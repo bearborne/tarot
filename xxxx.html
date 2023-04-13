@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Tarot Card Reader</title>
+	<style>
+		body {
+			text-align: center;
+		}
+		img {
+			width: 50%;
+			max-width: 500px;
+			margin-bottom: 20px;
+		}
+		p {
+			font-size: 20px;
+			margin-bottom: 20px;
+		}
+		button {
+			font-size: 16px;
+			padding: 10px 20px;
+			background-color: #4285f4;
+			color: #fff;
+			border: none;
+			border-radius: 5px;
+			cursor: pointer;
+		}
+	</style>
+</head>
+<body>
+	<h1>Tarot Card Reader</h1>
+	<img id="cardImage">
+	<p id="cardDescription"></p>
+	<button onclick="drawCard()">Draw Card</button>
+	<script>
+		function drawCard() {
+			// Array of card image filenames
+			var cardImages = [
+				"Affliction.png",
+"Armistic.png",
+"Avoidance.png",
+"balance.png",
+"benevolence.png",
+"Brilliance.png",
+"celebration.png",
+"chaos.png",
+"Communion.png",
+"Companionship.png",
+"concord.png",
+"confidence.png",
+"Dawnbringer.png",
+"Death & Decay.png",
+"Deception.png",
+"derailment.png",
+"Desertion.png",
+"Detachment.png",
+"Dissatisfaction.png",
+"Duskbringer.png",
+"Fulfillment.png",
+"Grand Justice.png",
+"greed.png",
+"Hand of Fate.png",
+"Harbinger.png",
+"Heartrend.png",
+"Infestinger.png",
+"instinct.png",
+"Interference.png",
+"Intertuption.png",
+"Into the Unknown.png",
+"Introspection.png",
+"Materialism.png",
+"Mindgames.png",
+"moonlight.png",
+"naivety.png",
+"Perseverance.png",
+"Pestilence.png",
+"Recognition.png",
+"Stagnation.png",
+"Starlight.png",
+"strife.png",
+"Temptress.png",
+"Terror.png",
+"The First Flame.png",
+"the hunger.png",
+"Voyage.png",
+"Wisdom Within.png",
+,
+				// Add more filenames as needed
+			];
+			// Get a random index from the cardImages array
+			var randomIndex = Math.floor(Math.random() * cardImages.length);
+			// Get the filename of the randomly selected card image
+			var cardImage = cardImages[randomIndex];
+			// Set the card image source
+			document.getElementById("cardImage").src = cardImage;
+			// Get the card description from the text file
+			var xhr = new XMLHttpRequest();
+			xhr.onreadystatechange = function() {
+				if (this.readyState == 4 && this.status == 200) {
+					var cardDescription = this.responseText;
+					// Set the card description text
+					document.getElementById("cardDescription").textContent = cardDescription;
+				}
+			};
+			xhr.open("GET", "./" + cardImage.replace(".png", ".txt"), true);
+
+			xhr.send();
+		}
+	</script>
+</body>
+</html>
