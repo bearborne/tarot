@@ -3226,7 +3226,7 @@ function tensionsOf(entries) {
   return TENSIONS.map(([a, b, head, text, ask]) => {
     const A = whichCards(entries, (e, i) => sets[i].has(a) && !sets[i].has(b));
     const B = whichCards(entries, (e, i) => sets[i].has(b) && !sets[i].has(a));
-    return A.length && B.length ? { head, text, ask, cards: [...A, ...B].sort((x, y) => x - y) } : null;
+    return A.length && B.length ? { head, text, ask, a: A, b: B, cards: [...A, ...B].sort((x, y) => x - y) } : null;
   }).filter(Boolean).slice(0, 2);
 }
 
@@ -3300,34 +3300,54 @@ function numberArcBits(entries, nameOf) {
   return bits;
 }
 
-// What the reading asks: questions for the spread as a whole (from its
-// themes, elements and patterns), then one from each card, headed by the
-// place it holds in the chosen lens.
+// What the reading asks: questions for the spread as a whole, then one from
+// each card, headed by the place it holds in the chosen lens. Every question
+// for the whole names the cards that raised it, so it belongs to this reading
+// alone; one that would read the same for any spread isn't asked.
 const ELEMENT_ASK = {
-  Fire:  ["Where is your energy and courage pulling you?", "Where could a little more passion or courage help?"],
-  Water: ["What are your feelings telling you here?", "What would change if you let yourself feel this fully?"],
-  Air:   ["What would an honest, clear look show you?", "What thought or conversation is waiting to be had?"],
-  Earth: ["What practical step would ground this?", "What would help this take root in daily life?"],
+  Fire:  ["where is that drive pulling you?", "where could a little more passion or courage help?"],
+  Water: ["what are those feelings telling you?", "what would change if you let yourself feel this fully?"],
+  Air:   ["what would an honest, clear look show you?", "what thought or conversation is waiting to be had?"],
+  Earth: ["what practical step would ground this?", "what would help this take root in daily life?"],
 };
 function summaryQuestions(entries, lens) {
   const n = entries.length;
   const { themes, topEl, els, majors, revs } = patternParts(entries);
-  const whole = themes.slice(0, 3).map((t) => THEME_TEXT[t][2]);
-  if (topEl && els[topEl] >= 2) whole.push(ELEMENT_ASK[topEl][0]);
-  const missing = Object.keys(ELEMENT_ASK).filter((x) => !els[x]);
-  if (n >= 4 && missing.length === 1) whole.push(ELEMENT_ASK[missing[0]][1]);
-  if (majors >= 2 && majors >= Math.ceil(n / 2)) whole.push("What larger lesson might this chapter be teaching you?");
-  if (revs && revs >= Math.ceil(n / 2)) whole.push("What is still forming, and needs time rather than pressure?");
-  if (n >= 3) whole.push("How do the first card and the last speak to each other?");
-  // From the deeper patterns: a tension, two figures facing each other.
-  const nameOf = (i) => (lens ? placeName(lens, i, entries[i]) : entries[i].label || entries[i].card.name);
+  const sets = themeSets(entries);
+  const lower = (q) => q[0].toLowerCase() + q.slice(1);
+  // "The Tower", "The Tower and Death", "The Tower, Death and the Star"; past four, a count.
+  const who = (idx) => {
+    if (idx.length > 4) return `${idx.length} of the ${n} cards`;
+    const names = idx.map((i, k) => (k ? entries[i].card.name.replace(/^The /, "the ") : entries[i].card.name));
+    return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0];
+  };
+  const mid = (name) => name.replace(/^The /, "the ");
+  const whole = [];
+  themes.slice(0, 3).forEach((t) => {
+    const idx = whichCards(entries, (e, i) => sets[i].has(t));
+    const what = t === "heart" ? "the heart" : THEME_TEXT[t][0].toLowerCase();
+    if (idx.length < n || n <= 3) whole.push(`${who(idx)} speak of ${what}: ${lower(THEME_TEXT[t][2])}`);
+  });
   const t = tensionsOf(entries)[0];
-  if (t) whole.push(t.ask);
+  if (t) whole.push(`${who(t.a)} against ${mid(who(t.b))}: ${lower(t.ask)}`);
+  if (n >= 3) whole.push(`How does ${mid(entries[0].card.name)} lead to ${mid(entries[n - 1].card.name)}?`);
+  if (topEl && els[topEl] >= 2) {
+    const idx = whichCards(entries, (e) => elementFor(e.card) === topEl);
+    whole.push(`${who(idx)} carry ${topEl}: ${ELEMENT_ASK[topEl][0]}`);
+  }
+  const missing = Object.keys(ELEMENT_ASK).filter((x) => !els[x]);
+  if (n >= 4 && missing.length === 1) whole.push(`No ${missing[0]} among ${n} cards: ${ELEMENT_ASK[missing[0]][1]}`);
+  if (majors >= 2 && majors >= Math.ceil(n / 2)) {
+    whole.push(`${who(whichCards(entries, (e) => isMajorCard(e.card)))} are Major Arcana: what larger lesson is this chapter teaching?`);
+  }
+  if (revs && revs >= Math.ceil(n / 2)) {
+    whole.push(`${who(whichCards(entries, (e) => e.reversed))} ${revs > 1 ? "are" : "is"} reversed: what is still forming, and needs time rather than pressure?`);
+  }
+  // Two figures facing each other.
+  const nameOf = (i) => (lens ? placeName(lens, i, entries[i]) : entries[i].label || entries[i].card.name);
   const f = entries.map(facingOf);
   const meet = f.findIndex((d, i) => d === "right" && f[i + 1] === "left");
-  if (meet >= 0) whole.push(`What are ${nameOf(meet)} and ${nameOf(meet + 1)} saying to each other?`);
-  whole.push("What is one small step you could take this week?");
-  if (!themes.length) whole.unshift(n > 1 ? "What links these cards for you?" : "Where does this card show up in your life right now?");
+  if (meet >= 0) whole.push(`What are ${nameOf(meet)} and ${nameOf(meet + 1)} saying to each other?`.replace(/ The /g, " the "));
 
   // As many questions for the reading as it has cards (each card asks one too).
   const asked = [...new Set(whole)].slice(0, n);
@@ -3344,6 +3364,7 @@ function summaryQuestions(entries, lens) {
 function fillSummaryAsks(wholeBox, eachBox, entries, lens) {
   const { whole, each } = summaryQuestions(entries, lens);
   wholeBox.innerHTML = "";
+  wholeBox.hidden = !whole.length;
   wholeBox.append(el("p", "asks-title", "The reading asks"));
   const ul = el("ul");
   whole.forEach((q) => ul.append(el("li", "", q)));
@@ -3363,10 +3384,12 @@ function fillSummaryAsks(wholeBox, eachBox, entries, lens) {
 
 // Buttons that belong together stay one line each, all at the same size:
 // the text shrinks together until the longest one fits.
-function fitOneLine(buttons) {
+// keepHeight: the line keeps its full height while its text shrinks, so the box around it doesn't move.
+function fitOneLine(buttons, keepHeight = false) {
   const fit = () => {
     if (!buttons[0] || !buttons[0].isConnected) return;
-    buttons.forEach((b) => (b.style.fontSize = ""));
+    buttons.forEach((b) => { b.style.fontSize = ""; if (keepHeight) b.style.height = b.style.lineHeight = ""; });
+    const heights = keepHeight ? buttons.map((b) => b.getBoundingClientRect().height) : [];
     const base = parseFloat(getComputedStyle(buttons[0]).fontSize);
     let k = 1;
     buttons.forEach((b) => {
@@ -3375,7 +3398,10 @@ function fitOneLine(buttons) {
       const need = b.scrollWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
       if (need > room && room > 0) k = Math.min(k, room / need);
     });
-    if (k < 1) buttons.forEach((b) => (b.style.fontSize = `${Math.max(10, Math.floor(base * k * 0.98 * 2) / 2)}px`));
+    if (k < 1) buttons.forEach((b, i) => {
+      b.style.fontSize = `${Math.max(10, Math.floor(base * k * 0.98 * 2) / 2)}px`;
+      if (keepHeight) b.style.height = b.style.lineHeight = `${heights[i]}px`;
+    });
   };
   requestAnimationFrame(fit);
   document.fonts?.ready.then(fit);
@@ -4926,10 +4952,10 @@ function eclipticLon(body, date) {
   return Astronomy.Ecliptic(Astronomy.GeoVector(body, date, true)).elon;
 }
 
-// Degrees, minutes and seconds within the sign: 21°26′07″.
+// Degrees and minutes within the sign: 21°26′.
 function degText(x) {
-  const t = Math.floor(x * 3600), two = (n) => String(n).padStart(2, "0");
-  return `${Math.floor(t / 3600)}°${two(Math.floor(t / 60) % 60)}′${two(t % 60)}″`;
+  const t = Math.floor(x * 60);
+  return `${Math.floor(t / 60)}°${String(t % 60).padStart(2, "0")}′`;
 }
 
 function skyAt(date) {
@@ -4983,7 +5009,8 @@ function buildWheel() {
   svgEl(core, "stop", { offset: "1", "stop-color": "#ffbe5a", "stop-opacity": "0" });
 
   // A slowly turning ring of gold dots outside the zodiac, like the runes of the summary.
-  const runes = svgEl(svg, "g", { class: "w-runes" });
+  // (It fades in on its own wrapper, so the turning is never restarted.)
+  const runes = svgEl(svgEl(svg, "g", { class: "w-runes-in" }), "g", { class: "w-runes" });
   for (let i = 0; i < 72; i++) {
     const [x, y] = wheelPt(i * 5, WR + 8);
     if (i % 6 === 0) svgEl(runes, "rect", { x: x - 2, y: y - 2, width: 4, height: 4, class: "w-diamond",
@@ -5088,7 +5115,9 @@ function skyStep(dir) {
 
 function renderSky(opening = false) {
   const box = $("skyBody");
-  box.innerHTML = "";
+  // The wheel's box stays in the page while the rest is redrawn: taking the
+  // wheel out and back would restart its turning ring of runes.
+  [...box.children].forEach((n) => { if (n !== WHEEL.cols) n.remove(); });
   if (typeof Astronomy === "undefined") {
     box.append(el("p", "empty-note", "The sky couldn't be worked out on this device."));
     return;
@@ -5100,12 +5129,13 @@ function renderSky(opening = false) {
   const ornament = () => { const l = el("div", "rpg-line sky-orn"); l.append(el("i"), el("b"), el("i")); return l; };
   const when = el("p", "sky-when");
   when.append(el("span", "", `${date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })} · ${timeText(date)}`));
-  if (SKY.at) {
-    const now = el("button", "link small gold sky-now", "Now");
-    now.addEventListener("click", () => { SKY.at = null; renderSky(); });
-    when.append(now);
-  }
-  box.append(ornament(), when);
+  // Present: back to the sky as it is now. Always there, so nothing shifts; resting while it's already now.
+  const present = el("button", "chip sky-present", "Present");
+  present.disabled = !SKY.at;
+  present.setAttribute("aria-label", "Back to the present sky");
+  present.addEventListener("click", () => { SKY.at = null; renderSky(); });
+  when.append(present);
+  const top = [ornament(), when];
 
   // ‹ Hour Day Week Month Year ›
   const steps = el("div", "sky-steps");
@@ -5121,21 +5151,24 @@ function renderSky(opening = false) {
     units.append(b);
   });
   steps.append(back, units, fwd);
-  box.append(steps);
+  top.push(steps);
 
   const moonPos = bodies.find((b) => b.body === "Moon");
   const lunation = el("div", "sky-moon");
   lunation.append(el("span", "sky-moon-main", `${moon.icon} ${moon.name} · Moon in ${SIGNS[moonPos.sign]} ${moonPos.dms}`),
     el("span", "sky-moon-note", `${moon.lit}% lit · day ${moon.day} of 29`));
   flashIfChanged(lunation, "moon", lunation.textContent, opening);
-  fitOneLine([lunation.firstChild]);   // phase and Moon sign stay on one line
+  fitOneLine([lunation.firstChild], true);   // phase and Moon sign stay on one line
 
   // On a wide screen the wheel sits beside the list; on a phone above it.
   if (!WHEEL.svg) buildWheel();
   WHEEL.svg.classList.toggle("drawing", opening && !calm);
-  const cols = el("div", "sky-cols"), side = el("div", "sky-side");
-  cols.append(WHEEL.svg, side);
-  box.append(cols);
+  if (!WHEEL.cols) { WHEEL.cols = el("div", "sky-cols"); WHEEL.cols.append(WHEEL.svg); }
+  const cols = WHEEL.cols, side = el("div", "sky-side");
+  cols.querySelector(".sky-side")?.remove();
+  cols.append(side);
+  if (!cols.isConnected) box.append(cols);
+  cols.before(...top);
   WHEEL.svg.getBoundingClientRect();   // settle it in its new place before it moves
   if (opening) WHEEL.hot = null;
   updateWheel(bodies, moon, opening);
@@ -5167,7 +5200,7 @@ function renderSky(opening = false) {
   });
   side.append(lunation, list);
   // Every sign shows at one size: if the longest doesn't fit its tile, they all shrink together.
-  fitOneLine([...list.querySelectorAll(".sky-where")]);
+  fitOneLine([...list.querySelectorAll(".sky-where")], true);
   fitSkyToWheel();
   skyHot(WHEEL.hot);   // the sign may have changed with the time
 }
@@ -5177,12 +5210,19 @@ function renderSky(opening = false) {
 function fitSkyToWheel() {
   const side = document.querySelector("#skySheet .sky-side"), cols = side?.parentElement;
   if (!side) return;
-  side.style.fontSize = "";
+  const list = side.querySelector(".sky-list");
+  side.style.fontSize = list.style.gridTemplateColumns = "";
   if (!matchMedia("(min-width: 900px)").matches) return;
   const fit = () => {
     if (!side.isConnected) return;
     const wheel = WHEEL.svg.getBoundingClientRect();
     if (!wheel.height) return;
+    // The tiles are sized for the longest place any planet could be in, so
+    // they keep one size as the time changes; only the text inside shrinks.
+    const wheres = [...side.querySelectorAll(".sky-where")];
+    const real = wheres.map((w) => [...w.childNodes]);
+    side.style.fontSize = list.style.gridTemplateColumns = "";
+    wheres.forEach((w) => { w.style.fontSize = w.style.height = w.style.lineHeight = ""; w.textContent = "Sagittarius 28°48′ ℞"; });
     const gap = parseFloat(getComputedStyle(cols).columnGap) || 0;
     const room = cols.clientWidth - wheel.width - gap;
     let size = parseFloat(getComputedStyle(side).fontSize);
@@ -5191,6 +5231,8 @@ function fitSkyToWheel() {
       size *= Math.min(wheel.height / r.height, room / r.width);
       side.style.fontSize = `${size.toFixed(2)}px`;
     }
+    list.style.gridTemplateColumns = getComputedStyle(list).gridTemplateColumns;
+    wheres.forEach((w, i) => w.replaceChildren(...real[i]));
   };
   fit();
   document.fonts?.ready.then(fit);
