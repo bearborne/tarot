@@ -36,8 +36,8 @@
     <div class="home-links">
       <button class="pill" id="browseBtn">Browse the cards</button>
       <button class="pill" id="historyBtn">Your history</button>
+      <button class="pill sky-link" id="skyBtn">✦ Sky now</button>
     </div>
-    <button class="cotd sky-link" id="skyBtn">✦ Sky now</button>
     <div class="options" id="options"></div>
   </section>
 
@@ -56,6 +56,7 @@
       <div class="deck" id="deck" role="button" aria-label="Spread the cards"></div>
       <div class="fan" id="fan"></div>
       <div class="end-actions" id="endActions" hidden>
+        <button class="reading-title" id="readingTitle"></button>
         <button class="pill summary-btn" id="summaryBtn">✦ Reading summary</button>
         <button class="pill" id="newBtn">New reading</button>
       </div>
@@ -116,6 +117,15 @@
         <button class="pill small" id="exportBtn">Export backup</button>
         <button class="pill small" id="importBtn">Import backup</button>
         <input type="file" id="importFile" accept=".json,application/json" hidden>
+      </div>
+      <div class="chips hist-tabs" id="histTabs">
+        <button class="chip on" data-mode="readings" aria-pressed="true">Readings</button>
+        <button class="chip" data-mode="cotd" aria-pressed="false">Card of the day</button>
+      </div>
+      <div class="hist-search" id="histSearchWrap">
+        <input type="search" id="histSearch" placeholder="Search by name, card or date"
+          aria-label="Search your history" autocomplete="off" spellcheck="false">
+        <button class="link small" id="histSearchClear" aria-label="Clear the search" hidden>×</button>
       </div>
       <div id="historyList"></div>
     </div>

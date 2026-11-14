@@ -118,11 +118,76 @@ function loadHistory() {
   return Array.isArray(h) ? h.filter((r) => r && Array.isArray(r.cards)) : [];
 }
 
-// cards: [{ name, rev, label }]
-function addReading(spreadName, cards) {
+// cards: [{ name, rev, label }]; title: the reading's name, if it has one.
+// Returns the new reading's id.
+function addReading(spreadName, cards, title) {
   const h = loadHistory();
-  h.push({ id: `${Date.now()}-${rand(1e6)}`, t: Date.now(), spread: spreadName, cards });
+  const id = `${Date.now()}-${rand(1e6)}`;
+  h.push({ id, t: Date.now(), spread: spreadName, cards, ...(title ? { title } : {}) });
   writeJSON(HISTORY_KEY, h);
+  return id;
+}
+
+// Changes one saved reading (a new name, say).
+function updateReading(id, changes) {
+  const h = loadHistory();
+  const r = h.find((x) => x.id === id);
+  if (!r) return false;
+  Object.assign(r, changes);
+  return writeJSON(HISTORY_KEY, h);
+}
+
+// A reading's name: the one it was given, or else one made from its cards.
+function readingTitle(r) {
+  return r.title || nameReading(readingCards(r)) || r.spread;
+}
+const readingCards = (r) => r.cards.map((c) => ({ card: CARDS.find((x) => x.name === c.name), reversed: !!c.rev }))
+  .filter((x) => x.card);
+
+// Lets a name be retyped where it stands. Enter or tapping away keeps it,
+// Escape (or leaving it empty) puts the old one back.
+// ideas: other names to offer, as a row of words to tap.
+function renameInPlace(holder, current, save, ideas = []) {
+  if (!holder.isConnected) return;
+  const big = holder.classList.contains("reading-title");
+  const box = el("div", `rename-box ${big ? "big" : ""}`);
+  const input = el("input", `rename-input ${big ? "big" : ""}`);
+  input.type = "text";
+  input.value = current;
+  input.maxLength = 60;
+  input.enterKeyHint = "done";
+  input.setAttribute("aria-label", "Name this reading");
+  box.append(input);
+  const offer = ideas.filter((w) => w !== current).slice(0, 6);
+  if (offer.length) {
+    const row = el("div", "rename-ideas");
+    offer.forEach((w) => {
+      const chip = el("button", "chip rename-idea", w);
+      chip.type = "button";
+      // Keep the box focused, so tapping a word doesn't count as tapping away.
+      chip.addEventListener("pointerdown", (e) => e.preventDefault());
+      chip.addEventListener("click", () => { input.value = w; finish(true); });
+      row.append(chip);
+    });
+    box.append(row);
+  }
+  holder.replaceWith(box);   // the box takes the name's place while typing
+  input.focus();
+  input.select();
+  let done = false;
+  const finish = (keep) => {
+    if (done) return;
+    done = true;
+    const name = input.value.trim().replace(/\s+/g, " ");
+    box.replaceWith(holder);
+    if (keep && name && name !== current) save(name);
+  };
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); finish(true); }
+    else if (e.key === "Escape") { e.preventDefault(); finish(false); }
+  });
+  input.addEventListener("blur", () => finish(true));
+  input.addEventListener("click", (e) => e.stopPropagation());
 }
 
 function removeReading(id) {
@@ -672,8 +737,28 @@ startSky();
 $("backBtn").addEventListener("click", showHome);
 $("newBtn").addEventListener("click", showHome);
 $("summaryBtn").addEventListener("click", () => {
-  const entries = tableEntries(), title = S.spread.name;
-  summonSummary((magic) => openSummary(entries, title, magic));
+  const entries = tableEntries(), title = S.title || S.spread.name, reading = S;
+  summonSummary((magic) => openSummary(entries, title, magic, reading.readingId && {
+    id: reading.readingId,
+    onRename: (name) => { reading.title = name; if (S === reading) showReadingTitle(); },
+  }));
+});
+
+// The reading's name, above the buttons once every card is turned.
+// Tap it to rename; the new name is kept in the history.
+function showReadingTitle() {
+  const b = $("readingTitle");
+  b.replaceChildren(el("span", "reading-title-text", S.title), el("span", "rename-mark", "✎"));
+  b.setAttribute("aria-label", `${S.title}. Tap to rename`);
+}
+$("readingTitle").addEventListener("click", () => {
+  if (!S?.readingId) return;
+  const reading = S;
+  renameInPlace($("readingTitle"), reading.title, (name) => {
+    if (!updateReading(reading.readingId, { title: name })) return;
+    reading.title = name;
+    if (S === reading) showReadingTitle();
+  }, nameIdeas(reading.slots.map((s) => ({ card: s.card, reversed: s.reversed }))));
 });
 
 // ── 2. The table ────────────────────────────────────────
@@ -792,8 +877,9 @@ async function pick(fanCard) {
   const allPicked = S.picked === S.n;
   if (allPicked) {
     S.phase = "busy";
-    addReading(S.spread.name, S.slots.map((s) =>
-      ({ name: s.card.name, rev: s.reversed, label: S.spread.positions[s.i].label })));
+    S.title = nameReading(S.slots.map((s) => ({ card: s.card, reversed: s.reversed }))) || S.spread.name;
+    S.readingId = addReading(S.spread.name, S.slots.map((s) =>
+      ({ name: s.card.name, rev: s.reversed, label: S.spread.positions[s.i].label })), S.title);
   }
   else {
     const left = S.n - S.picked;
@@ -957,6 +1043,7 @@ async function turn(slot) {
     slot.turning = false;
     if (last) {
       setHint("");
+      showReadingTitle();
       $("summaryBtn").hidden = false;
       $("endActions").hidden = false;
       $("endActions").animate([{ opacity: 0 }, { opacity: 1 }], 400);
@@ -2659,6 +2746,83 @@ function themesOf(keyword) {
   return Object.keys(THEMES).filter((t) => THEMES[t].some((stem) => k.includes(stem)));
 }
 
+// ── A reading's name ────────────────────────────────────
+// One esoteric word, borrowed from World of Warcraft talents (priest, druid,
+// mage, warlock, paladin and a few others) and sorted by the theme it speaks
+// to. Hard themes get gentle words: comfort and resolve, not doom. The cards'
+// keywords vote for their themes, the first (most central) keywords counting
+// most; the strongest theme gives the name. Which of its words is used
+// depends on the cards themselves, so the same cards always get the same
+// name, and different readings of one theme get different ones.
+const THEME_NAMES = {
+  beginnings: ["Germination", "Kindling", "Ignition", "Impetus", "Awakening", "Dawnlight", "Flashpoint"],
+  intuition:  ["Epiphany", "Clearcasting", "Phantasm", "Starweaver", "Moonkin", "Forewarning", "Grimoire"],
+  heart:      ["Benevolence", "Benediction", "Lifebloom", "Everbloom", "Lenience", "Veneration"],
+  together:   ["Resonance", "Sanctuary", "Symbiosis", "Solidarity", "Soulwell", "Intercession"],
+  stillness:  ["Tranquility", "Hibernate", "Solstice", "Snowdrift", "Intangibility"],
+  reflection: ["Evocation", "Reverberate", "Brainstorm", "Mastermind", "Afterimage", "Illumine"],
+  change:     ["Cyclone", "Supernova", "Typhoon", "Emberstorm", "Backdraft", "Inferno", "Hammerfall", "Gateway"],
+  renewal:    ["Rebirth", "Regenesis", "Reinvigoration", "Verdancy", "Restitution", "Redemption", "Reclamation", "Aurora"],
+  truth:      ["Eureka", "Adjudication", "Luminosity", "Beacon", "Jurisdiction"],
+  will:       ["Persistence", "Intensity", "Valiance", "Soulburn", "Shadowfury", "Obduracy", "Cavalier"],
+  structure:  ["Ironbark", "Stonebark", "Oakskin", "Permafrost", "Bulwark", "Sentinel"],
+  abundance:  ["Prosperity", "Overgrowth", "Cultivation", "Abundance", "Recompense"],
+  craft:      ["Lightweaver", "Amplification", "Spellslinger", "Rimecaster", "Masterwork", "Lightforged"],
+  joy:        ["Serendipity", "Liveliness", "Flourish", "Radiance", "Awestruck"],
+  freedom:    ["Slipstream", "Forestwalk", "Dreamwalk", "Levitate", "Shimmer", "Liberation"],
+  shadow:     ["Solace", "Stoicism", "Nightfall", "Soulstone", "Absolution", "Extrication"],
+  balance:    ["Eclipse", "Atonement", "Duality", "Harmony"],
+  choice:     ["Augury", "Prescience", "Divinity", "Lightbringer"],
+  self:       ["Apotheosis", "Ascendance", "Enlightenment", "Incarnation", "Sanctification"],
+};
+// When no card has a known theme.
+const WILD_NAMES = ["Starfall", "Arcanosphere", "Cinderstorm", "Wintertide", "Consecration"];
+
+// A small number made from the cards, the same every time for the same cards.
+function cardsHash(cards) {
+  let h = 7;
+  cards.forEach(({ card, reversed }) => {
+    for (const ch of card.name + (reversed ? "~" : "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  });
+  return h;
+}
+
+// The reading's themes, strongest first.
+function readingThemes(cards) {
+  const score = {};
+  cards.forEach(({ card, reversed }) => {
+    const seen = new Set();   // each theme counts once per keyword, at its best
+    filled(keywordsFor(card, reversed)).forEach((k, i) => {
+      themesOf(k).forEach((t) => {
+        const w = i === 0 ? 3 : i === 1 ? 2 : 1;
+        if (seen.has(t + w)) return;
+        seen.add(t + w);
+        score[t] = (score[t] || 0) + w;
+      });
+    });
+  });
+  const order = Object.keys(THEME_NAMES);   // ties go to the theme listed first
+  return Object.keys(score).sort((a, b) => score[b] - score[a] || order.indexOf(a) - order.indexOf(b));
+}
+
+// cards: [{ card, reversed }]. "" with no cards.
+function nameReading(cards) {
+  if (!cards.length) return "";
+  const pool = THEME_NAMES[readingThemes(cards)[0]] || WILD_NAMES;
+  return pool[cardsHash(cards) % pool.length];
+}
+
+// Other names that would suit the reading, offered while renaming: the
+// words of its three strongest themes.
+// They take turns, one word from each theme, so the row mixes them.
+function nameIdeas(cards) {
+  const pools = readingThemes(cards).slice(0, 3).map((t) => THEME_NAMES[t]);
+  if (!pools.length) return WILD_NAMES.slice();
+  const ideas = [];
+  for (let i = 0; i < Math.max(...pools.map((p) => p.length)); i++) pools.forEach((p) => p[i] && ideas.push(p[i]));
+  return [...new Set(ideas)];
+}
+
 function spreadKeyword(slot) {
   return linkedKeyword(slot, S.slots.filter((s) => s.card));
 }
@@ -3330,7 +3494,8 @@ function drawThread(box, targets, lit, animate) {
 
 // entries: [{ card, reversed, label, question }]
 // magic = arrive out of the light of the summon, instead of sliding up.
-function openSummary(entries, title, magic = false) {
+// named: { id, onRename } for a saved reading, so its name can be changed here too.
+function openSummary(entries, title, magic = false, named = null) {
   const n = entries.length;
   const sheet = el("div", "sheet details");
   const bar = el("header", "bar");
@@ -3342,7 +3507,24 @@ function openSummary(entries, title, magic = false) {
   const body = el("div", "details-body two-col summary-page");
   const side = el("div", "col-side"), main = el("div", "col-main");
   body.append(side, main);
-  side.append(el("h2", "summary-title", title));
+  if (named) {
+    // The reading's name: tap to rename, as on the table and in the history.
+    const h = el("h2", "summary-title");
+    const b = el("button", "reading-title summary-name");
+    const show = () => {
+      b.replaceChildren(el("span", "reading-title-text", title), el("span", "rename-mark", "✎"));
+      b.setAttribute("aria-label", `${title}. Tap to rename`);
+    };
+    show();
+    b.addEventListener("click", () => renameInPlace(b, title, (name) => {
+      if (!updateReading(named.id, { title: name })) return;
+      title = name;
+      show();
+      named.onRename?.(name);
+    }, nameIdeas(entries)));
+    h.append(b);
+    side.append(h);
+  } else side.append(el("h2", "summary-title", title));
 
   // The cards, with the place each one holds in the chosen lens.
   const items = entries.map((e) => detailsItem(e.card, e.reversed, e.label, e.question || ""));
@@ -5052,65 +5234,262 @@ document.addEventListener("visibilitychange", () => skyField.start());
 
 // ── 6. Your history ─────────────────────────────────────
 
+// The history is grouped by month. Only open months draw their cards, so a
+// long history stays quick; a strip of months at the top jumps to any of them.
+// Two lists share the screen: readings, and each day's card of the day.
+const HIST = { open: new Set(), mode: "readings" };
+const COTD_SPREAD = "Card of the day";
+const monthKey = (t) => { const d = new Date(t); return `${d.getFullYear()}-${d.getMonth()}`; };
+const monthName = (t, long) => new Date(t).toLocaleDateString("en-GB",
+  { month: long ? "long" : "short", year: long || new Date(t).getFullYear() !== new Date().getFullYear() ? "numeric" : undefined });
+const dayName = (t) => new Date(t).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+
 function renderHistory() {
   const box = $("historyList");
   box.innerHTML = "";
-  const readings = loadHistory().sort((a, b) => b.t - a.t);
+  const daily = HIST.mode === "cotd";
+  document.querySelectorAll("#histTabs .chip").forEach((c) => {
+    c.classList.toggle("on", c.dataset.mode === HIST.mode);
+    c.setAttribute("aria-pressed", c.dataset.mode === HIST.mode);
+  });
+  let readings = loadHistory().sort((a, b) => b.t - a.t)
+    .filter((r) => (r.spread === COTD_SPREAD) === daily);
+  if (daily) {   // one card a day: if it was drawn again that day, the last one counts
+    const seen = new Set();
+    readings = readings.filter((r) => { const d = dayName(r.t) + new Date(r.t).getFullYear(); return !seen.has(d) && seen.add(d); });
+  }
+  $("histSearch").placeholder = daily ? "Search by card or date" : "Search by name, card or date";
   if (!readings.length) {
-    box.append(el("p", "empty-note history-empty", "Your readings will appear here once you've drawn some cards."));
+    $("histSearchWrap").hidden = true;
+    box.append(el("p", "empty-note history-empty", daily
+      ? "Each day's card will appear here once you've revealed one."
+      : "Your readings will appear here once you've drawn some cards."));
     return;
   }
-  let day = "";
+  $("histSearchWrap").hidden = false;
+
+  // Searching: every word typed must be found somewhere in the reading.
+  const words = fold($("histSearch").value).split(/\s+/).filter(Boolean);
+  const searching = words.length > 0;
+  if (searching) {
+    readings = readings.filter((r) => { const text = searchText(r); return words.every((w) => text.includes(w)); });
+    const n = readings.length;
+    box.append(el("p", "search-count", n ? `${n} found` : "Nothing found"));
+    if (!n) return;
+  }
+  const months = [];
   readings.forEach((r) => {
-    const d = dateText(r.t);
-    if (d !== day) { day = d; box.append(el("h3", "history-day", d)); }
+    const key = monthKey(r.t);
+    if (months.at(-1)?.key !== key) months.push({ key, t: r.t, list: [] });
+    months.at(-1).list.push(r);
+  });
+  if (!HIST.open.size) HIST.open.add(months[0].key);   // the newest month starts open
+  const isOpen = (key) => searching || HIST.open.has(key);   // what's found is all shown
 
-    const item = el("div", "reading");
-    const head = el("div", "reading-head");
-    head.append(el("span", "", `${timeText(r.t)} · ${r.spread}`));
-    const remove = el("button", "link small", "Remove");
-    remove.addEventListener("click", () => {
-      if (!confirm("Remove this reading from your history?")) return;
-      removeReading(r.id);
-      renderHistory();
+  // The strip of months, kept at the top while scrolling.
+  if (months.length > 1) {
+    const strip = el("nav", "month-strip");
+    strip.setAttribute("aria-label", "Jump to a month");
+    months.forEach((m) => {
+      const chip = el("button", "month-chip");
+      chip.append(el("span", "", monthName(m.t)), el("span", "month-count", String(m.list.length)));
+      chip.dataset.key = m.key;
+      chip.addEventListener("click", () => openMonth(m.key));
+      strip.append(chip);
     });
-    // The cards, in order; tap one to open its page and swipe through the reading.
-    const known = r.cards.map((c) => ({ c, card: CARDS.find((x) => x.name === c.name) })).filter((x) => x.card);
-    const items = known.map(({ c, card }) => detailsItem(card, !!c.rev, c.label && c.label !== "Your card" ? c.label : ""));
+    box.append(strip);
+  }
 
-    const actions = el("span", "reading-actions");
-    if (known.length) {
-      const sum = el("button", "link small gold", "Summary");
-      // The spread's questions, if it still exists and has them.
-      const positions = (SPREADS.find((sp) => sp.name === r.spread) || {}).positions || [];
-      sum.addEventListener("click", () => {
-        const entries = items.map((it, i) => ({ card: it.card, reversed: it.reversed, label: it.label,
-          question: (positions[i] || {}).question || "" }));
-        summonSummary((magic) => openSummary(entries, r.spread, magic));
+  months.forEach((m) => {
+    const sec = el("section", "month");
+    sec.dataset.key = m.key;
+    const head = el("button", "month-head");
+    const n = m.list.length;
+    const rev = daily ? m.list.filter((r) => r.cards[0]?.rev).length : 0;
+    head.append(el("span", "month-name", monthName(m.t, true)), el("span", "month-count", daily
+      ? `${n === 1 ? "1 day" : `${n} days`}${rev ? ` · ${rev} reversed` : ""}`
+      : n === 1 ? "1 reading" : `${n} readings`));
+    const body = el("div", daily ? "month-body cotd-days" : "month-body");
+    const fill = () => {
+      if (body.childElementCount) return;
+      if (daily) { fillDays(body, m.list); return; }
+      let day = "";
+      m.list.forEach((r) => {
+        const d = dayName(r.t);
+        if (d !== day) { day = d; body.append(el("h3", "history-day", d)); }
+        body.append(readingItem(r));
       });
-      actions.append(sum);
-    }
-    actions.append(remove);
-    head.append(actions);
-    const row = el("div", "related-row");
-    known.forEach(({ c, card }, i) => {
-      const b = el("button", "related-card");
-      const pic = el("div", "related-pic");
-      const face = cardFace(card, true, !!c.rev);
-      face.style.height = "100%";
-      pic.append(face);
-      if (items[i].label) b.append(el("span", "related-label", items[i].label));
-      b.append(pic, el("span", "related-name", c.rev ? `${card.name}, reversed` : card.name));
-      b.setAttribute("aria-label", `${c.label ? c.label + ": " : ""}${card.name}${c.rev ? ", reversed" : ""}`);
-      b.addEventListener("click", () => openDetails(items, i));
-      row.append(b);
-    });
-    item.append(head, row);
-    box.append(item);
+    };
+    const set = (open) => {
+      sec.classList.toggle("open", open);
+      head.setAttribute("aria-expanded", open);
+      body.hidden = !open;
+      if (open) fill();
+      if (!searching) open ? HIST.open.add(m.key) : HIST.open.delete(m.key);
+    };
+    head.addEventListener("click", () => set(body.hidden));
+    sec.append(head, body);
+    box.append(sec);
+    set(isOpen(m.key));
+  });
+  requestAnimationFrame(markMonthHere);
+}
+
+// Lower case, without accents, so "hermit" finds "The Hermit".
+const fold = (s) => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+// Everything a reading can be found by: its name, spread, cards, places
+// and date ("14 november 2026 saturday", "nov").
+function searchText(r) {
+  const d = new Date(r.t);
+  const bits = [r.spread === COTD_SPREAD ? "" : readingTitle(r), r.spread,
+    d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
+    d.toLocaleDateString("en-GB", { month: "short" })];
+  r.cards.forEach((c) => bits.push(c.name, c.rev ? "reversed" : "", c.label || ""));
+  return fold(bits.join(" "));
+}
+
+let searchTimer = 0;
+$("histSearch").addEventListener("input", () => {
+  $("histSearchClear").hidden = !$("histSearch").value;
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { $("history").scrollTop = 0; renderHistory(); }, 120);
+});
+$("histSearchClear").addEventListener("click", () => {
+  $("histSearch").value = "";
+  $("histSearchClear").hidden = true;
+  renderHistory();
+  $("histSearch").focus();
+});
+
+// A month of daily cards as a grid, newest first; tap one to open it and
+// swipe through the rest of that month.
+function fillDays(body, list) {
+  const days = list.map((r) => ({ r, c: r.cards[0], card: CARDS.find((x) => x.name === r.cards[0]?.name) }))
+    .filter((x) => x.card);
+  const items = days.map(({ r, c, card }) => detailsItem(card, !!c.rev, `Card of the day · ${dayName(r.t)}`));
+  days.forEach(({ r, c, card }, i) => {
+    const b = el("button", "related-card cotd-day");
+    const pic = el("div", "related-pic");
+    const face = cardFace(card, true, !!c.rev);
+    face.style.height = "100%";
+    pic.append(face);
+    const d = new Date(r.t);
+    b.append(el("span", "related-label", d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric" })),
+      pic, el("span", "related-name", c.rev ? `${card.name}, reversed` : card.name));
+    b.setAttribute("aria-label", `${dayName(r.t)}: ${card.name}${c.rev ? ", reversed" : ""}`);
+    b.addEventListener("click", () => openDetails(items, i));
+    body.append(b);
   });
 }
 
+document.querySelectorAll("#histTabs .chip").forEach((c) => c.addEventListener("click", () => {
+  if (HIST.mode === c.dataset.mode) return;
+  HIST.mode = c.dataset.mode;
+  HIST.open.clear();
+  renderHistory();
+}));
+
+// Opens a month and brings its heading to the top, under the strip.
+function openMonth(key) {
+  const sec = document.querySelector(`#historyList .month[data-key="${key}"]`);
+  if (!sec) return;
+  if (!sec.classList.contains("open")) sec.querySelector(".month-head").click();
+  const sheet = $("history"), strip = document.querySelector("#historyList .month-strip");
+  const top = sec.getBoundingClientRect().top - sheet.getBoundingClientRect().top + sheet.scrollTop
+    - (strip ? strip.offsetHeight + 8 : 0);
+  sheet.scrollTo({ top, behavior: calm ? "auto" : "smooth" });
+}
+
+// Marks the month being read in the strip, and keeps its chip in view.
+function markMonthHere() {
+  const strip = document.querySelector("#historyList .month-strip");
+  if (!strip) return;
+  const line = strip.getBoundingClientRect().bottom + 12;
+  let key = null;
+  document.querySelectorAll("#historyList .month").forEach((s) => {
+    if (!key || s.getBoundingClientRect().top <= line) key = s.dataset.key;
+  });
+  strip.querySelectorAll(".month-chip").forEach((c) => {
+    const here = c.dataset.key === key;
+    if (here && !c.classList.contains("here") && strip.scrollWidth > strip.clientWidth) {
+      strip.scrollTo({ left: c.offsetLeft - (strip.clientWidth - c.offsetWidth) / 2, behavior: calm ? "auto" : "smooth" });
+    }
+    c.classList.toggle("here", here);
+  });
+}
+let monthTick = 0;
+$("history").addEventListener("scroll", () => {
+  if (!monthTick) monthTick = requestAnimationFrame(() => { monthTick = 0; markMonthHere(); });
+}, { passive: true });
+
+function readingItem(r) {
+  const item = el("div", "reading");
+  const head = el("div", "reading-head");
+  // The reading's name (tap to rename), with its time and spread beneath.
+  const who = el("div", "reading-who");
+  const name = el("button", "reading-name");
+  const showName = () => {
+    name.replaceChildren(el("span", "reading-name-text", readingTitle(r)), el("span", "rename-mark", "✎"));
+    name.setAttribute("aria-label", `${readingTitle(r)}. Tap to rename`);
+  };
+  showName();
+  name.addEventListener("click", () => renameInPlace(name, readingTitle(r), (title) => {
+    if (!updateReading(r.id, { title })) return;
+    r.title = title;
+    showName();
+  }, nameIdeas(readingCards(r))));
+  who.append(name, el("span", "reading-meta", `${timeText(r.t)} · ${r.spread}`));
+  head.append(who);
+  const remove = el("button", "link small", "Remove");
+  remove.addEventListener("click", () => {
+    if (!confirm("Remove this reading from your history?")) return;
+    removeReading(r.id);
+    renderHistory();
+  });
+  // The cards, in order; tap one to open its page and swipe through the reading.
+  const known = r.cards.map((c) => ({ c, card: CARDS.find((x) => x.name === c.name) })).filter((x) => x.card);
+  const items = known.map(({ c, card }) => detailsItem(card, !!c.rev, c.label && c.label !== "Your card" ? c.label : ""));
+
+  const actions = el("span", "reading-actions");
+  if (known.length) {
+    const sum = el("button", "link small gold", "Summary");
+    // The spread's questions, if it still exists and has them.
+    const positions = (SPREADS.find((sp) => sp.name === r.spread) || {}).positions || [];
+    sum.addEventListener("click", () => {
+      const entries = items.map((it, i) => ({ card: it.card, reversed: it.reversed, label: it.label,
+        question: (positions[i] || {}).question || "" }));
+      summonSummary((magic) => openSummary(entries, readingTitle(r), magic, {
+        id: r.id,
+        onRename: (title) => { r.title = title; showName(); },
+      }));
+    });
+    actions.append(sum);
+  }
+  actions.append(remove);
+  head.append(actions);
+  const row = el("div", "related-row");
+  known.forEach(({ c, card }, i) => {
+    const b = el("button", "related-card");
+    const pic = el("div", "related-pic");
+    const face = cardFace(card, true, !!c.rev);
+    face.style.height = "100%";
+    pic.append(face);
+    if (items[i].label) b.append(el("span", "related-label", items[i].label));
+    b.append(pic, el("span", "related-name", c.rev ? `${card.name}, reversed` : card.name));
+    b.setAttribute("aria-label", `${c.label ? c.label + ": " : ""}${card.name}${c.rev ? ", reversed" : ""}`);
+    b.addEventListener("click", () => openDetails(items, i));
+    row.append(b);
+  });
+  item.append(head, row);
+  return item;
+}
+
 $("historyBtn").addEventListener("click", () => {
+  HIST.open.clear();
+  $("history").scrollTop = 0;
+  $("histSearch").value = "";
+  $("histSearchClear").hidden = true;
   renderHistory();
   slideIn($("history"));
 });

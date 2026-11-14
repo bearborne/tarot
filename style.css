@@ -557,6 +557,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* The reading's summary */
 .summary-title { margin-bottom: 10px; }
+/* The summary's title is the reading's name: it looks like the heading, and renames on tap */
+.reading-title.summary-name { max-width: 100%; font: inherit; letter-spacing: inherit; color: inherit; text-shadow: none; }
+.summary-title .rename-box .rename-input.big { font-size: max(1.2rem, 16px); }
 /* LAYOUT RULE: a row of a reading's cards always shows every card, in
    even rows (--cols set by app.js), never cut off at the screen's edge.
    Labels and key words take one line, names exactly two. */
@@ -912,6 +915,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
   margin: 26px auto 0;
 }
 .home-links .pill { padding: 11px 20px; }
+/* On a phone the three buttons share one line */
+@media (max-width: 480px) {
+  .home-links { flex-wrap: nowrap; gap: 6px; }
+  .home-links .pill { flex: 0 1 auto; padding: 10px 11px; font-size: .9rem; white-space: nowrap; }
+}
 
 /* A line to carry with you */
 .carry-line {
@@ -1064,6 +1072,161 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .link.small { padding: 4px 2px; font-size: .85rem; }
 .link.gold { color: var(--gold); }
 .reading-actions { display: flex; gap: 14px; }
+
+/* Months: a strip to jump between them, and a heading that opens or closes each */
+.month-strip {
+  position: sticky;
+  top: -12px;   /* sits flush with the sheet's top edge, over its padding */
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -16px 6px;
+  padding: 10px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid rgba(201, 169, 110, .15);
+}
+.month-strip::-webkit-scrollbar { display: none; }
+.month-chip {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 12px;
+  color: var(--gold);
+  background: transparent;
+  border: 1px solid rgba(201, 169, 110, .45);
+  border-radius: 999px;
+  font-size: .9rem;
+  white-space: nowrap;
+}
+.month-chip:active { background: rgba(201, 169, 110, .12); }
+.month-chip.here { background: rgba(201, 169, 110, .16); border-color: var(--gold); }
+.month-chip .month-count { color: var(--muted); font-size: .8rem; }
+/* With a mouse, every month shows at once instead of scrolling sideways */
+@media (hover: hover) and (pointer: fine) {
+  .month-strip { flex-wrap: wrap; justify-content: center; }
+}
+.month { margin: 0 0 6px; }
+.month-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 2px 10px;
+  color: var(--gold);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(201, 169, 110, .2);
+  font-size: 1.05rem;
+  text-align: left;
+}
+.month-head .month-name::after {   /* a small chevron: right when closed, down when open */
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 0 2px 10px;
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(-45deg);
+  opacity: .75;
+  transition: transform .2s;
+}
+.month.open .month-head .month-name::after { transform: rotate(45deg); }
+.month-head .month-count { color: var(--muted); font-size: .85rem; }
+.month-body .history-day:first-child { margin-top: 14px; }
+
+/* Readings / Card of the day */
+.hist-tabs { justify-content: center; padding: 0 0 8px; }
+
+/* Search */
+.hist-search { position: relative; margin: 2px 0 4px; }
+.hist-search[hidden] { display: none; }
+#histSearch {
+  width: 100%;
+  padding: 10px 40px 10px 16px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid rgba(201, 169, 110, .3);
+  border-radius: 999px;
+  font: inherit;
+  font-size: 1rem;   /* 16px or more, so the phone doesn't zoom in */
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+#histSearch::-webkit-search-cancel-button { display: none; }
+#histSearch::placeholder { color: var(--muted); font-style: italic; }
+#histSearch:focus { border-color: var(--gold); }
+#histSearchClear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 10px;
+  font-size: 1.2rem;
+  color: var(--muted);
+}
+.search-count { margin: 10px 0 0; text-align: center; color: var(--muted); font-size: .9rem; }
+
+/* A reading's name: tap to rename */
+.reading-name, .reading-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: 100%;
+  padding: 2px 0;
+  color: var(--gold);
+  background: none;
+  border: 0;
+  font: inherit;
+  text-align: left;
+}
+.reading-name { font-size: 1.05rem; }
+.reading-name-text, .reading-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rename-mark { flex: none; font-size: .8em; opacity: .55; }
+.reading-who { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.reading-meta { color: var(--muted); font-size: .85rem; }
+.reading-head { align-items: flex-start; gap: 12px; }
+.reading-actions { flex: none; }
+.reading-title {
+  justify-content: center;
+  max-width: min(86vw, 24rem);
+  font-family: "IM Fell English SC", var(--read);
+  font-size: 1.3rem;
+  letter-spacing: .03em;
+  text-shadow: 0 0 10px rgba(255, 214, 130, .35);
+}
+.rename-input {
+  width: min(78vw, 20rem);
+  padding: 4px 10px;
+  color: var(--gold);
+  background: var(--panel);
+  border: 1px solid var(--gold);
+  border-radius: 8px;
+  font: inherit;
+  font-size: max(1rem, 16px);
+  outline: none;
+}
+.rename-box { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.rename-box.big { align-items: center; }
+.rename-ideas { display: flex; flex-wrap: wrap; gap: 6px; max-width: min(86vw, 24rem); }
+.rename-box.big .rename-ideas { justify-content: center; }
+.chip.rename-idea { padding: 4px 10px; font-size: .85rem; color: var(--gold); }
+.chip.rename-idea:active { background: rgba(201, 169, 110, .16); }
+.rename-input.big { text-align: center; font-family: "IM Fell English SC", var(--read); font-size: 1.2rem; }
+
+/* A month of daily cards: an even grid, every name two lines */
+.month-body.cotd-days {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 14px 10px;
+  padding: 14px 2px 8px;
+}
+.month-body.cotd-days[hidden] { display: none; }
+.cotd-day { width: 100%; }
 
 /* The on/off switches under the spreads */
 .options {
@@ -1603,7 +1766,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* ── Sky now ──
    Dressed like the tarot screens: the same night sky, gold glow,
    IM Fell names and diamond ornaments. */
-.sky-link { margin-top: 14px; font-size: 1rem; text-shadow: 0 0 8px rgba(255, 214, 130, .45); }
+.pill.sky-link {
+  text-shadow: 0 0 8px rgba(255, 214, 130, .45);
+  border-color: rgba(230, 196, 120, .8);
+  box-shadow: 0 0 10px rgba(255, 214, 130, .18), inset 0 0 8px rgba(255, 214, 130, .08);
+}
 #skySheet { --glowtxt: 0 0 3px rgba(12, 11, 17, .95), 0 0 10px rgba(255, 214, 130, .35); }
 #skySheet > :not(.sky) { position: relative; }
 #skySheet .bar-title {
