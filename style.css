@@ -817,7 +817,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
     font-size: 2.3rem;
     border-bottom: 1px solid rgba(201, 169, 110, .28);
   }
-  .quick-box .tags { justify-content: center; }
   .quick-box .keywords { text-align: center; font-size: 1.1rem; margin-bottom: 18px; }
   .quick-box .quick-text { margin-bottom: 14px; }
   .quick-box .quick-text p { font-size: 1.2rem; line-height: 1.7; }
@@ -1277,53 +1276,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .switch:checked::after { transform: translateX(18px); background: var(--bg); }
 .switch:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
-/* Tags turned off */
-.no-tags .tags, .no-tags .tag-tip { display: none !important; }
-
-/* ── Tags: the golden boxes ───────────────── */
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-  margin: 0 0 12px;
-}
-.tag {
-  padding: 4px 11px 5px;
-  border: 1px solid #8a6d3b;
-  border-radius: 5px;
-  background: linear-gradient(180deg, #dcc28c, #b8945a);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 1px 3px rgba(0, 0, 0, .3);
-  color: #2a2016;
-  font-family: var(--serif);
-  font-size: .95rem;
-  font-variant: small-caps;
-  letter-spacing: .05em;
-  line-height: 1.2;
-}
-.tag:active { filter: brightness(.92); }
-@media (hover: hover) { .tag:hover { filter: brightness(1.06); } }
-.tag.big { display: inline-block; font-size: 1.2rem; padding: 6px 16px 7px; }
-
-.tag-tip {
-  position: fixed;
-  z-index: 9999;
-  width: max-content;
-  max-width: min(330px, calc(100vw - 24px));
-  max-height: 70vh;
-  overflow-y: auto;
-  padding: 12px 14px;
-  background: var(--panel);
-  border: 1px solid rgba(201, 169, 110, .55);
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .55);
-  text-align: left;
-}
-.tip-name { color: var(--gold); font-variant: small-caps; letter-spacing: .05em; font-size: 1.05rem; }
-.tip-meaning { margin: 6px 0 10px; }
-.tip-meaning p { margin: 0 0 .6em; line-height: 1.45; }
-.tip-hint { margin: 0; color: var(--muted); font-size: .85rem; font-style: italic; }
 .pill.small { padding: 8px 16px; font-size: .95rem; }
 
 /* ── 5. Browse the cards ──────────────────── */
@@ -1348,12 +1300,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
   font-size: .92rem;
 }
 .chip.on { color: var(--bg); background: var(--gold); border-color: var(--gold); }
-
-.all-tags { justify-content: flex-start; margin-bottom: 16px; }
-
-.tag-head { text-align: center; margin: 8px 0 20px; }
-#tagHeadMeaning { max-width: 30rem; margin: 12px auto 2px; font-style: italic; font-size: 1.05rem; line-height: 1.5; }
-#tagHeadMeaning p { margin: 0 0 .7em; }
 
 .grid {
   display: grid;
@@ -1922,3 +1868,26 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 }
 }
+
+/* Long press to copy on the reading summary: no text selection or iOS
+   callout fighting it, and a short note when the names are copied. */
+.summary-page { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.summary-page input, .summary-page textarea { -webkit-user-select: text; user-select: text; }
+.copy-note {
+  position: fixed;
+  left: 50%;
+  bottom: calc(28px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  color: var(--gold);
+  background: var(--panel);
+  border: 1px solid rgba(201, 169, 110, .5);
+  border-radius: 999px;
+  font-size: .9rem;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: copy-in .25s ease-out;
+  transition: opacity .4s;
+}
+.copy-note.gone { opacity: 0; }
+@keyframes copy-in { from { opacity: 0; transform: translate(-50%, 8px); } }

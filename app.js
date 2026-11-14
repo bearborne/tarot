@@ -32,11 +32,10 @@ let S = null;           // the reading in progress
 // ── Options (remembered on this device) ─────────────────
 
 const OPTIONS = [
-  { id: "tags",      name: "Tags",           note: "Show the golden tag boxes" },
-  { id: "court",     name: "Court cards",    note: "Add the Pages, Knights, Queens and Kings" },
+  { id: "court",    name: "Court cards",    note: "Add the Pages, Knights, Queens and Kings" },
   { id: "reversals", name: "Reversed cards", note: "Cards can come out upside down" },
 ];
-const SET = { tags: false, court: false, reversals: false };
+const SET = { court: false, reversals: false };
 
 // Reads the saved switches. Only known switches, only true/false.
 function loadOptions() {
@@ -391,10 +390,6 @@ SPREADS.forEach((spread) => {
 });
 
 // The on/off switches under the spreads.
-function applyOptions() {
-  document.body.classList.toggle("no-tags", !SET.tags);
-}
-
 OPTIONS.forEach((o) => {
   const row = el("label", "option");
   const text = el("span", "option-text");
@@ -409,14 +404,11 @@ OPTIONS.forEach((o) => {
   box.addEventListener("change", () => {
     SET[o.id] = box.checked;
     saveOptions();
-    applyOptions();
     if (o.id === "court") buildFloatDeck();
-    hideTip();
   });
   row.append(text, box);
   $("options").append(row);
 });
-applyOptions();
 
 // Pick magic: one button that steps through the styles.
 {
@@ -432,7 +424,6 @@ applyOptions();
     pickFx = PICK_FX[(i + 1) % PICK_FX.length].id;
     try { localStorage.setItem("tarot-pickfx", pickFx); } catch {}
     show();
-    hideTip();
   });
   row.append(text, btn);
   $("options").append(row);
@@ -443,7 +434,6 @@ applyOptions();
 function syncOptions() {
   loadOptions();
   document.querySelectorAll("#options .switch").forEach((b) => { b.checked = SET[b.dataset.opt]; });
-  applyOptions();
   buildFloatDeck();
 }
 addEventListener("pageshow", syncOptions);
@@ -3782,6 +3772,14 @@ function openSummary(entries, title, magic = false, named = null) {
   asksRow.append(asks, asksEach);
   main.append(leftCol, rightCol, asksRow);
 
+  // Long press (phone) or right click (computer) anywhere on the page
+  // copies the cards' names: "1: Six of Cups 2: Five of Swords …".
+  const copyNames = () => copyText(
+    entries.map((e, i) => `${i + 1}: ${e.card.name}`).join(" "),
+    n === 1 ? "Card name copied" : "Card names copied"
+  );
+  onLongPress(sheet, copyNames);
+
   sheet.append(bar, body, strip);
   document.body.append(sheet);
   if (magic && !calm) appearWithMagic(sheet, body);
@@ -3791,6 +3789,59 @@ function openSummary(entries, title, magic = false, named = null) {
     sheet.remove();
   });
   return sheet;
+}
+
+// Right click, or a long press on a touch screen, on el (but not in a text
+// box). The copy runs when the finger lifts, since phones only let a page
+// write to the clipboard right after a touch ends.
+function onLongPress(el, fn, hold = 500) {
+  let start = null, last = 0;
+  const run = () => { if (Date.now() - last > 800) { last = Date.now(); fn(); } };
+  const typing = (t) => t.closest && t.closest("input, textarea, [contenteditable]");
+  el.addEventListener("contextmenu", (ev) => {
+    if (typing(ev.target)) return;
+    ev.preventDefault();
+    // A touch's own long press is handled when the finger lifts.
+    if (!start) run();
+  });
+  el.addEventListener("touchstart", (ev) => {
+    if (ev.touches.length !== 1 || typing(ev.target)) { start = null; return; }
+    const t = ev.touches[0];
+    start = { x: t.clientX, y: t.clientY, at: Date.now() };
+  }, { passive: true });
+  el.addEventListener("touchmove", (ev) => {
+    if (!start) return;
+    const t = ev.touches[0];
+    if (Math.hypot(t.clientX - start.x, t.clientY - start.y) > 10) start = null;
+  }, { passive: true });
+  el.addEventListener("touchcancel", () => { start = null; });
+  el.addEventListener("touchend", (ev) => {
+    const s = start;
+    start = null;
+    if (!s || Date.now() - s.at < hold) return;
+    ev.preventDefault();   // no click on whatever was held
+    run();
+  });
+}
+
+// Put text on the clipboard and say so in a short note at the bottom.
+async function copyText(text, note = "Copied") {
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch {
+    const ta = el("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.cssText = "position:fixed;opacity:0;top:0;left:0";
+    document.body.append(ta);
+    ta.select();
+    try { ok = document.execCommand("copy"); } catch {}
+    ta.remove();
+  }
+  const t = el("div", "copy-note", ok ? note : "Couldn't copy");
+  t.style.zIndex = ++Z + 10;
+  document.body.append(t);
+  setTimeout(() => t.classList.add("gone"), 1400);
+  setTimeout(() => t.remove(), 1800);
 }
 
 // The summary page arriving through the arcane portal: the page itself is
@@ -4486,11 +4537,6 @@ function showPosition(i, labelEl, questionEl) {
   questionEl.hidden = !pos.question;
 }
 
-function fillTags(box, card) {
-  box.innerHTML = "";
-  (card.tags || []).forEach((id) => box.append(tagBox(id)));
-  box.hidden = !box.children.length;
-}
 
 // Some cards have their own keywords and questions for when they're reversed;
 // the rest use the same ones both ways.
@@ -4532,7 +4578,6 @@ function openQuick(i) {
   showPosition(i, $("quickPos"), $("quickQuestion"));
   $("quickName").textContent = card.name;
   $("quickReversed").hidden = !reversed;
-  fillTags($("quickTags"), card);
   fillKeywords($("quickKeywords"), keywordsFor(card, reversed));
   const useReversed = reversed && (card.reversed || "").trim();
   fillText($("quickText"), useReversed ? card.reversed : card.short, "Add a short description for this card in cards.js.");
@@ -4580,7 +4625,6 @@ function slideIn(sheet) {
 }
 
 function slideOut(sheet) {
-  hideTip();
   return sheet.animate(
     [{ transform: "none" }, { transform: "translateY(100%)" }],
     { duration: 300, easing: "ease-in" }
@@ -4606,11 +4650,12 @@ function correspondences(card) {
 }
 
 // One side of the card, "Upright" or "Reversed": its meaning, plus its own
-// keywords and questions when the two sides have different ones.
-function meaning(card, rev) {
+// keywords (for the side the card didn't fall on, when the two sides have
+// different ones) and questions.
+function meaning(card, rev, fell) {
   const box = el("div", "details-text meaning");
   box.append(el("p", "asks-title", rev ? "Reversed" : "Upright"));
-  if (hasRevKeywords(card)) {
+  if (hasRevKeywords(card) && rev !== fell) {
     const k = el("p", "keywords");
     fillKeywords(k, keywordsFor(card, rev));
     box.append(k);
@@ -4794,18 +4839,17 @@ function detailsBody({ card, reversed, label, question }) {
   if (question) side.append(el("p", "pos-question", question));
   side.append(el("h2", "", card.name));
   if (reversed) side.append(el("p", "reversed-note", "Reversed"));
-  const tags = el("div", "tags");
-  fillTags(tags, card);
-  // Shared keywords sit under the name; separate ones go with each side.
+  // The keywords for the way the card fell always sit under the name; the
+  // other side's go with its meaning, if they differ.
   const keywords = el("p", "keywords");
-  fillKeywords(keywords, hasRevKeywords(card) ? [] : card.keywords);
-  side.append(tags, keywords);
+  fillKeywords(keywords, keywordsFor(card, reversed));
+  side.append(keywords);
   if ((card.line || "").trim()) side.append(el("p", "carry-line", card.line.trim()));
   side.append(correspondences(card));
 
   // Upright and reversed meanings; the way the card fell comes first.
-  const upright = meaning(card, false);
-  const rev = (card.reversed || "").trim() ? meaning(card, true) : null;
+  const upright = meaning(card, false, !!reversed);
+  const rev = (card.reversed || "").trim() ? meaning(card, true, !!reversed) : null;
   if (reversed && rev) main.append(rev, upright);
   else main.append(upright, ...(rev ? [rev] : []));
 
@@ -4907,82 +4951,13 @@ document.addEventListener("keydown", (e) => {
   top?.go(e.key === "ArrowLeft" ? -1 : 1);
 });
 
-// ── Tags: the golden boxes ──────────────────────────────
-
+// With a mouse (rather than a touch screen).
 const canHover = matchMedia("(hover: hover) and (pointer: fine)").matches;
-const tip = $("tagTip");
-
-function tagInfo(id) {
-  return TAGS[id] || { name: id, meaning: "" };
-}
-
-function cardsWithTag(id) {
-  return activeDeck().filter((c) => (c.tags || []).includes(id));
-}
-
-function countText(n) {
-  return n === 1 ? "1 card" : `${n} cards`;
-}
-
-// With a mouse: hover shows the meaning, click shows the cards.
-// On a phone: tap shows the meaning with a button to see the cards.
-function tagBox(id) {
-  const b = el("button", "tag", tagInfo(id).name);
-  if (canHover) {
-    b.addEventListener("mouseenter", () => showTip(b, id, false));
-    b.addEventListener("mouseleave", hideTip);
-    b.addEventListener("click", () => { hideTip(); openBrowse(id); });
-  } else {
-    b.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (!tip.hidden && tip.dataset.tag === id) hideTip();
-      else showTip(b, id, true);
-    });
-  }
-  return b;
-}
-
-function showTip(anchor, id, withButton) {
-  const t = tagInfo(id);
-  const n = cardsWithTag(id).length;
-  tip.innerHTML = "";
-  tip.dataset.tag = id;
-  tip.append(el("div", "tip-name", t.name));
-  const meaning = el("div", "tip-meaning");
-  fillText(meaning, t.meaning, "Add this tag's meaning in tags.js.");
-  tip.append(meaning);
-  if (withButton) {
-    const go = el("button", "pill small", `Show all ${countText(n)}`);
-    go.addEventListener("click", () => { hideTip(); openBrowse(id); });
-    tip.append(go);
-  } else {
-    tip.append(el("p", "tip-hint", `Click to see all ${countText(n)}`));
-  }
-  tip.hidden = false;
-
-  const r = anchor.getBoundingClientRect();
-  const w = tip.offsetWidth, h = tip.offsetHeight;
-  const left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, innerWidth - w - 12));
-  let top = r.bottom + 8;
-  if (top + h > innerHeight - 12) top = r.top - h - 8;
-  tip.style.left = `${left}px`;
-  tip.style.top = `${Math.max(12, top)}px`;
-}
-
-function hideTip() {
-  tip.hidden = true;
-  tip.dataset.tag = "";
-}
-
-document.addEventListener("click", (e) => {
-  if (!tip.hidden && !tip.contains(e.target)) hideTip();
-});
-document.addEventListener("scroll", (e) => { if (e.target !== tip) hideTip(); }, true);
 
 // ── 5. Browse the cards ─────────────────────────────────
 
 const SUITS = ["All", "Major Arcana", "Wands", "Cups", "Swords", "Pentacles"];
-const B = { suit: "All", tag: null };
+const B = { suit: "All" };
 
 function suitOf(card) {
   if (CARDS.indexOf(card) < 22) return "Major Arcana";
@@ -4997,29 +4972,9 @@ SUITS.forEach((s) => {
 });
 
 function renderBrowse() {
-  if (!SET.tags) B.tag = null;
-  const tagged = B.tag != null;
-  $("tagHead").hidden = !tagged;
-  $("browseFilters").hidden = tagged;
-
-  if (tagged) {
-    const t = tagInfo(B.tag);
-    $("tagHeadBox").innerHTML = "";
-    const box = el("span", "tag big", t.name);
-    $("tagHeadBox").append(box);
-    fillText($("tagHeadMeaning"), t.meaning, "");
-    $("tagHeadMeaning").hidden = !t.meaning;
-  } else {
-    [...$("suitChips").children].forEach((c) =>
-      c.classList.toggle("on", c.dataset.suit === B.suit));
-    $("allTags").innerHTML = "";
-    Object.keys(TAGS).forEach((id) => $("allTags").append(tagBox(id)));
-    $("allTags").hidden = !$("allTags").children.length;
-  }
-
-  const list = tagged
-    ? cardsWithTag(B.tag)
-    : activeDeck().filter((c) => B.suit === "All" || suitOf(c) === B.suit);
+  [...$("suitChips").children].forEach((c) =>
+    c.classList.toggle("on", c.dataset.suit === B.suit));
+  const list = activeDeck().filter((c) => B.suit === "All" || suitOf(c) === B.suit);
 
   const grid = $("grid");
   grid.innerHTML = "";
@@ -5033,13 +4988,10 @@ function renderBrowse() {
     b.addEventListener("click", () => openDetails(list.map((c) => detailsItem(c)), list.indexOf(card)));
     grid.append(b);
   });
-  if (!list.length) grid.append(el("p", "empty-note", "No cards have this tag yet."));
 }
 
-function openBrowse(tag = null) {
-  hideTip();
+function openBrowse() {
   const browse = $("browse");
-  B.tag = tag;
   renderBrowse();
   if (browse.hidden) {
     slideIn(browse);
@@ -5053,8 +5005,7 @@ function openBrowse(tag = null) {
   }
 }
 
-$("browseBtn").addEventListener("click", () => { B.suit = "All"; openBrowse(null); });
-$("tagClear").addEventListener("click", () => { B.tag = null; renderBrowse(); });
+$("browseBtn").addEventListener("click", () => { B.suit = "All"; openBrowse(); });
 $("browseBack").addEventListener("click", async () => {
   const browse = $("browse");
   await slideOut(browse);
