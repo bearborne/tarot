@@ -3385,8 +3385,57 @@ function summaryQuestions(entries, lens) {
     return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0];
   };
   const mid = (name) => name.replace(/^The /, "the ");
+  // "The Hermit's", "the Lovers'" (start = at the start of the question).
+  const poss = (i, start) => { const m = entries[i].card.name; const x = start ? m : mid(m); return x + (/[^s]s$/.test(x) ? "'" : "'s"); };
   const whole = [];
+
+  // Two cards' key ideas that meet in one theme: quoted, so the question
+  // could only come from these two cards.
+  const linked = connectedIdeas(entries, 3);
+  const clause = (x, t) => {
+    const bits = x.split(/;\s*/);
+    const c = bits.find((b) => ideaThemes(b).includes(t)) || bits[0];
+    return /^[A-Z][a-z]+:/.test(c) ? c : c.charAt(0).toLowerCase() + c.slice(1);
+  };
+  // Stricter than themesOf, since these are quoted: a stem must start a
+  // word, and a short one must be (nearly) the whole word ("care", not
+  // "career"). "…in love or work", "…at work" only say where; they don't
+  // link ideas.
+  const ideaThemes = (x) => {
+    const k = x.toLowerCase().replace(/\b(?:in|at) (?:love|work)(?: or (?:love|work))?/g, "");
+    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return Object.keys(THEMES).filter((t) => THEMES[t].some((stem) =>
+      new RegExp(`(^|[^a-z])${esc(stem)}${stem.length <= 5 ? "(s|es|d|ed|ing)?([^a-z]|$)" : ""}`).test(k)));
+  };
+  let bridge = null;
+  linked.forEach((xs, i) => linked.forEach((ys, j) => {
+    if (j <= i) return;
+    xs.forEach((x, a) => ys.forEach((y, b) => {
+      // "self" alone is too loose a link ("self-inspiration", "self-healing").
+      const shared = ideaThemes(x).filter((t) => t !== "self" && ideaThemes(y).includes(t));
+      const score = shared.length * 10 - a - b;
+      if (shared.length && (!bridge || score > bridge.score)) bridge = { i, j, x, y, t: shared[0], score };
+    }));
+  }));
+  if (bridge) {
+    const { i, j, x, y, t: bt } = bridge;
+    whole.push(`${poss(i, true)} “${clause(x, bt)}” and ${poss(j)} “${clause(y, bt)}”: ${lower(THEME_TEXT[bt][2])}`);
+  }
+
+  // The lens's challenge and advice, in the card's own words.
+  const placeAt = (p) => (lens && !lens.own ? lens.places.indexOf(p) : -1);
+  const ci = placeAt("challenge"), ai = placeAt("advice");
+  if (ci >= 0) whole.push(`${poss(ci, true)} challenge, ${phrases(entries[ci].card, entries[ci].reversed).c}: what makes that hard right now?`);
+  if (ai >= 0) {
+    whole.push(`${poss(ai, true)} advice, ${phrases(entries[ai].card, entries[ai].reversed).a}: what would that look like this week?`);
+  } else if (n >= 2) {
+    // No advice place: the first and last cards' advice, side by side.
+    const [a1, a2] = [entries[0], entries[n - 1]].map((e) => (e.card.inReading || {})[e.reversed ? "reversedAdvice" : "advice"] || (e.card.inReading || {}).advice);
+    if (a1 && a2 && a1 !== a2) whole.push(`${entries[0].card.name} says ${a1}; ${mid(entries[n - 1].card.name)}, ${a2}. Which comes first?`);
+  }
+
   themes.slice(0, 3).forEach((t) => {
+    if (bridge && bridge.t === t) return;   // already asked, in the cards' own ideas
     const idx = whichCards(entries, (e, i) => sets[i].has(t));
     const what = t === "heart" ? "the heart" : THEME_TEXT[t][0].toLowerCase();
     if (idx.length < n || n <= 3) whole.push(`${who(idx)} speak of ${what}: ${lower(THEME_TEXT[t][2])}`);
@@ -3415,9 +3464,25 @@ function summaryQuestions(entries, lens) {
   // As many questions for the reading as it has cards (each card asks one too).
   const asked = [...new Set(whole)].slice(0, n);
   const used = new Set(asked);
+  // Each card's question: the one that speaks most to the other cards
+  // (their keywords, key ideas and how they read) and to this card's own
+  // connecting ideas. Ties keep the card's own order.
+  const rich = entries.map((e) => {
+    const { ideas, nuances } = ideasFor(e.card, e.reversed);
+    const { g, a, c } = phrases(e.card, e.reversed);
+    return new Set([...filled(keywordsFor(e.card, e.reversed)), ...ideas, ...nuances, g, a, c].flatMap(themesOf));
+  });
   const each = entries.map((e, i) => {
-    const q = filled(questionsFor(e.card, e.reversed)).find((x) => !used.has(x));
-    if (!q) return null;
+    const mine = new Set(linked[i].flatMap(themesOf));
+    const scored = filled(questionsFor(e.card, e.reversed)).filter((x) => !used.has(x)).map((x, k) => {
+      const ts = themesOf(x);
+      const score = ts.reduce((s, t) => s + rich.filter((r, j) => j !== i && r.has(t)).length + (mine.has(t) ? 1 : 0), 0);
+      return { x, score, k };
+    }).sort((p, q) => q.score - p.score || p.k - q.k);
+    let q = scored.length ? scored[0].x : "";
+    // Out of questions: ask how to follow the card's advice.
+    if (!q) { const a = (e.card.inReading || {})[e.reversed ? "reversedAdvice" : "advice"]; q = a ? `What would it look like to ${a}?` : ""; }
+    if (!q || used.has(q)) return null;
     used.add(q);
     return { head: lens ? placeName(lens, i, e) : e.label || e.card.name, text: q };
   }).filter(Boolean);
