@@ -5739,3 +5739,26 @@ $("importFile").addEventListener("change", async (e) => {
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   navigator.serviceWorker.register("sw.js");
 }
+
+// Some browsers (often Firefox on Linux) draw the page without the graphics
+// card, which makes the animations stutter. Say so once at launch.
+function drawsOnCpu() {
+  try {
+    const c = document.createElement("canvas");
+    const gl = c.getContext("webgl", { failIfMajorPerformanceCaveat: true });
+    if (!gl) return true;   // no hardware WebGL: the browser is on the CPU
+    const info = gl.getExtension("WEBGL_debug_renderer_info");
+    const name = String(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER));
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
+    return /llvmpipe|softpipe|lavapipe|swiftshader|software|basic render/i.test(name);
+  } catch { return false; }
+}
+if (drawsOnCpu()) {
+  const t = el("div", "copy-note cpu-note",
+    "Your browser is drawing without the graphics card, so animations may lag. Turn on hardware acceleration in its settings.");
+  t.style.zIndex = ++Z + 10;
+  const close = () => { t.classList.add("gone"); setTimeout(() => t.remove(), 400); };
+  t.addEventListener("click", close);
+  document.body.append(t);
+  setTimeout(close, 9000);
+}
