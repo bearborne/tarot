@@ -3706,6 +3706,7 @@ function openSummary(entries, title, magic = false, named = null) {
   // reading's title. A fresh copy each time the reading is redrawn.
   const sharedTiles = () => patterns["Shared words"] && partSection(patterns["Shared words"], cardCols).querySelector(".tiles");
   let current = 0;
+  let placeAsks = () => {};   // set once the columns are built (below)
   const render = () => {
     const lens = lenses[current];
     [...lensBox.children].forEach((c, i) => {
@@ -3752,6 +3753,7 @@ function openSummary(entries, title, magic = false, named = null) {
       lensPart.append(sec);
     }
     showThread();
+    placeAsks();
   };
   lenses.forEach((lens, i) => {
     const b = el("button", "lens-btn", lens.name);
@@ -3771,6 +3773,26 @@ function openSummary(entries, title, magic = false, named = null) {
   const asksRow = el("div", "sum-asks");
   asksRow.append(asks, asksEach);
   main.append(leftCol, rightCol, asksRow);
+  // LAYOUT RULE: no empty space under the shorter column on a wide screen.
+  // Each question box closes its own column (the reading's on the left,
+  // each card's on the right) and stretches down to meet the other column;
+  // a lone box goes under a clearly shorter column, else full width below.
+  // On a phone they stay below.
+  const wide = matchMedia("(min-width: 1340px)");
+  placeAsks = () => {
+    asksRow.append(asks, asksEach);
+    if (!wide.matches) return;
+    const shown = [asks, asksEach].filter((b) => !b.hidden);
+    if (shown.length === 2) { leftCol.append(asks); rightCol.append(asksEach); }
+    else if (shown.length === 1) {
+      // (The columns stretch to the same height, so measure what's in them.)
+      const filled = (col) => Math.max(0, ...[...col.children].map((c) => c.getBoundingClientRect().bottom));
+      // Columns already near level: the box stays full width below them.
+      const l = filled(leftCol), r = filled(rightCol);
+      if (Math.abs(l - r) > 120) (l < r ? leftCol : rightCol).append(shown[0]);
+    }
+  };
+  wide.addEventListener("change", placeAsks);
 
   // Long press (phone) or right click (computer) anywhere on the page
   // copies the cards' names: "1: Six of Cups 2: Five of Swords …".
@@ -3782,6 +3804,7 @@ function openSummary(entries, title, magic = false, named = null) {
 
   sheet.append(bar, body, strip);
   document.body.append(sheet);
+  placeAsks();   // again, now that the columns can be measured
   if (magic && !calm) appearWithMagic(sheet, body);
   else slideIn(sheet);
   back.addEventListener("click", async () => {

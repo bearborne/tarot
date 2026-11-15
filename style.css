@@ -611,6 +611,22 @@ button { font: inherit; color: inherit; cursor: pointer; }
     align-items: start;
   }
   .summary-page .sum-asks > .asks { margin: 0; }
+  .summary-page .sum-asks:empty { display: none; }
+  /* a box on its own in the row below takes the whole row */
+  .summary-page .sum-asks > .asks:not([hidden]):first-child:has(+ .asks[hidden]),
+  .summary-page .sum-asks > .asks[hidden] + .asks,
+  .summary-page .sum-asks > .asks:only-child { grid-column: 1 / -1; }
+  /* the columns run to the same bottom; the question box closing each
+     one grows to fill what's left, its questions centred in it */
+  .summary-page .sum-col { align-self: stretch; display: flex; flex-direction: column; }
+  .summary-page .sum-col > .summary-asks {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-bottom: 0;
+  }
+  .summary-page .sum-col > .summary-asks[hidden] { display: none; }
 }
 .summary-part ul { margin: 0; padding: 0; list-style: none; }
 .summary-part li { margin: 0 0 .8em; line-height: 1.45; }
