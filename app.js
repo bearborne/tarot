@@ -4998,17 +4998,24 @@ function meaning(card, rev, fell) {
   ].filter(([, x]) => (x || "").trim());
   if (said.length) {
     const dl = el("dl", "in-reading");
-    said.forEach(([k, x]) => dl.append(el("dt", "", k), el("dd", "", cap(x.trim()))));
+    said.forEach(([k, x]) => {
+      const tile = el("div", "ir-tile");
+      tile.append(el("dt", "", k), el("dd", "", cap(x.trim())));
+      dl.append(tile);
+    });
     box.append(dl);
   }
   const { ideas, nuances } = ideasFor(card, rev);
   if (ideas.length || nuances.length) {
     const sec = el("div", "key-ideas");
-    sec.append(el("p", "asks-title", "Key ideas"));
-    const ul = el("ul");
-    ideas.forEach((x) => ul.append(el("li", "", x)));
-    nuances.forEach((x) => ul.append(el("li", "nuance", x)));
-    sec.append(ul);
+    // The warm ideas, then the nuances as their own group.
+    [["Key ideas", ideas, ""], ["Nuances", nuances, "nuance"]].forEach(([title, list, cls]) => {
+      if (!list.length) return;
+      sec.append(el("p", "sub-title", title));
+      const ul = el("ul");
+      list.forEach((x) => ul.append(el("li", cls, x)));
+      sec.append(ul);
+    });
     box.append(sec);
   }
   if (hasRevQuestions(card)) {
@@ -5186,20 +5193,47 @@ function detailsBody({ card, reversed, label, question }) {
   if (label) side.append(el("p", "pos-label", label));
   if (question) side.append(el("p", "pos-question", question));
   side.append(el("h2", "", card.name));
-  if (reversed) side.append(el("p", "reversed-note", "Reversed"));
-  // The keywords for the way the card fell always sit under the name; the
-  // other side's go with its meaning, if they differ.
+  const hasRev = !!(card.reversed || "").trim();
+  let shown = !!reversed;   // the way the card is shown: as it fell, or turned by the switch
+  // A card with a reversed meaning gets a switch to turn it round; the
+  // card, the keywords under its name and the order of its meanings follow.
+  const sw = hasRev ? el("div", "side-switch") : null;
+  if (sw) {
+    sw.setAttribute("role", "group");
+    sw.setAttribute("aria-label", "Card position");
+    side.append(sw);
+  } else if (reversed) side.append(el("p", "reversed-note", "Reversed"));
+  // The keywords for the way the card is shown always sit under the name;
+  // the other side's go with its meaning, if they differ.
   const keywords = el("p", "keywords");
-  fillKeywords(keywords, keywordsFor(card, reversed));
   side.append(keywords);
   if ((card.line || "").trim()) side.append(el("p", "carry-line", card.line.trim()));
   side.append(correspondences(card));
 
-  // Upright and reversed meanings; the way the card fell comes first.
-  const upright = meaning(card, false, !!reversed);
-  const rev = (card.reversed || "").trim() ? meaning(card, true, !!reversed) : null;
-  if (reversed && rev) main.append(rev, upright);
-  else main.append(upright, ...(rev ? [rev] : []));
+  // The meaning for the way the card is shown, upright or reversed.
+  const meanings = el("div", "meanings");
+  main.append(meanings);
+  const btns = sw ? [false, true].map((r) => {
+    const b = el("button", "side-btn", r ? "Reversed" : "Upright");
+    b.addEventListener("click", () => { if (r !== shown) show(r, true); });
+    sw.append(b);
+    return b;
+  }) : [];
+  function show(r, animate) {
+    shown = r;
+    face.classList.toggle("reversed", r);
+    btns.forEach((b, i) => b.setAttribute("aria-pressed", String(!!i === r)));
+    keywords.textContent = "";
+    fillKeywords(keywords, keywordsFor(card, r));
+    // Only the side being shown; the switch brings up the other.
+    meanings.replaceChildren(meaning(card, r && hasRev, r && hasRev));
+    if (animate && !calm) {
+      face.animate([{ transform: `rotate(${r ? 0 : 180}deg)` }, { transform: `rotate(${r ? 180 : 360}deg)` }],
+        { duration: 450, easing: "ease-in-out" });
+      [keywords, meanings].forEach((x) => x.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 }));
+    }
+  }
+  show(shown, false);
 
   if (!hasRevQuestions(card)) {
     const asks = el("div", "asks");
@@ -5211,7 +5245,7 @@ function detailsBody({ card, reversed, label, question }) {
     fillText(text, card.details, "");
     main.append(text);
   }
-  [pictureGuide(card), notesBox(card), cardHistory(card), relatedCards(card)]
+  [pictureGuide(card), cardHistory(card), relatedCards(card), notesBox(card)]
     .forEach((part) => part && main.append(part));
   return body;
 }
@@ -5222,8 +5256,12 @@ function openDetails(items, index = 0) {
   const back = el("button", "link", "‹ Back");
   const count = el("span", "bar-title count");
   const nav = el("span", "bar-nav");
-  const prev = el("button", "nav-btn", "‹");
-  const next = el("button", "nav-btn", "›");
+  // Drawn chevrons, so they sit exactly in the middle of the circle.
+  const chevron = (d) => `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const prev = el("button", "nav-btn");
+  const next = el("button", "nav-btn");
+  prev.innerHTML = chevron("M14.5 6l-6 6 6 6");
+  next.innerHTML = chevron("M9.5 6l6 6-6 6");
   prev.setAttribute("aria-label", "Previous card");
   next.setAttribute("aria-label", "Next card");
   nav.append(prev, next);

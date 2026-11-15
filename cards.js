@@ -16,9 +16,10 @@
 //    short   – a short description of the card, shown in the card
 //              window and on its page
 //    reversed – what the card means when it comes out upside down
-//    reversedKeywords, reversedQuestions – only on cards whose keywords
-//              and questions don't fit both ways; the rest use the
-//              same keywords and questions upright and reversed
+//    reversedKeywords – a few words for the card reversed (every card
+//              has its own; without them it falls back to keywords)
+//    reversedQuestions – only on cards whose questions don't fit both
+//              ways; the rest use the same questions upright and reversed
 //    ideas, nuances – key ideas for the card upright, one per line:
 //              ideas are the warm, growth-minded ones; nuances are
 //              neutral, or depend on how they're framed
@@ -47,6 +48,7 @@ const CARDS = [
     correspondences: { astrology: "Uranus", element: "Air", number: "0" },
     short: `A traveller steps toward the edge with an open heart and a light pack. The Fool is the beginning of every journey: curiosity, trust and the freedom to start fresh without knowing exactly where the road goes.`,
     reversed: `The Fool's leap turns inward. You may be holding back at the edge, or leaping before you have looked; keep the leap, and give it a little ground to land on. Joy and faith return once your trust feels safe enough to move.`,
+    reversedKeywords: ["hesitation", "grounded trust", "looking before leaping", "safe footing", "returning joy"],
     questions: [
       `What would you try if you didn't need to know how it ends?`,
       `Where could a little more trust open a door for you?`,
@@ -142,6 +144,7 @@ const CARDS = [
     correspondences: { astrology: "Moon", number: "2" },
     short: `Seated between two pillars, she keeps the knowledge that comes from stillness. The High Priestess invites you to listen inward, trust your intuition and let what is hidden reveal itself in its own time.`,
     reversed: `The inner voice has gone quiet, not silent. It may be muffled by the noise around you, or you may be keeping your knowing hidden, even from yourself. Make space for stillness, and let intuition and gentle honesty find their way back.`,
+    reversedKeywords: ["muffled intuition", "hidden knowing", "inner noise", "making space", "self-honesty"],
     questions: [
       `What does your quiet inner voice already know?`,
       `What might become clear if you stopped searching and simply listened?`,
@@ -186,6 +189,7 @@ const CARDS = [
     correspondences: { astrology: "Venus", number: "3" },
     short: `Surrounded by a growing field, the Empress is abundance that comes from care. She speaks of nurturing, creativity and comfort, and of the way things flourish when they are tended with patience.`,
     reversed: `The Empress asks where care has flowed outward without returning. Home or heart may feel a little empty for now; turn the nurturing you give so freely toward yourself, and let rest, creativity and your own needs set the pace.`,
+    reversedKeywords: ["self-nurture", "depleted care", "rest", "receiving", "your own needs"],
     questions: [
       `What in your life is asking to be nurtured?`,
       `How can you be kinder and more generous with yourself?`,
@@ -338,6 +342,7 @@ const CARDS = [
     correspondences: { astrology: "Gemini", element: "Air", number: "6" },
     short: `Two figures stand together beneath a blessing. The Lovers speak of connection, harmony and choices made from the heart, choices that align what you do with who you truly are.`,
     reversed: `The Lovers point to your relationship with yourself. Something may be out of step between what you value and what you choose, or a bond may be asking for an honest conversation. Harmony grows from listening to your own heart, then speaking from it.`,
+    reversedKeywords: ["self-relationship", "values out of step", "honest conversation", "inner alignment", "listening to the heart"],
     questions: [
       `What choice would be true to your heart?`,
       `Which relationships bring out the best in you?`,
@@ -384,6 +389,7 @@ const CARDS = [
     correspondences: { astrology: "Cancer", element: "Water", number: "7" },
     short: `The charioteer moves forward by holding two different forces in balance. The Chariot is determination and direction: progress that comes from clear intent and steady self-command.`,
     reversed: `The Chariot's horses are pulling in different directions, or are waiting for a destination. Things may be moving slower than usual; pause and point the reins again. Direction matters more than speed now, and your energy will move as one once you know where you are going.`,
+    reversedKeywords: ["scattered direction", "slower pace", "pausing to steer", "clarifying the goal", "inner alignment"],
     questions: [
       `Where do you want to go, and how clearly can you see it?`,
       `What opposing pulls in you could work together?`,
@@ -430,6 +436,7 @@ const CARDS = [
     correspondences: { astrology: "Leo", element: "Fire", number: "8" },
     short: `A gentle hand rests on a lion's head. Strength is courage expressed through patience and compassion, the quiet power that guides rather than forces.`,
     reversed: `Strength turns toward self-compassion. Doubt or tiredness may be asking for gentleness rather than force. Strength can be soft: being patient and kind with yourself, and resting, is how it rebuilds.`,
+    reversedKeywords: ["self-compassion", "doubt", "tiredness", "gentleness with yourself", "rebuilding"],
     questions: [
       `Where could gentleness work better than force?`,
       `What part of you needs patience instead of pressure?`,
@@ -534,6 +541,7 @@ const CARDS = [
     correspondences: { astrology: "Jupiter", number: "10" },
     short: `The Wheel keeps turning, and with it, the seasons of life. This card speaks of cycles, timing and change, and of the chance to move gracefully with what is shifting around you.`,
     reversed: `The Wheel may feel slow, or stuck on a familiar loop. Rather than pushing against the turn, accept both the ups and the downs, and ask for help where you need it. Shifting how you meet circumstances often comes before the circumstances themselves move.`,
+    reversedKeywords: ["familiar loops", "slow turns", "acceptance", "asking for help", "inner shift"],
     questions: [
       `What cycle in your life is turning right now?`,
       `How can you move with change rather than against it?`,
@@ -580,6 +588,7 @@ const CARDS = [
     correspondences: { astrology: "Libra", element: "Air", number: "11" },
     short: `Justice holds a sword and a set of scales. She stands for fairness, clarity and honesty, and for the understanding that thoughtful choices bring balanced results.`,
     reversed: `Justice turns the scales inward. Look gently at what feels out of balance, including your own part in it, and at where you judge yourself too harshly. Not everything is as it first seems; honesty and attention to the details restore the balance.`,
+    reversedKeywords: ["inner balance", "self-judgement", "owning your part", "looking deeper", "honesty"],
     questions: [
       `What would a fair and honest view of this situation look like?`,
       `Which of your choices are shaping where you are now?`,
@@ -626,6 +635,7 @@ const CARDS = [
     correspondences: { astrology: "Neptune", element: "Water", number: "12" },
     short: `Hanging calmly upside down, the Hanged Man sees the world from a new angle. This card is the pause that brings insight, a willing surrender that lets a fresh perspective appear.`,
     reversed: `The pause isn't finished yet. You may be restless to act, or resisting a surrender that is asking to happen. Make time and space to listen; a new perspective arrives once you stop struggling against the stillness.`,
+    reversedKeywords: ["restlessness", "resisting the pause", "listening", "stillness", "perspective arriving"],
     questions: [
       `What might look different if you turned it upside down?`,
       `Where could a pause serve you better than a push?`,
@@ -676,6 +686,7 @@ const CARDS = [
     correspondences: { astrology: "Scorpio", element: "Water", number: "13" },
     short: `Death is the card of transformation: one chapter closing so another can begin. Like winter giving way to spring, it speaks of endings that clear the way for renewal and growth.`,
     reversed: `A transformation is underway, quietly, underneath. Something may be held onto past its season, and change may be coming more slowly than you expected. You can let go at your own pace; each loosening lets the ending finish its work and the renewal come through.`,
+    reversedKeywords: ["holding on", "slow change", "quiet transformation", "letting go at your pace", "renewal underneath"],
     questions: [
       `What chapter is ready to close?`,
       `What are you making room for?`,
@@ -726,6 +737,7 @@ const CARDS = [
     correspondences: { astrology: "Sagittarius", element: "Fire", number: "14" },
     short: `An angel pours water between two cups, blending them with care. Temperance is balance, moderation and patience, the art of mixing different parts of life into something harmonious.`,
     reversed: `Temperance shows where life has tipped out of balance, perhaps into too much or too little. Gently come back to the middle with small adjustments rather than big swings. Check your priorities, rest, and let healing happen in its own private way.`,
+    reversedKeywords: ["imbalance", "too much or too little", "small adjustments", "priorities", "private healing"],
     questions: [
       `What in your life needs a gentler blend?`,
       `Where could patience lead to a better result?`,
@@ -775,6 +787,7 @@ const CARDS = [
     correspondences: { astrology: "Capricorn", element: "Earth", number: "15" },
     short: `The Devil shows the ties we hold onto, and the loose chains show they can be lifted off. This card invites honest awareness of habits, desires and attachments, and of the freedom that comes from seeing them clearly.`,
     reversed: `The chains begin to loosen. Awareness of a habit, attachment or fear is growing, and with it the freedom to choose differently. The shadow becomes a teacher once it is seen without shame.`,
+    reversedKeywords: ["loosening chains", "awareness", "release", "freedom to choose", "shadow as teacher"],
     questions: [
       `What holds you that you could choose to set down?`,
       `Which habits or desires deserve an honest look?`,
@@ -803,6 +816,7 @@ const CARDS = [
     correspondences: { astrology: "Mars", number: "16" },
     short: `Lightning strikes the tower and what was built on shaky ground falls away. The Tower is sudden clarity: a breakthrough that clears out what no longer fits so something truer can be built.`,
     reversed: `The Tower's change is happening on the inside. You may be questioning old beliefs, or bracing against a truth that wants to break through. The more you resist, the stronger the push; trusting the process lets the old shape crack so a truer one can fit.`,
+    reversedKeywords: ["inner upheaval", "questioning beliefs", "resistance", "trusting the process", "truer shape"],
     questions: [
       `What foundation is ready to be rebuilt?`,
       `What truth is asking to be seen?`,
@@ -909,6 +923,7 @@ const CARDS = [
     correspondences: { astrology: "Pisces", element: "Water", number: "18" },
     short: `The Moon lights a winding path through the night. It speaks of dreams, imagination and intuition, and of finding your way by feeling when things are not yet fully clear.`,
     reversed: `The fog is lifting. Confusion is beginning to clear, and feelings or fears from deep within are rising so they can be understood and released. Meet your inner tides with curiosity; what you feel is starting to make sense.`,
+    reversedKeywords: ["lifting fog", "clarity returning", "rising feelings", "understanding fears", "release"],
     questions: [
       `What are your dreams and feelings telling you?`,
       `Where can you trust yourself even without full clarity?`,
@@ -1605,6 +1620,7 @@ const CARDS = [
     correspondences: { astrology: "Saturn in Sagittarius", element: "Fire", number: "10" },
     short: `A figure carries a full bundle of wands toward a town. The Ten of Wands is the weight of what you have taken on, and a chance to look honestly at what you carry, why you carry it, and what could be shared or set down.`,
     reversed: `A burden is ready to be set down. Your body and spirit may be asking you to stop, and rest is not giving up. Some of what you carried was never yours; as you release it, lightness becomes possible.`,
+    reversedKeywords: ["setting down burdens", "rest", "release", "what isn't yours", "lightness"],
     questions: [
       `What are you carrying right now?`,
       `Which loads are truly yours to hold?`,
@@ -1923,6 +1939,7 @@ const CARDS = [
     correspondences: { astrology: "Venus in Cancer", element: "Water", number: "2" },
     short: `Two figures exchange cups beneath a winged lion. The Two of Cups is mutual recognition: two people, or two parts of yourself, meeting as equals, and the healing that happens when you are truly seen.`,
     reversed: `The Two of Cups asks you to look at the balance within a connection. One side may be giving more, or words may be getting lost. Speak about what you each give and need; misunderstandings can become openings when you return to honesty and respect.`,
+    reversedKeywords: ["imbalance in giving", "lost words", "honest talk", "respect", "repair"],
     questions: [
       `Which connection in your life feels truly mutual?`,
       `What do you bring to your relationships, and what do you receive?`,
@@ -2020,6 +2037,7 @@ const CARDS = [
     correspondences: { astrology: "Moon in Cancer", element: "Water", number: "4" },
     short: `A figure sits in thought beneath a tree as a cup is offered from a cloud. The Four of Cups is turning inward: stepping back from what is on offer so that you can discover what you truly want.`,
     reversed: `A time of withdrawal is coming to an end. Motivation and enthusiasm are returning, and you may be ready to look up, notice what is being offered, and be grateful for what is already here. You are ready to move forward.`,
+    reversedKeywords: ["re-engagement", "returning motivation", "noticing offers", "gratitude", "moving forward"],
     questions: [
       `What might you be overlooking right now?`,
       `What does your heart truly want?`,
@@ -2068,6 +2086,7 @@ const CARDS = [
     correspondences: { astrology: "Mars in Scorpio", element: "Water", number: "5" },
     short: `A cloaked figure mourns three spilled cups while two still stand behind. The Five of Cups is the honest work of grief: letting loss be felt fully, which is what allows the heart to turn, find what remains and cross the bridge home.`,
     reversed: `Grief begins to soften and move. You can turn toward what remains, offer forgiveness where it is ready, and take the first steps across the bridge, carrying your loss with tenderness rather than weight. Emotions are flowing again.`,
+    reversedKeywords: ["softening grief", "forgiveness", "turning toward what remains", "first steps", "flowing feelings"],
     questions: [
       `What feelings deserve to be acknowledged?`,
       `What is still standing behind you?`,
@@ -2168,6 +2187,7 @@ const CARDS = [
     correspondences: { astrology: "Venus in Scorpio", element: "Water", number: "7" },
     short: `Seven cups float in the clouds, each holding a different vision. The Seven of Cups is the rich world of imagination and desire, and the practice of discernment: sensing which dreams are truly yours.`,
     reversed: `The clouds are clearing. Illusions fade and a clearer choice emerges, made from the heart. The card invites you to commit to what is real and meaningful to you, and to let the other dreams rest.`,
+    reversedKeywords: ["clearing illusions", "clarity", "heartfelt choice", "commitment", "letting dreams rest"],
     questions: [
       `Which of your dreams feels most real to you?`,
       `What would help you choose among your options?`,
@@ -2218,6 +2238,7 @@ const CARDS = [
     correspondences: { astrology: "Saturn in Pisces", element: "Water", number: "8" },
     short: `A figure walks away from eight stacked cups toward the mountains under the moon. The Eight of Cups is the soul's search for deeper meaning: the courage to leave what no longer nourishes you, even when it looks complete from the outside.`,
     reversed: `The Eight of Cups asks whether you are truly ready to leave. Staying a little longer is fine, as long as it is a choice and not a fear. Honest reflection on what you are really searching for will show you which way to walk.`,
+    reversedKeywords: ["readiness to leave", "staying by choice", "fear", "honest reflection", "true search"],
     questions: [
       `What are you searching for that feels deeper?`,
       `What are you ready to walk away from?`,
@@ -2367,6 +2388,7 @@ const CARDS = [
     correspondences: { element: "Earth of Water" },
     short: `A young figure looks with surprise at a fish rising from a cup. The Page of Cups is the heart's playful messenger: an unexpected feeling, intuition or creative idea, inviting you to stay curious and receptive.`,
     reversed: `The Page's message may be hidden behind self-doubt or tender feelings. Your inner child is asking for comfort. Be gentle with what you feel, and let creativity flow without judgement.`,
+    reversedKeywords: ["self-doubt", "tender feelings", "inner child", "comfort", "free creativity"],
     questions: [
       `What surprising feeling or idea has come to you lately?`,
       `How could you express your creativity playfully?`,
@@ -2467,6 +2489,7 @@ const CARDS = [
     correspondences: { astrology: "20° Gemini to 20° Cancer", element: "Water of Water" },
     short: `The Queen of Cups gazes into an ornate, closed cup by the sea. She is emotional depth and intuition: someone who can hold feelings, her own and others', with compassion and calm inner listening.`,
     reversed: `The Queen of Cups turns her compassion inward. You may have given so much that you feel drained, or be absorbing others' feelings. It is your turn to receive the same deep care you give so freely.`,
+    reversedKeywords: ["inward compassion", "emotional exhaustion", "absorbing feelings", "receiving care", "self-care"],
     questions: [
       `How can you care for your own feelings as gently as others'?`,
       `What is your intuition telling you?`,
@@ -2515,6 +2538,7 @@ const CARDS = [
     correspondences: { astrology: "20° Aquarius to 20° Pisces", element: "Fire of Water" },
     short: `Seated on a throne floating on the waves, the King of Cups stays calm. He is emotional maturity: feeling everything fully while remaining steady, and guiding with both heart and wisdom.`,
     reversed: `The King of Cups asks how your feelings are being held. Emotions may be kept too tightly in check, or flooding the shore. Strong feelings need room: write them out or talk them through before acting, and keep healthy boundaries with others' moods.`,
+    reversedKeywords: ["held-in feelings", "overwhelm", "room to feel", "emotional boundaries", "pausing before acting"],
     questions: [
       `How can you stay steady while feelings move around you?`,
       `Where could calm wisdom guide your choices?`,
@@ -2623,6 +2647,7 @@ const CARDS = [
     correspondences: { astrology: "Moon in Libra", element: "Air", number: "2" },
     short: `A blindfolded figure holds two crossed swords before a quiet sea. The Two of Swords is the still point before a decision: guarding your peace while you weigh things, and letting your inner sense guide you when the mind is torn.`,
     reversed: `The blindfold comes off. New information comes to light, fears loosen, and a calm decision becomes possible. Look within for the answer; a choice often grows clearer the moment you stop trying to hold both sides at once.`,
+    reversedKeywords: ["new information", "loosening fear", "calm decision", "clarity", "looking within"],
     questions: [
       `What decision are you holding right now?`,
       `What would you see if you removed the blindfold?`,
@@ -2670,6 +2695,7 @@ const CARDS = [
     correspondences: { astrology: "Saturn in Libra", element: "Air", number: "3" },
     short: `Three swords pierce a heart under falling rain. The Three of Swords is the pain that can come with truth: a sorrow named honestly, and the rain that clears the air once feelings are allowed to move through.`,
     reversed: `The storm is clearing and the heart begins its healing. Feelings you once held back may now be ready to be felt, and you don't have to hold them alone. Forgiveness, including toward yourself, and support from others carry the process forward.`,
+    reversedKeywords: ["healing heart", "feeling held-back grief", "forgiveness", "support", "recovery"],
     questions: [
       `What feelings would like to be acknowledged?`,
       `What truth, once faced, could bring relief?`,
@@ -2717,6 +2743,7 @@ const CARDS = [
     correspondences: { astrology: "Jupiter in Libra", element: "Air", number: "4" },
     short: `A knight lies in stillness within a chapel. The Four of Swords is sacred rest: withdrawing for a while so mind and body can recover, trusting that the stillness itself is doing quiet work.`,
     reversed: `You are waking from a long rest. Hope and energy are returning, and you may be ready to rise and rebalance. Reach out as you return to the world, and keep honouring what your energy tells you.`,
+    reversedKeywords: ["awakening", "returning energy", "rebalancing", "reaching out", "re-entry"],
     questions: [
       `Where do you need rest right now?`,
       `What helps you restore your energy?`,
@@ -2767,6 +2794,7 @@ const CARDS = [
     correspondences: { astrology: "Venus in Aquarius", element: "Air", number: "5" },
     short: `A figure gathers swords as two others walk away. The Five of Swords invites reflection on conflict: what winning really costs, which battles are worth your energy, and how to move on with your integrity intact.`,
     reversed: `Tension is ready to resolve. The card invites amends, forgiveness, and letting go of the need to be right. Learn from what happened, make peace with others and with yourself, and move on without regret.`,
+    reversedKeywords: ["reconciliation", "making amends", "forgiveness", "letting go of being right", "peace"],
     questions: [
       `Which conflicts are truly worth your energy?`,
       `What would a resolution with integrity look like?`,
@@ -2816,6 +2844,7 @@ const CARDS = [
     correspondences: { astrology: "Mercury in Aquarius", element: "Air", number: "6" },
     short: `A boat carries passengers toward a quieter shore. The Six of Swords is a passage between states of mind: leaving turbulence behind, carrying only what you must, and trusting the slow crossing toward peace.`,
     reversed: `The crossing is slower, or not yet finished. Something unresolved may be travelling with you. When you are ready, the boat is still there; acknowledge what you carry, bring only what you need, and the journey toward calmer waters continues.`,
+    reversedKeywords: ["slow crossing", "unresolved baggage", "readiness", "packing light", "continuing on"],
     questions: [
       `What are you moving away from?`,
       `What calmer shore are you heading toward?`,
@@ -2860,6 +2889,7 @@ const CARDS = [
     correspondences: { astrology: "Moon in Aquarius", element: "Air", number: "7" },
     short: `A figure slips away from a camp carrying swords. The Seven of Swords is strategy and independent thinking, and an invitation to look honestly at your methods: where cleverness serves you, and where openness would serve you more.`,
     reversed: `The Seven of Swords invites honesty, starting with yourself. A truth may be ready to come out, and that can be a relief. Step back to see clearly; integrity and owning your part bring back a sense of ease.`,
+    reversedKeywords: ["self-honesty", "truth coming out", "relief", "integrity", "owning your part"],
     questions: [
       `What clever approach could work here?`,
       `Where would openness serve you better than going it alone?`,
@@ -2905,6 +2935,7 @@ const CARDS = [
     correspondences: { astrology: "Jupiter in Gemini", element: "Air", number: "8" },
     short: `A bound and blindfolded figure stands among swords, with the path open behind. The Eight of Swords shows how the mind can build its own enclosure, and how freedom begins the moment you question the thoughts that hold you in place.`,
     reversed: `The bindings loosen. Limiting thoughts are being recognised for what they are, and freedom becomes available as you step out of the story that held you. Speak to yourself the way you would to a dear friend.`,
+    reversedKeywords: ["release", "seeing through limits", "freedom", "new story", "self-kindness"],
     questions: [
       `Which thoughts make you feel stuck?`,
       `What options might be closer than they seem?`,
@@ -2948,6 +2979,7 @@ const CARDS = [
     correspondences: { astrology: "Mars in Gemini", element: "Air", number: "9" },
     short: `A figure sits up in bed, hands over their face. The Nine of Swords is the mind at night: fears that grow in the dark, and the relief that comes when they are spoken aloud, shared and seen in daylight.`,
     reversed: `The night begins to lift. Old fears may be surfacing so they can leave; you are safer than they say. Worries ease as you reach for support and rest, and face them gently, one at a time.`,
+    reversedKeywords: ["easing worry", "surfacing fears", "rest", "reaching for support", "gentle facing"],
     questions: [
       `What worry would feel lighter if you shared it?`,
       `How much of this is happening now, and how much is imagined?`,
@@ -2997,6 +3029,7 @@ const CARDS = [
     correspondences: { astrology: "Sun in Gemini", element: "Air", number: "10" },
     short: `A figure lies beneath ten swords as dawn breaks over still water. The Ten of Swords is a complete ending: a thought pattern or story that has run its full course, and the clear, quiet morning that follows.`,
     reversed: `Recovery is underway. You may be slowly rising, or still holding onto an old story; let others help you stand. Releasing the ending fully, and learning what it taught you, is what lets the new day begin.`,
+    reversedKeywords: ["recovery", "rising slowly", "accepting help", "letting go of the story", "lessons learned"],
     questions: [
       `What is ready to be fully finished?`,
       `What dawn do you see on the horizon?`,
@@ -3156,6 +3189,7 @@ const CARDS = [
     correspondences: { astrology: "20° Virgo to 20° Libra", element: "Water of Air" },
     short: `The Queen of Swords raises her sword with one hand and extends the other. She is clarity, honesty and independence, someone who sees clearly and speaks the truth kindly.`,
     reversed: `The Queen of Swords asks you to soften a sharp edge, or to find your voice where you have stayed quiet. Old pain may have sharpened your words. Clarity and compassion can live in the same sentence.`,
+    reversedKeywords: ["softened edges", "finding your voice", "old pain", "compassionate truth", "kind clarity"],
     questions: [
       `What do you see clearly that others might miss?`,
       `How can you speak your truth with kindness?`,
@@ -3306,6 +3340,7 @@ const CARDS = [
     correspondences: { astrology: "Jupiter in Capricorn", element: "Earth", number: "2" },
     short: `A figure juggles two pentacles within an endless loop as ships ride the waves. The Two of Pentacles is the dance of everyday life: adaptability, rhythm and the lightness that keeps you balanced while things keep shifting.`,
     reversed: `The juggling may have become too much. Set one ball down and the rest feels lighter. Simplify, choose your true priorities, and gently let go of what you cannot hold right now.`,
+    reversedKeywords: ["overwhelm", "simplifying", "true priorities", "setting things down", "letting go"],
     questions: [
       `What are you balancing right now?`,
       `Where could flexibility help you?`,
@@ -3405,6 +3440,7 @@ const CARDS = [
     correspondences: { astrology: "Sun in Capricorn", element: "Earth", number: "4" },
     short: `A figure holds his pentacles close. The Four of Pentacles is the instinct to protect and conserve, and an invitation to notice what security means to you, and where holding on could soften into trust.`,
     reversed: `The grip is loosening. You may be learning to share, spend or trust, and opening your heart in the process. Look for a middle way between holding on and letting go, and notice where fear of not having enough has been steering.`,
+    reversedKeywords: ["loosening grip", "sharing", "trust", "middle way", "fear of lack"],
     questions: [
       `What helps you feel secure?`,
       `What are you holding onto, and why?`,
@@ -3455,6 +3491,7 @@ const CARDS = [
     correspondences: { astrology: "Mercury in Taurus", element: "Earth", number: "5" },
     short: `Two figures walk through the snow past a glowing church window. The Five of Pentacles is a time of feeling outside or in need, and a reminder that warmth, help and spiritual shelter are often closer than they appear.`,
     reversed: `The cold is easing. Help may be arriving, or you may be becoming ready to accept it. Step by step, recovery, hope and a renewed sense of belonging are close.`,
+    reversedKeywords: ["easing hardship", "accepting help", "recovery", "hope", "belonging"],
     questions: [
       `Where could you ask for the support you need?`,
       `What warmth might be close by that you haven't noticed?`,
@@ -3502,6 +3539,7 @@ const CARDS = [
     correspondences: { astrology: "Moon in Taurus", element: "Earth", number: "6" },
     short: `A figure holds scales while giving coins to others. The Six of Pentacles is the circulation of resources: giving and receiving with dignity, and noticing where the flow between you and others wants a fairer balance.`,
     reversed: `The flow of giving and receiving asks for attention. Notice where you give more than you can, or where you find it hard to receive. Your needs count too; rebalance, and take time to care for yourself.`,
+    reversedKeywords: ["imbalanced giving", "hard to receive", "your needs count", "rebalancing", "self-care"],
     questions: [
       `How do you give and how do you receive?`,
       `Where could generosity make a difference?`,
@@ -3551,6 +3589,7 @@ const CARDS = [
     correspondences: { astrology: "Saturn in Taurus", element: "Earth", number: "7" },
     short: `A gardener leans on his hoe and looks at the growing vine. The Seven of Pentacles is the patient pause of long-term work: stepping back to see what your effort has grown, and choosing where to invest next.`,
     reversed: `The Seven of Pentacles asks for an honest review. Growth may be slower than you hoped, but slow is not absent. Adjust what you tend rather than whether you tend it.`,
+    reversedKeywords: ["honest review", "slow growth", "adjusting", "patience", "tending what matters"],
     questions: [
       `What have you been patiently growing?`,
       `What has your effort produced so far?`,
@@ -3705,6 +3744,7 @@ const CARDS = [
     correspondences: { astrology: "Mercury in Virgo", element: "Earth", number: "10" },
     short: `Generations gather beneath an archway, with dogs at the old man's feet. The Ten of Pentacles is legacy and lineage: what you inherit and what you pass on, and the deep roots that let a life feel held.`,
     reversed: `The Ten of Pentacles invites a look at family patterns and inherited beliefs about security. Legacy is more than money; tend the relationships first. What would you like to carry forward, and what could you lovingly lay to rest?`,
+    reversedKeywords: ["family patterns", "inherited beliefs", "relationships first", "choosing what to carry", "laying to rest"],
     questions: [
       `What legacy would you like to build?`,
       `What have you inherited, and what will you pass on?`,
@@ -3861,6 +3901,7 @@ const CARDS = [
     correspondences: { astrology: "20° Sagittarius to 20° Capricorn", element: "Water of Earth" },
     short: `The Queen of Pentacles sits in a blossoming garden, holding a pentacle in her lap. She is care made practical: nurturing body, home and the people around her, and finding the sacred in ordinary things.`,
     reversed: `The Queen of Pentacles turns her care toward herself. You may be tending everyone's practical needs but your own. Nurture yourself the way you nurture others; your wellbeing is wealth too.`,
+    reversedKeywords: ["self-nurture", "neglected needs", "receiving care", "wellbeing", "inner abundance"],
     questions: [
       `How can you create comfort for yourself and others?`,
       `Where could practical care make a difference?`,
