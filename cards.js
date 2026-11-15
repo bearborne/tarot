@@ -19,6 +19,10 @@
 //    reversedKeywords, reversedQuestions – only on cards whose keywords
 //              and questions don't fit both ways; the rest use the
 //              same keywords and questions upright and reversed
+//    ideas, nuances – key ideas for the card upright, one per line:
+//              ideas are the warm, growth-minded ones; nuances are
+//              neutral, or depend on how they're framed
+//    reversedIdeas, reversedNuances – the same, for the card reversed
 //    questions – questions the card asks you, one per line
 //    line    – a short line to carry with you, shown on the card's page
 //    picture – what's in the picture: "The thing: what it means", one per line
@@ -54,6 +58,22 @@ const CARDS = [
       `The cliff edge: the unknown, met with trust rather than fear.`,
       `The small dog: instinct and loyal companionship, both warning and cheering on.`,
     ],
+    ideas: [
+      `Limitless potential; a fresh start or opening`,
+      `Freedom to follow what you want`,
+      `Confidence, innocence, originality, spontaneity`,
+      `Getting ready for a journey; hope and faith in what's ahead`,
+      `New starts in love or work`,
+      `Beginner's luck; improvising`,
+    ],
+    nuances: [
+      `Taking a leap, accepting it may or may not work`,
+      `Uranus: the unexpected, the unique`,
+    ],
+    reversedNuances: [
+      `Holding back; cautious about risks`,
+      `Not ready to commit`,
+    ],
     inReading: {
       upright: `a fresh start taken with an open heart`,
       reversed: `a leap that needs a little ground to land on`,
@@ -88,6 +108,23 @@ const CARDS = [
       `One hand raised, one pointing down: as above, so below; drawing spirit into form.`,
       `The four tools on the table: wand, cup, sword and pentacle, every element at hand.`,
     ],
+    ideas: [
+      `Energy turning into results; you already have the tools`,
+      `Resourcefulness; using your talents`,
+      `Turning a vision into something real`,
+      `Growth in an area you've been working on`,
+      `Feeling whole in more than one part of life`,
+      `Taking action`,
+    ],
+    nuances: [
+      `Mercury: thought, words and hands — what you can think, you can do`,
+      `"As above, so below" — being in tune with the bigger picture`,
+    ],
+    reversedNuances: [
+      `You have the tools but aren't using them fully`,
+      `Missing a piece of the puzzle`,
+      `Ungrounded; struggling to manifest`,
+    ],
     inReading: {
       upright: `focused will, with everything you need at hand`,
       reversed: `gifts that are waiting, not gone`,
@@ -116,6 +153,22 @@ const CARDS = [
       `The scroll marked TORA, half hidden: wisdom that is only partly revealed.`,
       `The crescent moon at her feet: intuition, cycles and the inner tides.`,
     ],
+    ideas: [
+      `Trusting your gut and inner voice`,
+      `Intuition, inner insight, quiet knowing`,
+      `Moon cycles; sacred or hidden wisdom`,
+      `Watching closely; observation as a skill`,
+      `Divine feminine; spirituality`,
+    ],
+    nuances: [
+      `Mystery; things not yet revealed`,
+      `Holding opposites (light/dark, masculine/feminine) and accepting both`,
+      `Virgo: careful, precise, inward`,
+    ],
+    reversedNuances: [
+      `Withdrawal and silence`,
+      `Fear of the unknown`,
+    ],
     inReading: {
       upright: `quiet inner knowing and patient intuition`,
       reversed: `an inner voice gone quiet, not silent`,
@@ -143,6 +196,24 @@ const CARDS = [
       `The ripening wheat: abundance that grows from patient care.`,
       `The Venus sign on her heart-shaped shield: love, beauty and creative power.`,
       `The stream and the forest: life moving freely and naturally.`,
+    ],
+    ideas: [
+      `Nurturing, caring, motherly love`,
+      `Abundance, fruition, harvest`,
+      `Starting a new creative project`,
+      `Connection with nature and Mother Earth`,
+      `Peace, healing, relaxation, self-care`,
+      `Divine feminine; purity of spirit`,
+      `Respect`,
+    ],
+    nuances: [
+      `Venus: beauty, love, luxury`,
+      `Fertility; pregnancy (with a Page)`,
+    ],
+    reversedNuances: [
+      `Needing more self-care`,
+      `Creativity feels blocked`,
+      `Vulnerability; feelings held in`,
     ],
     inReading: {
       upright: `abundance that grows from care and creativity`,
@@ -178,6 +249,24 @@ const CARDS = [
       `The armour under his robe: strength held in readiness, not shown off.`,
       `The bare mountains behind him: firm foundations and the discipline it takes to build.`,
     ],
+    ideas: [
+      `Structure, stability, discipline`,
+      `Protection and security`,
+      `Strategic planning; practical and logical`,
+      `Respect and leadership`,
+      `Building progress; steady toward goals`,
+      `Things under control`,
+      `Strong foundations`,
+    ],
+    nuances: [
+      `Father figure; divine masculine`,
+      `Aries: passion, motivation, leadership`,
+      `Authority, power, status`,
+    ],
+    reversedNuances: [
+      `Lacking structure or discipline`,
+      `Too carefree`,
+    ],
     inReading: {
       upright: `steady structure and clear boundaries`,
       reversed: `structure that grips instead of holds`,
@@ -212,6 +301,26 @@ const CARDS = [
       `The two followers before him: wisdom passed from one generation to the next.`,
       `The hand raised in blessing: a bridge between the everyday and the sacred.`,
     ],
+    ideas: [
+      `A wise teacher or mentor figure`,
+      `Values, ethics, shared traditions and community`,
+      `A counsellor or guide`,
+    ],
+    nuances: [
+      `Institutions, schools, structured learning`,
+      `Commitment / marriage`,
+      `Expectations; following an established system`,
+      `Taurus: the physical world, comfort, the senses`,
+    ],
+    reversedIdeas: [
+      `Originality; living your own way`,
+      `Open-minded; willing to understand`,
+      `Your own inner beliefs`,
+    ],
+    reversedNuances: [
+      `Changing views; breaking with tradition`,
+      `Being "different" from others or family`,
+    ],
     inReading: {
       upright: `shared wisdom, tradition and good teachers`,
       reversed: `a personal path beyond rules that no longer fit`,
@@ -239,6 +348,24 @@ const CARDS = [
       `The angel above: a higher blessing and the guidance of the heart.`,
       `The fruit tree with the serpent: desire, temptation and the choices they bring.`,
       `The tree of flames: passion and the fire of the spirit.`,
+    ],
+    ideas: [
+      `Soulmate love; a strong bond`,
+      `Two halves of a whole; stronger together`,
+      `Harmony, balance, healing`,
+      `A meaningful choice made from the heart`,
+      `Loving romance`,
+      `Cooperation and progress`,
+    ],
+    nuances: [
+      `Past-life connections`,
+      `Gemini: curious, adaptable, mental`,
+      `Temptation of the heart`,
+    ],
+    reversedNuances: [
+      `Looking at your own values`,
+      `Indecision; fear of choosing wrong`,
+      `Distance in a relationship`,
     ],
     inReading: {
       upright: `a heartfelt connection and a choice led by your values`,
@@ -268,6 +395,24 @@ const CARDS = [
       `No reins in his hands: control that comes from will, not force.`,
       `The starry canopy: guidance from something greater than yourself.`,
     ],
+    ideas: [
+      `On the right path`,
+      `Moving forward with determination`,
+      `Pushing past obstacles; victory and success`,
+      `Willpower and resilience`,
+      `Things under control`,
+      `Opposites working together`,
+      `Momentum building`,
+    ],
+    nuances: [
+      `Travel and transport`,
+      `Cancer: hard-working, moving forward`,
+    ],
+    reversedNuances: [
+      `Things moving slower than usual; delays`,
+      `Unsure of the next step`,
+      `Opposite forces not working together`,
+    ],
     inReading: {
       upright: `determined movement with a clear direction`,
       reversed: `a slower stretch, waiting for a clear direction`,
@@ -295,6 +440,28 @@ const CARDS = [
       `The infinity sign over her head: endless patience and spiritual strength.`,
       `Her hands at the lion's jaw: instinct guided with gentleness, not fear.`,
       `The garland of flowers: wild nature held by love.`,
+    ],
+    ideas: [
+      `Inner strength; gentle strength`,
+      `Courage and endurance`,
+      `Self-love and self-respect`,
+      `Love and compassion`,
+      `Limitless willpower`,
+      `Recovery from illness or guilt`,
+      `Balance; calm authority`,
+      `Mastery and learning`,
+      `Respect from others and yourself`,
+    ],
+    nuances: [
+      `Leo: leadership, fire`,
+    ],
+    reversedIdeas: [
+      `Restore your energy`,
+      `Letting go of pride`,
+    ],
+    reversedNuances: [
+      `Not yet using your inner strength`,
+      `Overdoing it; weak boundaries`,
     ],
     inReading: {
       upright: `gentle courage and patient inner strength`,
@@ -330,6 +497,26 @@ const CARDS = [
       `The staff: support, and the experience gathered along the way.`,
       `The snowy peak: the solitude of the heights, where clarity is found.`,
     ],
+    ideas: [
+      `Going within to find answers`,
+      `Meditation and contemplation`,
+      `Wisdom; inner guidance`,
+      `Healing; finding the light within`,
+      `Alone time to think`,
+      `Self-inspiration`,
+      `Rest and a break`,
+    ],
+    nuances: [
+      `Virgo: logical, analytical`,
+      `Can seem distant or withdrawn`,
+    ],
+    reversedIdeas: [
+      `Healing old trauma and emotion`,
+    ],
+    reversedNuances: [
+      `Not taking the alone time you need`,
+      `Too much seclusion`,
+    ],
     inReading: {
       upright: `solitude, reflection and inner guidance`,
       reversed: `solitude that has done its work`,
@@ -357,6 +544,24 @@ const CARDS = [
       `The sphinx at the top: wisdom that stays steady while everything turns.`,
       `The four winged figures reading in the corners: calm study through every change.`,
       `The snake descending and Anubis rising: the natural rhythm of falling and rising.`,
+    ],
+    ideas: [
+      `Luck on your side; life working in your favour`,
+      `Cycles turning or completing; renewal`,
+      `Opportunities; Jupiter = expansion and luck`,
+      `Trusting there's a bigger plan and going with the flow`,
+    ],
+    nuances: [
+      `Unexpected change; destiny and balance`,
+      `Welcoming both ups and downs`,
+    ],
+    reversedIdeas: [
+      `Time to ask for help`,
+      `Accept both ups and downs`,
+    ],
+    reversedNuances: [
+      `Delays; waiting for change`,
+      `Not going with the flow; stuck in a loop`,
     ],
     inReading: {
       upright: `a turning point and the natural rhythm of change`,
@@ -386,6 +591,24 @@ const CARDS = [
       `The upright double-edged sword: clear decisions that cut both ways.`,
       `The white shoe peeking out: a step taken in good conscience.`,
     ],
+    ideas: [
+      `Fairness, honesty, truth`,
+      `Balance and harmony`,
+      `The fairest decision will be made`,
+      `The scales tipping in your favour`,
+      `Cause and effect; what goes around comes around`,
+      `Clear thinking; not swayed by others`,
+      `Order, reason, equality`,
+    ],
+    nuances: [
+      `Contracts, marriage, legal matters`,
+      `Libra: balance and compromise`,
+    ],
+    reversedNuances: [
+      `Not everything is as it seems`,
+      `Pay attention to the details`,
+      `Inner critic`,
+    ],
     inReading: {
       upright: `clarity, fairness and honest cause and effect`,
       reversed: `a gentle call for honesty with yourself`,
@@ -413,6 +636,28 @@ const CARDS = [
       `Hanging calmly by one foot: a chosen surrender, not a punishment.`,
       `The halo around his head: insight that arrives when you let go.`,
       `The living wood he hangs from: growth continuing even while all seems still.`,
+    ],
+    ideas: [
+      `A pause; wait for more information`,
+      `A new perspective`,
+      `Letting go; mindfulness; surrender`,
+      `Releasing old beliefs and patterns`,
+      `Wisdom and higher learning`,
+      `Spiritual growth; enlightenment`,
+      `Don't make rash moves; stay still`,
+    ],
+    nuances: [
+      `Intuition, psychic gifts (Neptune)`,
+      `Sacrifice for a greater good`,
+    ],
+    reversedIdeas: [
+      `Moving forward with a new perspective`,
+      `Make time and space to listen`,
+      `Detaching from problems`,
+    ],
+    reversedNuances: [
+      `Resisting a pause; impatient`,
+      `Distracting yourself`,
     ],
     inReading: {
       upright: `a meaningful pause and a new perspective`,
@@ -442,6 +687,28 @@ const CARDS = [
       `The sun rising between two towers: the dawn that follows transformation.`,
       `The king, bishop, maiden and child: everyone passes through change.`,
     ],
+    ideas: [
+      `Transformation; moving to the next stage`,
+      `Letting go of the old to make room for the new`,
+      `An ending that opens a beginning; rebirth`,
+      `Growing self-awareness; deep inner change`,
+      `Opening up to possibilities; purification, beauty`,
+    ],
+    nuances: [
+      `Scorpio: depth, transformation, the hidden self`,
+      `Big journeys; past lives`,
+    ],
+    reversedIdeas: [
+      `Inner, private transformation`,
+      `Letting go of fear and old beliefs`,
+      `Spiritual and holistic healing`,
+      `Cleansing and detox`,
+      `An ending that opens a beginning`,
+    ],
+    reversedNuances: [
+      `Change coming more slowly`,
+      `Changes in work, love, friends, money`,
+    ],
     inReading: {
       upright: `a deep ending that makes room for renewal`,
       reversed: `a transformation happening quietly underneath`,
@@ -469,6 +736,27 @@ const CARDS = [
       `Water poured between two cups: the patient blending of opposites.`,
       `One foot on land, one in water: balance between the practical and the emotional.`,
       `The path to a crown of light: the long, steady road toward wholeness.`,
+    ],
+    ideas: [
+      `Balance, moderation, patience`,
+      `Healing and health`,
+      `Divine timing; staying calm`,
+      `Grounded and in flow; true to your purpose`,
+      `Harmony and cooperation; seeing every side`,
+      `Blending things well (alchemy)`,
+      `Gently managing emotions`,
+    ],
+    nuances: [
+      `Sagittarius: optimism, freedom, adventure`,
+    ],
+    reversedIdeas: [
+      `Personal, private healing`,
+      `Recovery and rest`,
+      `Holistic or energy healing`,
+      `Check your priorities`,
+    ],
+    reversedNuances: [
+      `Impatience; going to extremes`,
     ],
     inReading: {
       upright: `balance, patience and gentle blending`,
@@ -526,6 +814,27 @@ const CARDS = [
       `The crown knocked from the top: false certainties falling away.`,
       `The falling figures and flames: the release of what was built on weak ground.`,
     ],
+    ideas: [
+      `A wake-up call; truths coming to light`,
+      `Change that serves your highest good`,
+      `A chance to rebuild on stronger ground`,
+      `Spiritual awakening; unexpected help`,
+    ],
+    nuances: [
+      `Sudden shifts; unforeseen change`,
+      `Mars: energy, power, drive`,
+    ],
+    reversedIdeas: [
+      `Spiritual awakening from within`,
+      `New spiritual paths`,
+      `Inner transformation`,
+      `Stepping into a new, evolved self`,
+      `Trust the process`,
+    ],
+    reversedNuances: [
+      `Questioning beliefs, values and purpose`,
+      `The more you resist, the stronger the push`,
+    ],
     inReading: {
       upright: `a breakthrough that clears what was never built to hold you`,
       reversed: `an inner change asking to be trusted`,
@@ -560,6 +869,29 @@ const CARDS = [
       `The great eight-pointed star: hope and guidance after the storm.`,
       `The bird in the tree: the soul's song returning.`,
     ],
+    ideas: [
+      `Hope and faith; hope after chaos`,
+      `Inspiration; renewed happiness`,
+      `Peace, serenity, healing`,
+      `Rebuilding gently, step by step`,
+      `Listening to your inner voice`,
+      `Gentleness`,
+      `Spreading your wings and growing`,
+      `Blessings from the universe`,
+      `Life purpose and inner calling`,
+      `Overcoming obstacles`,
+    ],
+    nuances: [
+      `Aquarius: progress, optimism, independence`,
+    ],
+    reversedIdeas: [
+      `Time for self-healing, care and nourishment`,
+      `Learning to trust the universe and yourself`,
+      `Ask for help and guidance`,
+      `Positive affirmations`,
+      `Reconnect with nature and water`,
+      `Cleanse your energy`,
+    ],
     inReading: {
       upright: `quiet healing and renewed hope`,
       reversed: `stars still shining behind the cloud`,
@@ -587,6 +919,27 @@ const CARDS = [
       `The winding path to the mountains: the journey through the unknown.`,
       `The dog and the wolf: the tame and the wild in your own nature.`,
       `The crayfish rising from the water: feelings surfacing from the deep.`,
+    ],
+    ideas: [
+      `Strong intuition and deep feeling`,
+      `Pay attention to your dreams`,
+      `Emotions surfacing so they can heal`,
+      `Shadow work; the subconscious`,
+      `Moon cycles; dreams, creativity, spirituality (Pisces)`,
+    ],
+    nuances: [
+      `Hidden things; illusions; mystery`,
+      `Introspection`,
+    ],
+    reversedIdeas: [
+      `Releasing fear and anxiety`,
+      `Clarity about your fears`,
+      `Clearing negative energy`,
+      `Listen to inner guidance and dreams`,
+    ],
+    reversedNuances: [
+      `Misreading your own feelings`,
+      `Not seeing the path ahead yet`,
     ],
     inReading: {
       upright: `dreams, intuition and a path through the unknown`,
@@ -622,6 +975,28 @@ const CARDS = [
       `The sunflowers behind the wall: growth that turns toward the light.`,
       `The red banner: vitality and the joy of being alive.`,
     ],
+    ideas: [
+      `Joy, success, optimism, vitality`,
+      `Good outcomes; abundance in many areas`,
+      `Warmth, love, happy family life, children`,
+      `Confidence, courage, strength`,
+      `Safety, trust, stability`,
+      `Playfulness; the inner child`,
+      `Good health and growth`,
+    ],
+    nuances: [
+      `Ego and life purpose`,
+    ],
+    reversedIdeas: [
+      `An opportunity on the horizon`,
+      `Looking forward to a celebration`,
+      `Abundance — money and emotions`,
+    ],
+    reversedNuances: [
+      `Temporary low mood; confidence dipping`,
+      `Old beliefs getting in the way`,
+      `Over-optimistic`,
+    ],
     inReading: {
       upright: `joy, vitality and being seen as you are`,
       reversed: `a light that doesn't need to perform`,
@@ -656,6 +1031,28 @@ const CARDS = [
       `The figures rising from their coffins: renewal and release from the past.`,
       `The mountains in the distance: the higher path, now in view.`,
     ],
+    ideas: [
+      `Gaining clarity; an awakening`,
+      `Finding answers; a calling or message`,
+      `Reaching a milestone; higher success`,
+      `Moving past obstacles; deciding to move forward`,
+      `Learning from the past; releasing regrets`,
+      `Truth coming out`,
+    ],
+    nuances: [
+      `Pluto: rebirth, power, evolution`,
+    ],
+    reversedIdeas: [
+      `Be kind to yourself; self-care`,
+      `Work on forgiveness and self-acceptance`,
+      `Meditation and reflection help`,
+      `Discipline and affirmations help`,
+    ],
+    reversedNuances: [
+      `Time to look honestly at yourself`,
+      `Fear of the next step or your calling`,
+      `Answers not clear yet`,
+    ],
     inReading: {
       upright: `an awakening and a calling to rise`,
       reversed: `a calling met by an old inner critic`,
@@ -689,6 +1086,27 @@ const CARDS = [
       `The dancer inside the wreath: wholeness, and the freedom to move within it.`,
       `The two wands she holds: balance held lightly, without effort.`,
       `The four figures in the corners: every part of life brought together.`,
+    ],
+    ideas: [
+      `Completion of a cycle or project`,
+      `Fulfilment; feeling whole`,
+      `Celebration and belonging`,
+      `The world at your fingertips`,
+      `Look back and see how far you've come`,
+      `Beginning the next journey`,
+      `Freedom, purity, trust`,
+      `Harvest and abundance`,
+    ],
+    nuances: [
+      `Travel; other cultures`,
+      `Saturn: discipline, structure, order`,
+      `Milestones: marriage, children, career`,
+    ],
+    reversedNuances: [
+      `A cycle near its end, with delays`,
+      `Not yet celebrating your wins`,
+      `Still attached to the past`,
+      `Moving on too fast or skipping steps`,
     ],
     inReading: {
       upright: `completion, wholeness and a cycle fulfilled`,
@@ -727,6 +1145,28 @@ const CARDS = [
       `The sprouting leaves: life force eager to grow.`,
       `The castle on the hill: what this spark could one day build.`,
     ],
+    ideas: [
+      `A new spark of purpose and passion`,
+      `Fresh motivation and energy`,
+      `New hobbies, passions, movement`,
+      `Excitement, joy and fun`,
+      `Inspiration and new ideas`,
+      `Confident, daring, spontaneous`,
+      `Taking the lead; time to act`,
+      `New career paths; good money flow`,
+      `More passion in love`,
+    ],
+    nuances: [
+      `Possible travel or pregnancy (with other cards)`,
+    ],
+    reversedIdeas: [
+      `Time to find a new hobby or interest`,
+    ],
+    reversedNuances: [
+      `Delays in travel or change`,
+      `Too much on your plate`,
+      `Low on direction or goals`,
+    ],
     inReading: {
       upright: `a spark of inspiration and fresh energy`,
       reversed: `a spark resting, not gone`,
@@ -760,6 +1200,25 @@ const CARDS = [
       `The globe in his hand: the world held as possibility.`,
       `The rose and lily cross on the wall: desire and pure thought joined.`,
       `One wand fixed to the wall, one held: what is settled and what is still a choice.`,
+    ],
+    ideas: [
+      `Looking out at opportunities and growth`,
+      `Ready to move forward, especially in career`,
+      `Planning your moves and the long-term future`,
+      `Strong intuition — listen to it`,
+      `Knowing what's best for you`,
+      `Partnerships; possibilities; progress`,
+    ],
+    nuances: [
+      `Weighing options: stay or go?`,
+      `Needing courage; aware of the risks`,
+      `Possible travel; investment decisions`,
+    ],
+    reversedNuances: [
+      `Two paths; choosing one goal over another`,
+      `Inner decisions and changes`,
+      `Not ready for change yet`,
+      `Overthinking the future`,
     ],
     inReading: {
       upright: `a wider view and a first choice of direction`,
@@ -795,6 +1254,23 @@ const CARDS = [
       `The figure seen from behind: looking forward, not back.`,
       `The golden light: a horizon full of possibility.`,
     ],
+    ideas: [
+      `Hard work starting to pay off; rewards on their way`,
+      `Opportunities on the horizon; expansion`,
+      `Celebrating how far you've come`,
+      `Confidence and looking ahead`,
+      `Teamwork; travel or exploring`,
+      `Leaving the past behind to move on`,
+    ],
+    nuances: [
+      `A lesson in patience; waiting and going with the flow`,
+    ],
+    reversedNuances: [
+      `Coming home from travel`,
+      `Slow early stages of a project`,
+      `More climbing than expected; delays in rewards`,
+      `Tired; needs rest`,
+    ],
     inReading: {
       upright: `expansion, with plans already in motion`,
       reversed: `an unexpected turn that is still a place to steer from`,
@@ -828,6 +1304,21 @@ const CARDS = [
       `The garland across four wands: a shelter made of celebration.`,
       `The two figures raising flowers: joy shared and welcomed.`,
       `The castle behind them: the security that makes celebration possible.`,
+    ],
+    ideas: [
+      `Celebration, joyful events, gatherings`,
+      `Stable foundations; home and belonging`,
+      `Happy family, reunions, homecomings`,
+      `Engagements, weddings, moving in together`,
+      `New family members (children, pets)`,
+      `Making your home beautiful`,
+      `Music, dance, art, community`,
+      `Closer, warmer relationships`,
+    ],
+    reversedNuances: [
+      `A short, passing phase`,
+      `Moving out; working from home`,
+      `Feeling like an outsider`,
     ],
     inReading: {
       upright: `a moment of arrival, belonging and celebration`,
@@ -863,6 +1354,25 @@ const CARDS = [
       `No one is hurt: the struggle is practice and play, not harm.`,
       `Their different clothes: a variety of views meeting.`,
     ],
+    ideas: [
+      `Stepping back from drama`,
+    ],
+    nuances: [
+      `Competition; climbing toward a goal`,
+      `Challenges to work through; differences of opinion`,
+      `Being stretched by too many demands`,
+    ],
+    reversedIdeas: [
+      `Conflict ending; finding agreement`,
+      `Teamwork and trust after a clash`,
+      `Accepting each other's differences and paths`,
+      `Harmony and balance returning`,
+      `Calmer, clearer thinking; less scattered`,
+      `Several talents coming together`,
+    ],
+    reversedNuances: [
+      `Avoiding arguments; inner conflict`,
+    ],
     inReading: {
       upright: `lively friction and different views meeting`,
       reversed: `a struggle that is settling`,
@@ -896,6 +1406,27 @@ const CARDS = [
       `The laurel wreaths on his head and wand: an achievement honoured.`,
       `The white horse: success carried with dignity.`,
       `The crowd on foot: the people who walked the way with you.`,
+    ],
+    ideas: [
+      `Victory; reaching a milestone`,
+      `Recognition, praise, awards`,
+      `Growing confidence and self-worth`,
+      `Steady progress; plans moving along`,
+      `Leading a group; community`,
+      `Celebrate your efforts`,
+      `Finding your place in the world; feeling welcomed`,
+      `Partners with shared goals`,
+    ],
+    nuances: [
+      `Fame, popularity, pride`,
+    ],
+    reversedIdeas: [
+      `Private, inner achievements count too`,
+    ],
+    reversedNuances: [
+      `Delays in success`,
+      `Feeling unseen or unrecognised`,
+      `Low confidence; working without support`,
     ],
     inReading: {
       upright: `recognition and well-earned confidence`,
@@ -931,6 +1462,24 @@ const CARDS = [
       `The mismatched shoes: standing firm even when not fully prepared.`,
       `The six wands rising from below: challenges met one at a time.`,
     ],
+    ideas: [
+      `Stand your ground; stand up for who you are`,
+      `Courage, resilience, conviction`,
+      `Be your most honest, authentic self`,
+      `Healthy boundaries and protection`,
+      `Make sure your voice is heard`,
+    ],
+    nuances: [
+      `Competition; facing challenges`,
+    ],
+    reversedIdeas: [
+      `Support returning; people ready to listen`,
+      `Rising above judgement`,
+    ],
+    reversedNuances: [
+      `Rethinking your own beliefs`,
+      `Self-doubt; weak boundaries`,
+    ],
     inReading: {
       upright: `conviction and standing your ground`,
       reversed: `defences ready to be set down`,
@@ -964,6 +1513,27 @@ const CARDS = [
       `The eight wands in flight: energy released and moving swiftly.`,
       `The open sky: nothing standing in the way.`,
       `The river and hill below: the ground the energy will soon land on.`,
+    ],
+    ideas: [
+      `Fast progress; things falling into place`,
+      `Obstacles cleared; goals come easily`,
+      `Travel, holidays, excitement`,
+      `Messages and news flow easily`,
+      `Freedom and space`,
+      `Quick recovery from setbacks`,
+      `Success in work, money, love; attracting success`,
+      `Celebrations and events`,
+    ],
+    nuances: [
+      `Romance that moves fast`,
+    ],
+    reversedIdeas: [
+      `Slow down, plan the next step`,
+      `Be still; meditate and reflect`,
+    ],
+    reversedNuances: [
+      `Things moving slower than expected; delays`,
+      `Too busy to focus on what matters`,
     ],
     inReading: {
       upright: `swift movement and things coming together`,
@@ -999,6 +1569,25 @@ const CARDS = [
       `The wands behind him like a fence: boundaries built from what he has learned.`,
       `His watchful glance: readiness, and the question of when to rest.`,
     ],
+    ideas: [
+      `Almost there; the final hurdle`,
+      `Persistence and resilience`,
+      `Find strength and courage to keep going`,
+      `Learn from what worked before`,
+      `Heal first, then take on new challenges`,
+      `Don't give up`,
+    ],
+    nuances: [
+      `Tired; heavy workload`,
+    ],
+    reversedIdeas: [
+      `Drawing on inner resources`,
+      `Letting go`,
+    ],
+    reversedNuances: [
+      `Feeling at your limit; overly defensive`,
+      `Staying in your comfort zone`,
+    ],
     inReading: {
       upright: `resilience and the strength of experience`,
       reversed: `long strength now asking for rest`,
@@ -1026,6 +1615,26 @@ const CARDS = [
       `The bundle held in front of his face: a load that blocks the view.`,
       `The town ahead: the goal close by.`,
       `His bent back: the cost of carrying everything alone.`,
+    ],
+    ideas: [
+      `The end of the hard stretch is near; one last push`,
+      `Ask for and accept help`,
+      `There are easier ways to reach your goal`,
+      `Taking responsibility`,
+    ],
+    nuances: [
+      `Carrying too much; others' burdens and dramas`,
+      `Overworking; high expectations`,
+    ],
+    reversedIdeas: [
+      `Letting go of pressure and expectations`,
+      `Standing up for yourself; learning to say no`,
+      `Finding help`,
+      `The end of a burden or struggle`,
+      `Choosing what really matters`,
+    ],
+    reversedNuances: [
+      `Tired but finished`,
     ],
     inReading: {
       upright: `a heavy stretch nearing its end`,
@@ -1062,6 +1671,24 @@ const CARDS = [
       `The sprouting wand he studies: curiosity meeting something new.`,
       `The desert and pyramids: territory not yet explored.`,
     ],
+    ideas: [
+      `Fresh passion and excitement; high, youthful energy`,
+      `Confident, fearless, adventurous`,
+      `Good news; a new perspective`,
+      `Taking action to grow`,
+      `Wider horizons; possibly travel`,
+    ],
+    nuances: [
+      `Impulsive; needs stimulation and movement`,
+      `Competitive streak`,
+      `New challenges as you enter a new stage`,
+    ],
+    reversedNuances: [
+      `Restless; jumping from task to task`,
+      `Low motivation; procrastinating`,
+      `Feeling boxed in`,
+      `Low confidence; too playful to finish things`,
+    ],
     inReading: {
       upright: `curiosity and the spark of a new passion`,
       reversed: `restless energy looking for somewhere to go`,
@@ -1096,6 +1723,22 @@ const CARDS = [
       `The rearing horse: energy eager to move.`,
       `The salamanders on his tunic: creative fire at work.`,
       `The open desert ahead: the call to adventure.`,
+    ],
+    ideas: [
+      `Forward movement; a big change in home or career`,
+      `Bold, daring, adventurous; loves a challenge`,
+      `Get it done and keep momentum`,
+      `Something good, maybe long-awaited`,
+      `Love found while travelling`,
+    ],
+    nuances: [
+      `Fast, fiery, seductive; enjoys the chase`,
+    ],
+    reversedNuances: [
+      `Plans or travel put on hold`,
+      `Energy scattered; needs a clear focus`,
+      `Impatience; rushing`,
+      `Still searching for a passion or career drive`,
     ],
     inReading: {
       upright: `passion in motion and bold adventure`,
@@ -1132,6 +1775,27 @@ const CARDS = [
       `The black cat at her feet: intuition, and the quieter side of confidence.`,
       `The lions on her throne: strength carried with grace.`,
     ],
+    ideas: [
+      `Confident, magnetic, independent`,
+      `Ambitious and driven; a strong manifester`,
+      `Adventurous; loves movement, travel, challenge`,
+      `Acts rather than just dreams`,
+      `Intuitive, especially in nature`,
+      `Big, warm presence`,
+    ],
+    nuances: [
+      `Impatient; can think her way is the only way`,
+      `Ego can get involved; may attract drama`,
+    ],
+    reversedIdeas: [
+      `A call to be more assertive`,
+    ],
+    reversedNuances: [
+      `Use logic to get clarity`,
+      `Low confidence; sensitive to criticism`,
+      `Feeling unmotivated or drained at work`,
+      `Hiding the inner self; quiet fears`,
+    ],
     inReading: {
       upright: `warm confidence and magnetic self-expression`,
       reversed: `warmth coming home to yourself`,
@@ -1166,6 +1830,23 @@ const CARDS = [
       `The salamander biting its own tail: the endless cycle of creation.`,
       `The flowering staff: a vision that is alive and growing.`,
       `Leaning forward on his throne: readiness to act on what he sees.`,
+    ],
+    ideas: [
+      `Natural leader; visionary`,
+      `Confident, charismatic, warm, big presence`,
+      `Entrepreneurial; gets things done`,
+      `Protector and provider; strong integrity`,
+      `Open with feelings; good with people and teams`,
+      `Focus and perseverance; finishing what you start`,
+    ],
+    nuances: [
+      `Strong-willed; impatient with others who are slow to act`,
+    ],
+    reversedNuances: [
+      `Doubting your ability to lead or succeed`,
+      `Expecting too much of yourself or others`,
+      `Comparing your achievements to others`,
+      `Impulsive choices`,
     ],
     inReading: {
       upright: `vision held with maturity, and inspiring leadership`,
@@ -1204,6 +1885,27 @@ const CARDS = [
       `The five streams of water: the senses overflowing with love.`,
       `The lotus pond: emotional growth rising from the depths.`,
     ],
+    ideas: [
+      `New love, friendship or connection`,
+      `An emotional fresh start; the heart opening`,
+      `Creativity flowing in`,
+      `Compassion and love`,
+      `Offers that open your heart (including work)`,
+      `Peace, calm, feeling emotionally safe`,
+      `Abundance and emotional wellbeing`,
+      `Growing intuition and spirituality`,
+    ],
+    nuances: [
+      `Proposals, marriage, possibly pregnancy (with other cards)`,
+    ],
+    reversedIdeas: [
+      `Self-love and self-care are needed`,
+      `Create to express: draw, music, mind-maps`,
+    ],
+    reversedNuances: [
+      `Feelings moving slowly`,
+      `Doubting your intuition`,
+    ],
     inReading: {
       upright: `an open heart and new feelings`,
       reversed: `a cup that needs filling from within`,
@@ -1231,6 +1933,20 @@ const CARDS = [
       `The winged lion over the staff of serpents: the healing that comes from union.`,
       `The exchanged cups: a meeting as equals.`,
       `The house in the distance: what two people can build together.`,
+    ],
+    ideas: [
+      `Love and partnership; soulmates`,
+      `Mutual respect and acceptance`,
+      `Stronger together; facing things as a pair`,
+      `Deep friendship and connection`,
+      `Equality, balance, shared effort`,
+      `Honesty, loyalty, agreements`,
+      `Shared interests and values`,
+      `Proposals and unions; good business partners`,
+    ],
+    reversedNuances: [
+      `Going separate ways`,
+      `Needing a mentor`,
     ],
     inReading: {
       upright: `mutual connection and meeting as equals`,
@@ -1266,6 +1982,27 @@ const CARDS = [
       `The harvest at their feet: abundance enjoyed together.`,
       `Three dancers in a circle: friendship and mutual support.`,
     ],
+    ideas: [
+      `Friendship, celebration, community`,
+      `Gatherings, festivals, parties`,
+      `Lifting each other up; support`,
+      `Creative collaboration; group projects`,
+      `Happiness, health, abundance`,
+      `Birthdays, weddings, holidays`,
+      `Old friends visiting`,
+      `A time of harvest and growth`,
+      `Body, mind and spirit in harmony`,
+    ],
+    nuances: [
+      `A new arrival (with other cards)`,
+    ],
+    reversedIdeas: [
+      `Join a group or community`,
+    ],
+    reversedNuances: [
+      `Working independently; time alone`,
+      `Drifting from some friends`,
+    ],
     inReading: {
       upright: `friendship, community and shared joy`,
       reversed: `circles shifting toward truer connection`,
@@ -1294,6 +2031,26 @@ const CARDS = [
       `The cup offered from the cloud: a gift waiting to be noticed.`,
       `The tree behind him: quiet roots that let reflection happen.`,
     ],
+    ideas: [
+      `Focus on what's working; things will shift`,
+      `A time for gratitude`,
+      `Maybe pick up a new hobby`,
+    ],
+    nuances: [
+      `Things moving slower than you'd like`,
+      `Lost in thought; daydreaming`,
+    ],
+    reversedIdeas: [
+      `Motivation and enthusiasm return`,
+      `Clarity about past, present and future`,
+      `Open to advice and guidance`,
+      `Releasing stress and old emotions`,
+      `Gratitude; seeing the good`,
+      `Present-moment awareness; inner wisdom`,
+      `Self-acceptance; contentment`,
+      `Leaving the past behind; ready to move forward`,
+      `Recharged; emotional growth`,
+    ],
     inReading: {
       upright: `turning inward to find out what you want`,
       reversed: `motivation and enthusiasm returning`,
@@ -1321,6 +2078,27 @@ const CARDS = [
       `The three spilled cups: what has been lost and is being mourned.`,
       `The two standing cups behind: what still remains.`,
       `The bridge and the house beyond: the way home, waiting.`,
+    ],
+    ideas: [
+      `Good things are still around the corner`,
+      `New horizons are coming soon`,
+      `Change comes when you're ready to let go`,
+      `Allow yourself to grieve`,
+      `Partial recovery; a bridge over troubled water`,
+    ],
+    nuances: [
+      `Emotional change`,
+    ],
+    reversedIdeas: [
+      `Healing; forgiveness and acceptance`,
+      `Coming out of hiding; reconnecting`,
+      `Overcoming grief and loss`,
+      `Letting go of old patterns`,
+      `Emotions flowing again`,
+      `Finding strength to move forward`,
+      `Seeing hidden opportunities`,
+      `Recovery in love, work and money`,
+      `Learning from mistakes; a new perspective`,
     ],
     inReading: {
       upright: `honest grief, with two cups still standing`,
@@ -1356,6 +2134,23 @@ const CARDS = [
       `The child offering a cup: kindness given freely.`,
       `The old houses: the safety of memory and home.`,
     ],
+    ideas: [
+      `Happy memories; nostalgia`,
+      `The inner child; innocence and joy`,
+      `Reunions; old friends visiting`,
+      `Receiving gifts; love and support`,
+      `Comfort, safety, stability`,
+      `Hope and new beginnings`,
+      `Caring work: teaching, nursing, healing`,
+    ],
+    nuances: [
+      `Past influences; good as long as you don't get stuck`,
+      `Old flames returning`,
+    ],
+    reversedNuances: [
+      `Homesick; old friends stirring feelings`,
+      `Not fully present`,
+    ],
     inReading: {
       upright: `warm memories and the gifts of the inner child`,
       reversed: `a past ready to become a source of strength`,
@@ -1384,6 +2179,28 @@ const CARDS = [
       `The figure in shadow: the dreamer before the choice.`,
       `The veiled figure in the middle: the hidden self, and the truest wish.`,
     ],
+    ideas: [
+      `Ask yourself: what do I really want?`,
+      `Decide from the heart`,
+      `Research and plan before choosing`,
+      `Don't let others pressure your choice`,
+    ],
+    nuances: [
+      `Many options; dreams and imagination`,
+      `Head in the clouds; distractions`,
+    ],
+    reversedIdeas: [
+      `Gaining clarity; seeing past illusions`,
+      `Realistic, positive choices`,
+      `Choosing from the heart`,
+      `Knowing what to choose`,
+      `Turning opportunities into real goals`,
+      `Clear paths ahead`,
+      `Not pressured into choices`,
+    ],
+    reversedNuances: [
+      `Calculated risks, well prepared`,
+    ],
     inReading: {
       upright: `rich imagination and many possibilities`,
       reversed: `illusions fading into a clear, heart-led choice`,
@@ -1411,6 +2228,22 @@ const CARDS = [
       `The eight cups left neatly behind: something complete, yet no longer enough.`,
       `The moon above: an inner cycle coming to its close.`,
       `The staff and mountains: the long walk toward deeper meaning.`,
+    ],
+    ideas: [
+      `Courage to leave fears behind and step forward`,
+      `Seeking answers within; soul-searching`,
+      `Letting go in order to heal`,
+      `Walking toward discovery; being set free`,
+      `Making an intuitive choice`,
+      `Strength and wisdom`,
+      `Emotional rest; retreats, travel, nature`,
+    ],
+    nuances: [
+      `Withdrawing for a while; stepping back from a situation`,
+    ],
+    reversedNuances: [
+      `Staying a little longer to take care of things`,
+      `Not ready to move on yet`,
     ],
     inReading: {
       upright: `walking away in search of deeper meaning`,
@@ -1446,6 +2279,24 @@ const CARDS = [
       `The cups arranged in an arc behind him: wishes gathered and displayed.`,
       `The blue cloth: emotional depth beneath the comfort.`,
     ],
+    ideas: [
+      `Wishes coming true; the "wish card"`,
+      `Emotional fulfilment; contentment`,
+      `Abundance and good fortune`,
+      `Gratitude for what you've achieved`,
+      `Knowing your worth; confidence`,
+      `Happy relationships and situations`,
+      `Recognition and respect`,
+      `Lucky for work and business`,
+    ],
+    nuances: [
+      `Pleasure, luxury, enjoyment`,
+    ],
+    reversedNuances: [
+      `Not seeing what you already have`,
+      `Wishes not yet fulfilled; unrealistic dreams`,
+      `Seeking others' approval`,
+    ],
     inReading: {
       upright: `contentment and gratitude for what you have`,
       reversed: `contentment quieter than proving it`,
@@ -1480,6 +2331,24 @@ const CARDS = [
       `The couple with arms raised: gratitude shared.`,
       `The children dancing: joy that is passed on.`,
     ],
+    ideas: [
+      `Joy and belonging; loving, supportive family`,
+      `Emotional fulfilment and abundance`,
+      `Dreams coming true`,
+      `Safety, stability, happiness at home`,
+      `Long-term commitment; marriage, family`,
+      `Community and togetherness`,
+      `Accepting differences`,
+      `Playfulness, holidays, small gatherings`,
+      `Healthy emotional flow and creativity`,
+    ],
+    nuances: [
+      `Moving home; next steps; children (with other cards)`,
+    ],
+    reversedNuances: [
+      `Home life needs a change`,
+      `Dreams not yet reached`,
+    ],
     inReading: {
       upright: `emotional fulfilment and a sense of home`,
       reversed: `home harmony that wants tending`,
@@ -1508,6 +2377,25 @@ const CARDS = [
       `The fish rising from the cup: an unexpected message from deep within.`,
       `The lotus pattern on his tunic: a heart opening like a flower.`,
       `The calm sea behind him: feelings at ease, ready to play.`,
+    ],
+    ideas: [
+      `Good emotional news; a happy surprise`,
+      `Creative, imaginative, sensitive`,
+      `Trust inspiration from intuition`,
+      `Curiosity and wonder; the inner child`,
+      `Reconciliation and joy`,
+      `Innocent love; compassion`,
+      `Offers that open your heart`,
+      `Growth, beauty, spirituality`,
+      `Good news in love, creativity, spirit`,
+    ],
+    reversedIdeas: [
+      `Inner-child healing needed`,
+    ],
+    reversedNuances: [
+      `Doubting your intuition`,
+      `Creative blocks; daydreaming too much`,
+      `Sensitive; insecure about self-image`,
     ],
     inReading: {
       upright: `a surprising feeling or creative message`,
@@ -1544,6 +2432,23 @@ const CARDS = [
       `The slowly walking horse: feeling that moves at a gentle pace.`,
       `The cup held forward: an offering of the heart.`,
     ],
+    ideas: [
+      `Charming, romantic; a heart-led person`,
+      `Dreams and goals moving forward gently`,
+      `Projects that inspire the heart and soul`,
+      `Creative, artistic, spiritually curious`,
+      `Hope and faith for the future`,
+      `A creative offer that helps you move on`,
+      `No rush needed`,
+    ],
+    nuances: [
+      `A refreshing, short-lived romance`,
+    ],
+    reversedNuances: [
+      `Overactive imagination; unrealistic hopes`,
+      `Moody; feelings change quickly`,
+      `Avoiding confrontation; stuck emotions`,
+    ],
     inReading: {
       upright: `following the heart with grace and imagination`,
       reversed: `feelings shifting faster than actions`,
@@ -1573,6 +2478,25 @@ const CARDS = [
       `The water reaching her throne: a deep bond with the emotional world.`,
       `The cherubs and shells on her throne: love and the gifts of the sea.`,
     ],
+    ideas: [
+      `Compassionate, sensitive, empathetic`,
+      `Intuitive; spiritually in tune`,
+      `Emotionally stable and mature`,
+      `Creative; expresses through art`,
+      `A healer, nurturer, supportive counsellor`,
+      `Forgiving; loving mother energy`,
+      `Romantic; in flow`,
+      `Lead with the heart`,
+    ],
+    reversedIdeas: [
+      `Self-care and self-love are needed`,
+    ],
+    reversedNuances: [
+      `Inner feelings; holding emotions back`,
+      `Creativity or intuition feels blocked`,
+      `Very sensitive; needing reassurance`,
+      `Giving too much at your own cost`,
+    ],
     inReading: {
       upright: `deep compassion and calm intuition`,
       reversed: `a giver whose turn it is to receive`,
@@ -1601,6 +2525,27 @@ const CARDS = [
       `The throne floating on a rough sea: calm amid emotional waves.`,
       `The fish amulet on his chest: feeling and creativity, worn close to the heart.`,
       `The ship and the leaping fish: life moving on while he stays steady.`,
+    ],
+    ideas: [
+      `A great listener; genuine understanding`,
+      `Loving, soulful, creative, spiritual`,
+      `Leading with heart; diplomatic`,
+      `Seeing from other people's view`,
+      `Avoids drama; calm presence`,
+      `Romance; small gestures of love`,
+      `Creative discipline; finding your community`,
+    ],
+    nuances: [
+      `Fatherly energy`,
+    ],
+    reversedIdeas: [
+      `Self-compassion`,
+      `Journaling, writing or talking things out helps`,
+      `Boundaries with others' emotions`,
+    ],
+    reversedNuances: [
+      `Inner feelings; moodiness; anxiety`,
+      `Absorbing others' emotions too much`,
     ],
     inReading: {
       upright: `emotional maturity and calm steadiness`,
@@ -1639,6 +2584,28 @@ const CARDS = [
       `The olive and palm branches: peace and victory.`,
       `The mountains below: obstacles seen clearly from above.`,
     ],
+    ideas: [
+      `Clarity, breakthroughs, realisations`,
+      `New ideas, plans and projects`,
+      `Learning, insight, knowledge`,
+      `Clear, honest communication`,
+      `Truth coming through`,
+      `Victory and success`,
+      `Sharp, quick, witty mind; vision`,
+      `Mental strength and resilience`,
+      `Plan and write things down`,
+    ],
+    nuances: [
+      `Marketing, media, messages`,
+      `Assertiveness`,
+    ],
+    reversedIdeas: [
+      `A change of perspective is needed`,
+    ],
+    reversedNuances: [
+      `Write your plans down`,
+      `A change of focus`,
+    ],
     inReading: {
       upright: `a breakthrough of clarity and truth`,
       reversed: `clarity close but still forming`,
@@ -1666,6 +2633,25 @@ const CARDS = [
       `The blindfold: shutting out distraction to listen within.`,
       `The crossed swords over her heart: protecting a fragile peace.`,
       `The crescent moon and the sea behind: intuition and the tides of feeling.`,
+    ],
+    nuances: [
+      `At a crossroads; torn between two things`,
+      `Too much in the head, not using intuition`,
+      `Unsure of your path`,
+    ],
+    reversedIdeas: [
+      `The blindfold comes off; seeing clearly`,
+      `Open-minded; a new perspective`,
+      `Calm, confident decisions`,
+      `Looking within for answers; intuition unblocked`,
+      `Knowing your boundaries`,
+      `Separating yourself from fear`,
+      `A direction chosen; new purpose`,
+      `Opening up to talk; free will`,
+    ],
+    reversedNuances: [
+      `Brief withdrawal to sort out feelings`,
+      `Hidden truths come out`,
     ],
     inReading: {
       upright: `a still point before a decision`,
@@ -1695,6 +2681,25 @@ const CARDS = [
       `The storm clouds and rain: grief moving through and clearing the air.`,
       `The heart floating alone: feelings seen plainly, without a story.`,
     ],
+    ideas: [
+      `Healing and growing through pain`,
+      `Time to rest, grieve and care for yourself`,
+      `Emotional release`,
+      `This will pass; the storm is temporary`,
+      `Focusing on recovery`,
+    ],
+    nuances: [
+      `Taking things to heart; hard experiences`,
+    ],
+    reversedIdeas: [
+      `The storm is clearing`,
+      `Healing from pain; recovering health, mind or money`,
+      `Forgiving others and yourself`,
+      `Reconciliation`,
+      `Accepting the truth; learning and moving on`,
+      `Strength, resilience, courage`,
+      `Seeking support or spiritual healing; energy clearing`,
+    ],
     inReading: {
       upright: `pain that will pass, and rain that clears the air`,
       reversed: `a storm clearing and a heart healing`,
@@ -1722,6 +2727,28 @@ const CARDS = [
       `The figure lying still: deep rest and retreat.`,
       `The hands joined in prayer: contemplation and surrender.`,
       `The stained glass window: a sacred, peaceful space.`,
+    ],
+    ideas: [
+      `Rest and recharge your mind`,
+      `Solitude; quiet time alone`,
+      `Meditation, relaxation, peace`,
+      `Take all the time you need to heal`,
+      `Find a safe space; protect your energy`,
+      `Grounding and rebalancing`,
+      `Asking for support (therapy, guides)`,
+    ],
+    nuances: [
+      `A break from work or relationships; stepping away from conflict`,
+    ],
+    reversedIdeas: [
+      `Rested and recharged; rising again`,
+      `Hope and faith returning`,
+      `Rebalancing and restructuring`,
+      `Clearing the mind`,
+      `Recovery (sometimes sudden); releasing stress`,
+    ],
+    reversedNuances: [
+      `Slow recovery; check in with your energy`,
     ],
     inReading: {
       upright: `rest, retreat and recovery`,
@@ -1751,6 +2778,27 @@ const CARDS = [
       `The two figures walking away: the price of being right.`,
       `The jagged clouds: tension still in the air.`,
     ],
+    ideas: [
+      `Choose your battles wisely`,
+      `Try to see other perspectives`,
+    ],
+    nuances: [
+      `Picking up the pieces`,
+      `Unexpected outcomes`,
+    ],
+    reversedIdeas: [
+      `Making amends; an invitation to apologise`,
+      `Forgiveness and acceptance`,
+      `Healing strained relationships`,
+      `Learning from mistakes`,
+      `Moving on without regrets`,
+      `Relief from stress and baggage`,
+      `Knowing what truly matters`,
+    ],
+    reversedNuances: [
+      `Old regrets or memories surfacing; unresolved feelings`,
+      `Avoiding conflict`,
+    ],
     inReading: {
       upright: `reflection on conflict and what winning costs`,
       reversed: `tension ready to resolve into peace`,
@@ -1778,6 +2826,22 @@ const CARDS = [
       `The boat crossing: a passage from one state of mind to another.`,
       `The swords standing in the boat: the past carried along, held steady.`,
       `Rough water on one side, calm on the other: turbulence being left behind.`,
+    ],
+    ideas: [
+      `Calm after the storm; moving to calmer waters`,
+      `Courage to leave what no longer serves you`,
+      `Moving on; transition and change`,
+      `Letting go of old hurt`,
+      `Support from others`,
+      `Heading toward safety, comfort and stability`,
+      `Rest after exhaustion; balance returning`,
+      `A heavy weight lifted; growth revealed`,
+    ],
+    reversedNuances: [
+      `Waiting it out a bit longer`,
+      `Quietly leaving`,
+      `Unexpected transitions`,
+      `Delays in a journey`,
     ],
     inReading: {
       upright: `a passage toward calmer waters`,
@@ -1807,6 +2871,23 @@ const CARDS = [
       `The two swords left behind: what can't be taken along.`,
       `The camp in the background: the community being stepped away from.`,
     ],
+    ideas: [
+      `Use your intuition wisely`,
+    ],
+    nuances: [
+      `There's more going on than what's said`,
+      `Not all the facts are in yet; intentions unclear`,
+      `Be thoughtful about who you trust`,
+    ],
+    reversedIdeas: [
+      `Step back to see clearly`,
+      `The truth comes out; facades drop`,
+      `Owning mistakes; making amends`,
+    ],
+    reversedNuances: [
+      `Being honest with yourself`,
+      `Impostor feelings`,
+    ],
     inReading: {
       upright: `strategy, independent thinking, and not all the facts yet`,
       reversed: `truth surfacing as a relief`,
@@ -1834,6 +2915,21 @@ const CARDS = [
       `The loose bindings: restrictions not as tight as they seem.`,
       `The blindfold: seeing only the thoughts, not the open path.`,
       `The castle far behind: the familiar structure the mind keeps returning to.`,
+    ],
+    ideas: [
+      `You have more power to break free than you think`,
+    ],
+    nuances: [
+      `Feeling stuck in a job, relationship or situation`,
+      `Intuition clouded by fearful beliefs`,
+    ],
+    reversedIdeas: [
+      `Breaking free; release`,
+      `Freedom from fear and anxiety`,
+      `Taking back control of your thoughts`,
+      `A new perspective; finding solutions`,
+      `Speaking up for yourself`,
+      `Strength and courage returning`,
     ],
     inReading: {
       upright: `bindings looser than they feel`,
@@ -1863,6 +2959,27 @@ const CARDS = [
       `The quilt of roses and zodiac signs: comfort and larger cycles, still present.`,
       `The carved struggle on the bed: old patterns replaying.`,
     ],
+    ideas: [
+      `Most fears won't come true`,
+      `Be objective and realistic`,
+      `Rest; spend time in nature`,
+      `Ask for support and guidance`,
+    ],
+    nuances: [
+      `Dreams worth noting`,
+      `Overthinking; imagination running wild`,
+    ],
+    reversedIdeas: [
+      `Healing; freedom from pain`,
+      `Letting go of worries, fears and old habits`,
+      `Finally getting good rest`,
+      `Seeing fears as illusions`,
+      `Recovering and coping; clarity about money`,
+      `Releasing shame and guilt`,
+    ],
+    reversedNuances: [
+      `Needing support but not yet asking`,
+    ],
     inReading: {
       upright: `night-time worries asking to be spoken`,
       reversed: `old fears surfacing so they can leave`,
@@ -1890,6 +3007,29 @@ const CARDS = [
       `The ten swords: a full and complete ending.`,
       `The dawn on the horizon: a new day coming, without fail.`,
       `The hand in a gesture of blessing: peace within the ending.`,
+    ],
+    ideas: [
+      `A new dawn is coming`,
+      `From the lowest point, the only way is up`,
+      `Let go of what needs to end; don't resist`,
+      `An ending that brings peace and calm`,
+      `Time to heal and recover`,
+      `A chance to start again`,
+    ],
+    nuances: [
+      `Cutting ties in love or work`,
+    ],
+    reversedIdeas: [
+      `Recovery; healing and rest`,
+      `Moving toward new horizons`,
+      `Acceptance; forgiving what happened`,
+      `Learning through hardship; understanding mistakes`,
+      `Small, steady improvements; finding solutions`,
+      `Rebuilding; being a survivor`,
+      `Discomfort that leads to healing`,
+    ],
+    reversedNuances: [
+      `Slow recovery; occasional setbacks`,
     ],
     inReading: {
       upright: `a complete ending, and the dawn after it`,
@@ -1926,6 +3066,24 @@ const CARDS = [
       `The sword held up: alertness and readiness to learn.`,
       `The birds in the sky: thoughts taking flight.`,
     ],
+    ideas: [
+      `Curious mind full of ideas`,
+      `Hungry to learn; student energy`,
+      `Good communication; talkative and open`,
+      `Great ideas for work; good news`,
+      `Sharp observer; reads between the lines`,
+      `New perspectives`,
+      `Write it down and plan it`,
+    ],
+    nuances: [
+      `Needs grounding to turn ideas into action`,
+      `Prefers realism over fairy-tale romance`,
+    ],
+    reversedNuances: [
+      `Things unclear; feeling confused or overwhelmed`,
+      `Ideas without a plan`,
+      `Overthinking; hard to decide`,
+    ],
     inReading: {
       upright: `a curious, alert mind eager to learn`,
       reversed: `a mind that needs to slow down`,
@@ -1961,6 +3119,25 @@ const CARDS = [
       `The windblown trees: the force of an idea in motion.`,
       `The sword raised high: determination and focus.`,
     ],
+    ideas: [
+      `Quick thinking; high energy; dynamic`,
+      `Driven by ideas; on a mission to succeed`,
+      `Ambitious and action-focused; forward-thinking`,
+      `Clear, focused mind (helped by meditation)`,
+      `Stimulating; makes you think`,
+    ],
+    nuances: [
+      `Time for quick action`,
+      `Needs grounding to avoid burnout`,
+    ],
+    reversedIdeas: [
+      `Slow down; ground yourself`,
+      `Think before you speak`,
+    ],
+    reversedNuances: [
+      `Restless, always on the go; burnout risk`,
+      `Changing direction often; overactive mind`,
+    ],
     inReading: {
       upright: `quick thinking and driven focus`,
       reversed: `speed outrunning thought`,
@@ -1989,6 +3166,24 @@ const CARDS = [
       `The upright sword: clear, honest perception.`,
       `The open hand: a welcome offered after the truth.`,
       `The single bird high above: a mind free to see far.`,
+    ],
+    ideas: [
+      `Clear, sharp, objective mind`,
+      `Honest, independent, wise`,
+      `Logical planning and organisation`,
+      `Solves problems; gives sound advice`,
+      `Letting go of the past; freeing yourself from fear`,
+      `Focused and disciplined; attention to detail`,
+    ],
+    nuances: [
+      `Careful in love; won't rush; needs a mental match`,
+      `Gives honest (constructive) feedback`,
+      `Can be too serious; less spontaneous`,
+    ],
+    reversedNuances: [
+      `Needing to sort out your thoughts`,
+      `Struggling to find the words to express yourself`,
+      `Holding past pain inside`,
     ],
     inReading: {
       upright: `clear perception and truth spoken kindly`,
@@ -2024,6 +3219,20 @@ const CARDS = [
       `The sword held upright: judgement that weighs before it cuts.`,
       `The butterflies on his throne: the transformation of thought.`,
       `The calm sky: clarity and a settled mind.`,
+    ],
+    ideas: [
+      `Clear thinking; clear insight`,
+      `Wise teacher; good advice`,
+      `Truth, fairness, ethics, authority`,
+      `Careful planning and analysis`,
+      `Loves a mental challenge`,
+    ],
+    nuances: [
+      `Think before you act`,
+    ],
+    reversedNuances: [
+      `Quiet thinking`,
+      `Strong opinions; changing views quickly`,
     ],
     inReading: {
       upright: `clear thinking and fair judgement`,
@@ -2062,6 +3271,24 @@ const CARDS = [
       `The garden of lilies: a fertile place to grow.`,
       `The arch in the hedge: the gateway to a new path.`,
     ],
+    ideas: [
+      `Planting seeds for growth; good foundations`,
+      `New job or career opportunities`,
+      `Success in money and business`,
+      `Promotions, pay rises, extra income`,
+      `New security in relationships`,
+      `Manifestation; receiving rewards`,
+      `Investing in yourself or your career`,
+      `Rebirth and purity; gardens and growth`,
+    ],
+    nuances: [
+      `Love through work; fertility (with other cards); inheritance`,
+    ],
+    reversedNuances: [
+      `Slow progress; delays`,
+      `Short-term income`,
+      `Needs better budgeting and planning`,
+    ],
     inReading: {
       upright: `a real opportunity and a seed to plant`,
       reversed: `a seed not yet ready to plant`,
@@ -2089,6 +3316,25 @@ const CARDS = [
       `The endless loop around the pentacles: the constant flow of everyday balance.`,
       `The ships on the waves: the ups and downs of life.`,
       `The dancing figure: lightness and adaptability.`,
+    ],
+    ideas: [
+      `Staying balanced and organised`,
+      `Adapting to changing circumstances`,
+      `Flexible priorities; good time management`,
+      `Having the resources to keep things in balance`,
+      `Working hard, staying on your feet`,
+    ],
+    nuances: [
+      `Juggling several commitments or incomes`,
+      `Weighing options about money or career`,
+      `Finances that go up and down`,
+    ],
+    reversedIdeas: [
+      `Time to reset priorities realistically`,
+    ],
+    reversedNuances: [
+      `Neglecting one area for another`,
+      `Too busy; overcommitted`,
     ],
     inReading: {
       upright: `adaptability and the dance of everyday life`,
@@ -2124,6 +3370,24 @@ const CARDS = [
       `The craftsman on the bench: skill being shared.`,
       `The monk and the patron with the plans: collaboration and shared vision.`,
     ],
+    ideas: [
+      `Teamwork and collaboration`,
+      `Building skills; learning and applying`,
+      `Hard work toward solid foundations`,
+      `Recognition for your contribution`,
+      `Valuable connections; trusting others`,
+      `Growth through dedication`,
+      `Teaching others; learning from a mentor`,
+      `Building your future step by step`,
+    ],
+    nuances: [
+      `Advice from people you trust`,
+    ],
+    reversedNuances: [
+      `Working alone; feeling left out`,
+      `Not yet recognised`,
+      `A routine with little new to offer`,
+    ],
     inReading: {
       upright: `meaningful teamwork and shared skill`,
       reversed: `a team that needs realigning`,
@@ -2151,6 +3415,28 @@ const CARDS = [
       `The pentacle held to his chest: holding on to feel safe.`,
       `Pentacles under his feet and on his crown: security sought in every part of life.`,
       `The city behind him: what is protected, and what is kept at a distance.`,
+    ],
+    ideas: [
+      `Financial security and stability`,
+      `Laying foundations for the future`,
+      `Steady income; savings; stable job`,
+      `Healthy boundaries and structure`,
+      `Grounded and safe`,
+      `Good foundations in relationships`,
+      `Respected for your achievements`,
+    ],
+    nuances: [
+      `Careful, conservative with money`,
+    ],
+    reversedIdeas: [
+      `Letting go of control and possessiveness`,
+      `Opening the heart; becoming open and vulnerable`,
+      `Being generous; more time for others`,
+      `Gaining courage`,
+      `Letting go of small habits and hoarding`,
+    ],
+    reversedNuances: [
+      `Being honest about where money comes from`,
     ],
     inReading: {
       upright: `a strong instinct to protect and conserve`,
@@ -2180,6 +3466,25 @@ const CARDS = [
       `The snow: hard times, and the cold of feeling left out.`,
       `The two figures together: companionship in times of need.`,
     ],
+    ideas: [
+      `It's temporary — this will pass`,
+      `Ask for help and support`,
+      `Look within and to past lessons for a way forward`,
+    ],
+    nuances: [
+      `Changes to money and stability`,
+    ],
+    reversedIdeas: [
+      `Recovery; coming out of hard times`,
+      `Hope, faith and support returning`,
+      `Seeing a way out`,
+      `One step at a time; slow improvements`,
+      `Healing from loss or illness`,
+      `Freedom from debt; stable home; new work`,
+      `Overcoming loneliness`,
+      `Relationships that last through everything`,
+      `Forgiveness and acceptance; finding comfort in spirit`,
+    ],
     inReading: {
       upright: `a hard winter, with a lit window nearby`,
       reversed: `the cold easing, and hope returning`,
@@ -2208,6 +3513,27 @@ const CARDS = [
       `Coins given into open hands: generosity with dignity.`,
       `The kneeling figures: the humility of receiving.`,
     ],
+    ideas: [
+      `Balance of giving and receiving`,
+      `Generosity; sharing from the heart`,
+      `Receiving help and support`,
+      `Gratitude for what you have`,
+      `Treating everyone with respect`,
+      `What you give comes back`,
+      `Fair rewards; enough to cover your needs`,
+      `Stability after hard times`,
+    ],
+    nuances: [
+      `Small, steady savings; avoid big risks`,
+      `Equal partnership with money`,
+    ],
+    reversedIdeas: [
+      `Take time to pamper yourself`,
+    ],
+    reversedNuances: [
+      `Giving too much without receiving`,
+      `One partner carrying the money`,
+    ],
     inReading: {
       upright: `the flow of giving and receiving`,
       reversed: `give and take asking for balance`,
@@ -2235,6 +3561,24 @@ const CARDS = [
       `The gardener leaning on his hoe: the pause to look at progress.`,
       `The pentacles on the vine: results ripening slowly.`,
       `His thoughtful face: deciding where to invest next.`,
+    ],
+    ideas: [
+      `Effort starting to pay off; seeds have grown`,
+      `Steady progress; perseverance`,
+      `Keep going; keep tending what you started`,
+      `Long-term vision; realistic goals`,
+      `Good time to save and build income`,
+      `Self-made success`,
+      `Growth also in relationships`,
+    ],
+    nuances: [
+      `Take stock: what worked, what didn't`,
+      `Learning from projects that didn't work out`,
+    ],
+    reversedNuances: [
+      `Unexpected results`,
+      `Delays and setbacks`,
+      `Expectations may be unrealistic`,
     ],
     inReading: {
       upright: `patience, and taking stock of what's growing`,
@@ -2270,6 +3614,25 @@ const CARDS = [
       `The finished pentacles on display: mastery built one piece at a time.`,
       `The distant town: the quiet of concentrated work.`,
     ],
+    ideas: [
+      `Building skills and talents; mastery through practice`,
+      `Learning, training, study`,
+      `Dedication and craftsmanship`,
+      `Earning through what you're good at`,
+      `Enjoying work; career progress`,
+      `Focus on your life's purpose`,
+      `Self-confidence; pride in your work`,
+      `Showing your work to the world`,
+      `A new hobby; a healthy routine`,
+      `Planning the next steps`,
+    ],
+    reversedIdeas: [
+      `Working on your inner self`,
+    ],
+    reversedNuances: [
+      `Needing more practice or preparation`,
+      `Perfectionism; workaholic tendencies`,
+    ],
     inReading: {
       upright: `devotion to a craft and steady practice`,
       reversed: `a craft that needs patience`,
@@ -2304,6 +3667,27 @@ const CARDS = [
       `The ripe vines: the fruits of patient cultivation.`,
       `The snail at her feet: the slow pace that brings lasting reward.`,
     ],
+    ideas: [
+      `Abundance, comfort and luxury`,
+      `Independence and self-sufficiency`,
+      `Rewards for your efforts; achievements`,
+      `Appreciate what you have and how far you've come`,
+      `Happiness and contentment`,
+      `Self-disciplined, wise, resourceful`,
+      `Healthy balance of money and love`,
+      `Success in business and career`,
+    ],
+    nuances: [
+      `Nature and animal lover; property; possible pregnancy`,
+    ],
+    reversedIdeas: [
+      `Realising money can't buy everything`,
+    ],
+    reversedNuances: [
+      `Time to look honestly at where you stand`,
+      `Guarded in love; independence that can isolate`,
+      `Setbacks and delays in abundance`,
+    ],
     inReading: {
       upright: `self-possession and a life you've cultivated`,
       reversed: `worth that lives beyond what you show`,
@@ -2331,6 +3715,26 @@ const CARDS = [
       `The old man with the dogs: wisdom and loyalty across generations.`,
       `The archway and the family: the shelter of lineage.`,
       `The pentacles in the shape of the Tree of Life: the spiritual within the material.`,
+    ],
+    ideas: [
+      `Lasting abundance in health and wealth`,
+      `Safety and stability in family`,
+      `Long-term security; a solid future`,
+      `Building a legacy; ancestry and tradition`,
+      `Sharing abundance with loved ones`,
+      `Community happiness and fulfilment`,
+      `Blessings, harmony, balance`,
+      `Stable, secure relationship`,
+      `Success and established status`,
+    ],
+    nuances: [
+      `Inheritance, pensions, big contracts`,
+      `Children or pregnancy (with other cards)`,
+    ],
+    reversedNuances: [
+      `Breaking with tradition`,
+      `Too focused on status`,
+      `Lacking long-term vision`,
     ],
     inReading: {
       upright: `legacy, family and lasting foundations`,
@@ -2367,6 +3771,27 @@ const CARDS = [
       `The ploughed field: ground ready for learning to take root.`,
       `The green landscape: growth, and the patience it asks for.`,
     ],
+    ideas: [
+      `Learning something new; building useful skills`,
+      `Good news about money or career`,
+      `New opportunities and ventures`,
+      `Planning goals and career moves`,
+      `Diligent, dependable, grounded`,
+      `Manifesting abundance; long-term success`,
+      `Steadier, more committed love`,
+      `Loves nature and the outdoors`,
+    ],
+    nuances: [
+      `News about health; a natural saver`,
+    ],
+    reversedIdeas: [
+      `Practical routines are needed`,
+    ],
+    reversedNuances: [
+      `Unsure how to set goals and plan`,
+      `Not ready for the next step in a relationship`,
+      `Things feel tedious; low motivation`,
+    ],
     inReading: {
       upright: `a student's devotion and a grounded new start`,
       reversed: `a start that wants to be small and practical`,
@@ -2402,6 +3827,22 @@ const CARDS = [
       `The ploughed field ahead: work that pays off slowly.`,
       `The oak leaves on his helmet: reliable, rooted strength.`,
     ],
+    ideas: [
+      `Steady, reliable growth; moving along nicely`,
+      `Loyal, patient, hardworking, responsible`,
+      `Practical plans; consistent income`,
+      `Building a career or a stable home`,
+      `Studies to get ahead; mature and independent`,
+      `Plans carefully, then acts`,
+    ],
+    nuances: [
+      `Puts work or security ahead of romance`,
+    ],
+    reversedNuances: [
+      `Bored or stuck in a routine`,
+      `Goals not clear yet`,
+      `Too focused on work or money`,
+    ],
     inReading: {
       upright: `steady, reliable progress`,
       reversed: `steadiness that has become a rut`,
@@ -2430,6 +3871,24 @@ const CARDS = [
       `The pentacle in her lap: care held close.`,
       `The rabbit in the corner: fertility and the gifts of nature.`,
       `The flowers and fruit around her: abundance in the everyday.`,
+    ],
+    ideas: [
+      `Wise, practical, nurturing, hardworking`,
+      `Down-to-earth; close to nature and animals`,
+      `Abundance, growth, fertility`,
+      `Caring for family; a secure, warm home`,
+      `Good with money and business`,
+      `A mentor or advisor; solid advice`,
+      `Quiet achievements; simple living`,
+      `Committed, long-term love`,
+    ],
+    reversedIdeas: [
+      `Self-care is needed; nurture yourself`,
+      `Pay attention to your own needs`,
+    ],
+    reversedNuances: [
+      `Rebalancing work and home; adjusting priorities`,
+      `Feeling stuck; needs grounding`,
     ],
     inReading: {
       upright: `practical care and a nurturing presence`,
@@ -2465,6 +3924,24 @@ const CARDS = [
       `The grape vines on his robe: abundance woven into who he is.`,
       `The bulls' heads on his throne: the steady, grounded strength of Taurus.`,
       `The castle behind him: lasting security, built over time.`,
+    ],
+    ideas: [
+      `Reliable, practical, grounded`,
+      `Wealth and financial security`,
+      `Good provider; strong family life`,
+      `Wise guidance; excellent money advice`,
+      `Principled, ethical leader`,
+      `Discipline and structure in career`,
+      `Realistic goals; slow and steady wins`,
+      `Safety and security; respected`,
+    ],
+    nuances: [
+      `Think about saving`,
+      `May hide deep insecurities`,
+    ],
+    reversedNuances: [
+      `Overworking; heavy load`,
+      `Needs grounding and balance`,
     ],
     inReading: {
       upright: `mature stewardship and grounded stability`,

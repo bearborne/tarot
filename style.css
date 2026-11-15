@@ -948,6 +948,29 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .carry-line::after { content: "”"; }
 
 /* What's in the picture */
+/* On the card page, under each side's meaning: how a summary reads it,
+   then its key ideas (the nuances a little dimmer). */
+.in-reading {
+  margin: 2px 0 14px;
+  text-align: center;
+  font-family: var(--read);
+  line-height: 1.45;
+}
+.in-reading dt { color: var(--gold); font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
+.in-reading dd { margin: 0 0 8px; }
+.key-ideas { margin: 4px 0 12px; }
+.key-ideas ul { margin: 0; padding: 0; list-style: none; text-align: center; }
+.key-ideas li { margin: 0 0 .45em; font-family: var(--read); line-height: 1.45; }
+.key-ideas li.nuance { color: var(--muted); }
+/* Under each card's line in "The reading": its ideas that connect, one per line */
+.summary-ideas {
+  display: block;
+  margin-top: 4px;
+  white-space: pre-line;
+  color: var(--muted);
+  font-size: .92em;
+  line-height: 1.45;
+}
 .picture-guide ul { margin: 0; padding: 0; list-style: none; }
 .picture-guide li { margin: 0 0 .8em; line-height: 1.45; }
 .picture-guide strong {

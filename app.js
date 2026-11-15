@@ -3520,13 +3520,15 @@ function threadable(node, cards, head) {
 
 function listItems(items) {
   const ul = el("ul");
-  items.forEach(({ head, text, sub, link, cards }) => {
+  items.forEach(({ head, text, ideas, sub, link, cards }) => {
     const li = el("li");
     threadable(li, cards, head);
     if (head) li.append(el("strong", "", head));
     // link: how this card follows the one before it
     if (link) li.append(el("em", "summary-link", `↳ ${cap(link)}`));
-    li.append(el("span", "", text));
+    if (text) li.append(el("span", "", text));
+    // ideas: the card's key ideas that connect to the rest of the reading
+    if (ideas && ideas.length) li.append(el("span", "summary-ideas", ideas.join("\n")));
     if (sub) li.append(el("em", "summary-q", sub));
     ul.append(li);
   });
@@ -3615,6 +3617,36 @@ function drawThread(box, targets, lit, animate) {
       [{ opacity: 0, transform: "scale(0)" }, { opacity: 1, transform: "scale(1)" }],
       { duration: 300, delay: k * 140, fill: "backwards", easing: "ease-out" }));
   }
+}
+
+// ── Ideas that connect ──────────────────────────────────
+// For each card, the key ideas (of the side it fell on) that speak most to
+// the other cards: an idea scores for each theme it shares with another
+// card's keywords and ideas, and more when it names one of that card's
+// keywords outright. The warm ideas win ties over the nuances. One card
+// alone simply shows its first few ideas.
+function connectedIdeas(entries, per = 2) {
+  const linesOf = (e) => { const { ideas, nuances } = ideasFor(e.card, e.reversed); return { ideas, nuances }; };
+  const profile = entries.map((e) => {
+    const words = filled(keywordsFor(e.card, e.reversed)).map((w) => w.toLowerCase());
+    const { ideas, nuances } = linesOf(e);
+    const themes = {};
+    [...words, ...ideas, ...nuances].flatMap(themesOf).forEach((t) => { themes[t] = (themes[t] || 0) + 1; });
+    return { words, themes };
+  });
+  return entries.map((e, i) => {
+    const { ideas, nuances } = linesOf(e);
+    if (entries.length === 1) return ideas.slice(0, 3);
+    const scored = [...ideas.map((x) => [x, 0.5]), ...nuances.map((x) => [x, 0])].map(([x, bonus], k) => {
+      const low = x.toLowerCase(), mine = themesOf(x);
+      const score = profile.reduce((sum, o, j) => j === i ? sum
+        : sum + mine.reduce((s, t) => s + Math.min(o.themes[t] || 0, 2), 0)
+              + o.words.filter((w) => w.length > 3 && low.includes(w)).length * 2, 0);
+      return { x, score: score + (score ? bonus : 0), k };
+    });
+    const linked = scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score || a.k - b.k);
+    return (linked.length ? linked : scored).slice(0, per).map((s) => s.x);
+  });
 }
 
 // entries: [{ card, reversed, label, question }]
@@ -3771,6 +3803,9 @@ function openSummary(entries, title, magic = false, named = null) {
   // Shared words: their tiles alone (no title of their own), under the
   // reading's title. A fresh copy each time the reading is redrawn.
   const sharedTiles = () => patterns["Shared words"] && partSection(patterns["Shared words"], cardCols).querySelector(".tiles");
+  // Each card's key ideas that relate most to the other cards, shown under
+  // its line in "The reading".
+  const linked = connectedIdeas(entries);
   let current = 0;
   let placeAsks = () => {};   // set once the columns are built (below)
   const render = () => {
@@ -3801,6 +3836,7 @@ function openSummary(entries, title, magic = false, named = null) {
         head: placeName(lens, i, e),
         // The place is already the heading, so drop the line's own "Ahead: " lead-in.
         text: (() => { const t = placeLine(e, lens.places[i], i).replace(/^[^:]+:\s*/, ""); return t.charAt(0).toUpperCase() + t.slice(1); })(),
+        ideas: linked[i],
         sub: lens.own && e.question ? e.question : "",
         link: i ? pairLine(entries[i - 1], e) : "",
         cards: [i],
@@ -3816,6 +3852,9 @@ function openSummary(entries, title, magic = false, named = null) {
       const sw = sharedTiles();
       if (sw) sec.append(sw);
       if (arc) sec.append(el("p", "summary-arc", arc));
+      if (linked.some((l) => l.length)) sec.append(listItems(entries.map((e, i) => ({
+        head: e.label || e.card.name, text: "", ideas: linked[i], cards: [i],
+      }))));
       lensPart.append(sec);
     }
     showThread();
@@ -4950,9 +4989,18 @@ function correspondences(card) {
   return box;
 }
 
-// One side of the card, "Upright" or "Reversed": its meaning, plus its own
-// keywords (for the side the card didn't fall on, when the two sides have
-// different ones) and questions.
+// A side's key ideas: the warm ones, and the nuances (neutral, or
+// depending on how they're framed).
+function ideasFor(card, rev) {
+  return {
+    ideas: filled(rev ? card.reversedIdeas : card.ideas),
+    nuances: filled(rev ? card.reversedNuances : card.nuances),
+  };
+}
+
+// One side of the card, "Upright" or "Reversed": its meaning, how a
+// summary reads it, its key ideas, plus its own keywords (for the side the
+// card didn't fall on, when the two sides have different ones) and questions.
 function meaning(card, rev, fell) {
   const box = el("div", "details-text meaning");
   box.append(el("p", "asks-title", rev ? "Reversed" : "Upright"));
@@ -4964,6 +5012,28 @@ function meaning(card, rev, fell) {
   const t = el("div");
   fillText(t, rev ? card.reversed : card.short, rev ? "" : "Add a short description for this card in cards.js.");
   box.append(t);
+  // How the summary reads this side, in short.
+  const r = card.inReading || {};
+  const said = [
+    ["In a reading", rev ? r.reversed : r.upright],
+    ["Advice", rev ? r.reversedAdvice || r.advice : r.advice],
+    ["Challenge", rev ? "" : r.challenge],
+  ].filter(([, x]) => (x || "").trim());
+  if (said.length) {
+    const dl = el("dl", "in-reading");
+    said.forEach(([k, x]) => dl.append(el("dt", "", k), el("dd", "", cap(x.trim()))));
+    box.append(dl);
+  }
+  const { ideas, nuances } = ideasFor(card, rev);
+  if (ideas.length || nuances.length) {
+    const sec = el("div", "key-ideas");
+    sec.append(el("p", "asks-title", "Key ideas"));
+    const ul = el("ul");
+    ideas.forEach((x) => ul.append(el("li", "", x)));
+    nuances.forEach((x) => ul.append(el("li", "nuance", x)));
+    sec.append(ul);
+    box.append(sec);
+  }
   if (hasRevQuestions(card)) {
     const asks = el("div", "asks");
     fillQuestions(asks, questionsFor(card, rev));
