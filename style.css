@@ -526,19 +526,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* The light of the pick magic, above the flying card; taps go through */
 .pickfx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 21; pointer-events: none; }
 
-/* The Pick magic button on the home screen */
-.pick-fx-btn {
-  flex: none;
-  min-width: 8.5rem;
-  padding: 7px 14px;
-  border: 1px solid rgba(201, 169, 110, .6);
-  border-radius: 999px;
-  background: rgba(201, 169, 110, .08);
-  color: var(--gold);
-  font-size: .95rem;
-  white-space: nowrap;
-}
-.pick-fx-btn:active { background: rgba(201, 169, 110, .2); }
 
 /* When the spread is done: the summary and a new reading */
 .end-actions {

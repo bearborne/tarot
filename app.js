@@ -61,10 +61,6 @@ const PICK_FX = [
   { id: "classic",  name: "Slow flight" },
 ];
 let pickFx = "surprise";
-try {
-  const saved = localStorage.getItem("tarot-pickfx");
-  if (PICK_FX.some((p) => p.id === saved)) pickFx = saved;
-} catch {}
 
 // A fresh one for every card pulled, never the same one twice in a row
 // (also across readings).
@@ -409,25 +405,6 @@ OPTIONS.forEach((o) => {
   row.append(text, box);
   $("options").append(row);
 });
-
-// Pick magic: one button that steps through the styles.
-{
-  const row = el("div", "option");
-  const text = el("span", "option-text");
-  text.append(el("span", "option-name", "Pick magic"), el("span", "option-note", "How a picked card flies to the spread"));
-  const btn = el("button", "pick-fx-btn");
-  const show = () => { btn.textContent = PICK_FX.find((p) => p.id === pickFx).name; };
-  show();
-  btn.setAttribute("aria-label", "Pick magic: tap to change");
-  btn.addEventListener("click", () => {
-    const i = PICK_FX.findIndex((p) => p.id === pickFx);
-    pickFx = PICK_FX[(i + 1) % PICK_FX.length].id;
-    try { localStorage.setItem("tarot-pickfx", pickFx); } catch {}
-    show();
-  });
-  row.append(text, btn);
-  $("options").append(row);
-}
 
 // When the page is shown again (back button, reopened app), make the
 // switches match what is saved, so what you see is what is used.
