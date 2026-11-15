@@ -558,7 +558,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* The reading's summary */
 .summary-title { margin-bottom: 10px; }
 /* The summary's title is the reading's name: it looks like the heading, and renames on tap */
-.reading-title.summary-name { max-width: 100%; font: inherit; letter-spacing: inherit; color: inherit; text-shadow: none; }
+.reading-title.summary-name { max-width: calc(100% - 2.4em); font: inherit; letter-spacing: inherit; color: inherit; text-shadow: none; }
 .summary-title .rename-box .rename-input.big { font-size: max(1.2rem, 16px); }
 /* LAYOUT RULE: a row of a reading's cards always shows every card, in
    even rows (--cols set by app.js), never cut off at the screen's edge.
@@ -1206,13 +1206,23 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .reading-meta { color: var(--muted); font-size: .85rem; }
 .reading-head { align-items: flex-start; gap: 12px; }
 .reading-actions { flex: none; }
+/* The name itself is centred; the pencil hangs just outside it on the
+   right, so it doesn't push the name off centre. Room is kept for it. */
 .reading-title {
+  position: relative;
   justify-content: center;
-  max-width: min(86vw, 24rem);
+  max-width: calc(min(86vw, 24rem) - 2.4em);
   font-family: "IM Fell English SC", var(--read);
   font-size: 1.3rem;
   letter-spacing: .03em;
   text-shadow: 0 0 10px rgba(255, 214, 130, .35);
+}
+.reading-title .rename-mark {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  margin-left: 8px;
+  transform: translateY(-50%);
 }
 .rename-input {
   width: min(78vw, 20rem);

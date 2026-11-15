@@ -2737,36 +2737,73 @@ function themesOf(keyword) {
 }
 
 // ── A reading's name ────────────────────────────────────
-// One esoteric word, borrowed from World of Warcraft talents (priest, druid,
-// mage, warlock, paladin and a few others) and sorted by the theme it speaks
-// to. Hard themes get gentle words: comfort and resolve, not doom. The cards'
-// keywords vote for their themes, the first (most central) keywords counting
-// most; the strongest theme gives the name. Which of its words is used
+// Two words that describe the reading: an image for its strongest theme,
+// coloured by a word from its second ("Quiet Dawn": stillness over renewal;
+// "Clear Heart": truth over the heart). Hard themes get gentle words:
+// comfort and resolve, not doom. The cards' keywords vote for their themes,
+// the first (most central) keywords counting most. Which words are used
 // depends on the cards themselves, so the same cards always get the same
 // name, and different readings of one theme get different ones.
+//   images – what the theme looks like (the name's second word)
+//   tones  – how it colours another theme (the name's first word)
 const THEME_NAMES = {
-  beginnings: ["Germination", "Kindling", "Ignition", "Impetus", "Awakening", "Dawnlight", "Flashpoint"],
-  intuition:  ["Epiphany", "Clearcasting", "Phantasm", "Starweaver", "Moonkin", "Forewarning", "Grimoire"],
-  heart:      ["Benevolence", "Benediction", "Lifebloom", "Everbloom", "Lenience", "Veneration"],
-  together:   ["Resonance", "Sanctuary", "Symbiosis", "Solidarity", "Soulwell", "Intercession"],
-  stillness:  ["Tranquility", "Hibernate", "Solstice", "Snowdrift", "Intangibility"],
-  reflection: ["Evocation", "Reverberate", "Brainstorm", "Mastermind", "Afterimage", "Illumine"],
-  change:     ["Cyclone", "Supernova", "Typhoon", "Emberstorm", "Backdraft", "Inferno", "Hammerfall", "Gateway"],
-  renewal:    ["Rebirth", "Regenesis", "Reinvigoration", "Verdancy", "Restitution", "Redemption", "Reclamation", "Aurora"],
-  truth:      ["Eureka", "Adjudication", "Luminosity", "Beacon", "Jurisdiction"],
-  will:       ["Persistence", "Intensity", "Valiance", "Soulburn", "Shadowfury", "Obduracy", "Cavalier"],
-  structure:  ["Ironbark", "Stonebark", "Oakskin", "Permafrost", "Bulwark", "Sentinel"],
-  abundance:  ["Prosperity", "Overgrowth", "Cultivation", "Abundance", "Recompense"],
-  craft:      ["Lightweaver", "Amplification", "Spellslinger", "Rimecaster", "Masterwork", "Lightforged"],
-  joy:        ["Serendipity", "Liveliness", "Flourish", "Radiance", "Awestruck"],
-  freedom:    ["Slipstream", "Forestwalk", "Dreamwalk", "Levitate", "Shimmer", "Liberation"],
-  shadow:     ["Solace", "Stoicism", "Nightfall", "Soulstone", "Absolution", "Extrication"],
-  balance:    ["Eclipse", "Atonement", "Duality", "Harmony"],
-  choice:     ["Augury", "Prescience", "Divinity", "Lightbringer"],
-  self:       ["Apotheosis", "Ascendance", "Enlightenment", "Incarnation", "Sanctification"],
+  // Images are things you could picture; tones are words that sit well
+  // in front of almost any of them.
+  beginnings: { images: ["Dawn", "Seed", "Spark", "Threshold", "Doorway", "Sunrise"],
+                tones:  ["First", "Kindled", "Budding", "Early", "Waking"] },
+  intuition:  { images: ["Moon", "Lantern", "Dream", "Oracle", "Mist", "Starlight"],
+                tones:  ["Moonlit", "Dreaming", "Hidden", "Whispering", "Silver", "Veiled"] },
+  heart:      { images: ["Heart", "Rose", "Chalice", "Bloom", "Embrace"],
+                tones:  ["Tender", "Open", "Warm", "Heartfelt", "Beloved", "Gentle"] },
+  together:   { images: ["Circle", "Hearth", "Bridge", "Table", "Campfire"],
+                tones:  ["Shared", "Kindred", "Woven"] },
+  stillness:  { images: ["Haven", "Harbour", "Stillwater", "Respite", "Snowfall", "Hush"],
+                tones:  ["Quiet", "Still", "Resting", "Soft", "Hushed", "Slow"] },
+  reflection: { images: ["Mirror", "Well", "Pool", "Lamp", "Hermitage"],
+                tones:  ["Inward", "Deep", "Wise", "Patient", "Pensive"] },
+  change:     { images: ["Tide", "Crossing", "Wheel", "Season", "Passage", "River"],
+                tones:  ["Turning", "Shifting", "Rising", "Wakening", "Tidal"] },
+  renewal:    { images: ["Spring", "Phoenix", "Bloom", "Sapling", "Morning", "Rain"],
+                tones:  ["Healing", "Greening", "Rekindled", "Renewed", "Hopeful", "Reborn"] },
+  truth:      { images: ["Sword", "Light", "Daybreak", "Beacon", "Window", "Bell"],
+                tones:  ["Clear", "Bright", "Honest", "True", "Unveiled", "Lucid"] },
+  will:       { images: ["Flame", "Torch", "Banner", "Arrow", "Forge", "Lion"],
+                tones:  ["Brave", "Burning", "Steadfast", "Bold", "Fierce", "Unbowed"] },
+  structure:  { images: ["Foundation", "Keystone", "Oak", "Pillar", "Cornerstone", "Mountain"],
+                tones:  ["Steady", "Rooted", "Grounded", "Sturdy", "Enduring"] },
+  abundance:  { images: ["Harvest", "Orchard", "Garden", "Bounty", "Cup", "Vineyard"],
+                tones:  ["Golden", "Generous", "Blessed", "Ripening"] },
+  craft:      { images: ["Workshop", "Loom", "Anvil", "Kiln", "Chisel"],
+                tones:  ["Patient", "Devoted", "Careful"] },
+  joy:        { images: ["Sun", "Feast", "Festival", "Dance", "Song", "Summer"],
+                tones:  ["Sunlit", "Joyful", "Radiant", "Golden", "Bright", "Singing"] },
+  freedom:    { images: ["Road", "Horizon", "Journey", "Wings", "Voyage", "Path"],
+                tones:  ["Wandering", "Wild", "Roaming", "Untamed", "Free", "Windswept"] },
+  shadow:     { images: ["Candle", "Shelter", "Night", "Ember", "Cloak", "Refuge"],
+                tones:  ["Gentle", "Sheltered", "Soothing", "Candlelit", "Tender", "Mending"] },
+  balance:    { images: ["Scales", "Equinox", "Twilight", "Halfmoon"],
+                tones:  ["Balanced", "Poised"] },
+  choice:     { images: ["Crossroads", "Compass", "Signpost", "Fork", "Key"],
+                tones:  ["Chosen", "Guiding", "Seeking", "Wayfinding"] },
+  self:       { images: ["Crown", "Star", "Voice", "Throne"],
+                tones:  ["Radiant", "Whole", "True", "Shining", "Sovereign"] },
 };
 // When no card has a known theme.
-const WILD_NAMES = ["Starfall", "Arcanosphere", "Cinderstorm", "Wintertide", "Consecration"];
+const WILD_NAMES = ["Open Sky", "Starlit Road", "Quiet Wonder", "Wandering Star", "Unwritten Page"];
+
+// Two words that don't say the same thing twice ("Rose Rose",
+// "Mended Mending").
+function nameFits(tone, image) {
+  const a = tone.toLowerCase(), b = image.toLowerCase();
+  return a.slice(0, 4) !== b.slice(0, 4);
+}
+
+// The names two themes make together, the first theme giving the image.
+function namesFor(main, colour) {
+  const { images } = THEME_NAMES[main];
+  const { tones } = THEME_NAMES[colour || main];
+  return images.flatMap((img) => tones.filter((tone) => nameFits(tone, img)).map((tone) => `${tone} ${img}`));
+}
 
 // A small number made from the cards, the same every time for the same cards.
 function cardsHash(cards) {
@@ -2798,19 +2835,28 @@ function readingThemes(cards) {
 // cards: [{ card, reversed }]. "" with no cards.
 function nameReading(cards) {
   if (!cards.length) return "";
-  const pool = THEME_NAMES[readingThemes(cards)[0]] || WILD_NAMES;
+  const [main, colour] = readingThemes(cards);
+  if (!main) return WILD_NAMES[cardsHash(cards) % WILD_NAMES.length];
+  const pool = namesFor(main, colour);
   return pool[cardsHash(cards) % pool.length];
 }
 
 // Other names that would suit the reading, offered while renaming: the
-// words of its three strongest themes.
-// They take turns, one word from each theme, so the row mixes them.
+// pairings of its three strongest themes, each theme taking a turn as the
+// image, so the row mixes them.
 function nameIdeas(cards) {
-  const pools = readingThemes(cards).slice(0, 3).map((t) => THEME_NAMES[t]);
-  if (!pools.length) return WILD_NAMES.slice();
+  const top = readingThemes(cards).slice(0, 3);
+  if (!top.length) return WILD_NAMES.slice();
+  const h = cardsHash(cards);
+  const pairs = top.length === 1 ? [[top[0], top[0]]]
+    : top.flatMap((a) => top.filter((b) => b !== a).map((b) => [a, b]));
+  const pools = pairs.map(([a, b], k) => {
+    const p = namesFor(a, b);
+    return p.map((_, i) => p[(i + h + k * 5) % p.length]);   // a different start per pairing
+  });
   const ideas = [];
-  for (let i = 0; i < Math.max(...pools.map((p) => p.length)); i++) pools.forEach((p) => p[i] && ideas.push(p[i]));
-  return [...new Set(ideas)];
+  for (let i = 0; ideas.length < 12 && i < 36; i++) pools.forEach((p) => p[i] && ideas.push(p[i]));
+  return [...new Set(ideas)].slice(0, 12);
 }
 
 function spreadKeyword(slot) {
