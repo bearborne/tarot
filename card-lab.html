@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Card Lab</title>
+<style>
+  :root { --bg:#0c0b11; --panel:#16131f; --ink:#e9e2d3; --muted:#a79f8f; --gold:#c9a96e; --line:rgba(201,169,110,.18);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--serif); font-size:14px; }
+  .app { display:grid; grid-template-columns:1fr 380px; height:100vh; }
+  .stage { display:flex; align-items:center; justify-content:center; gap:28px; padding:20px; overflow:hidden; }
+  .big { height:min(86vh, 760px); aspect-ratio:140/245; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,.6); overflow:hidden; }
+  .big svg, .small svg { width:100%; height:100%; display:block; }
+  .side { display:flex; flex-direction:column; align-items:center; gap:18px; }
+  .small { width:84px; aspect-ratio:140/245; border-radius:5px; overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,.5); }
+  .icons { display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .icons div { overflow:hidden; border-radius:22%; outline:1px solid #3a3448; }
+  .icons div svg { width:100%; height:100%; display:block; }
+  .cap { font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .panel { background:var(--panel); border-left:1px solid var(--line); overflow-y:auto; padding:12px 14px 40px; }
+  h1 { margin:0 0 2px; font-weight:normal; color:var(--gold); font-size:20px; }
+  .sub { margin:0 0 10px; color:var(--muted); font-size:12px; font-style:italic; }
+  details { border-top:1px solid var(--line); padding:8px 0; }
+  summary { cursor:pointer; color:var(--gold); font-size:15px; list-style:none; user-select:none; }
+  summary::before { content:"▸ "; color:var(--muted); }
+  details[open] > summary::before { content:"▾ "; }
+  .row { display:grid; grid-template-columns:118px 1fr 48px; gap:8px; align-items:center; margin:7px 0; }
+  .row label { color:var(--muted); font-size:12.5px; }
+  .row output { text-align:right; font-variant-numeric:tabular-nums; font-size:12px; }
+  input[type=range] { width:100%; accent-color:var(--gold); }
+  input[type=color] { width:30px; height:22px; padding:0; border:1px solid var(--line); background:none; border-radius:4px; cursor:pointer; }
+  .chk { display:flex; gap:6px; align-items:center; color:var(--muted); font-size:12.5px; margin:6px 0; }
+  .swatches { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0; color:var(--muted); font-size:12px; }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
+  button { font:inherit; font-size:13px; color:var(--ink); background:#241f31; border:1px solid var(--line); border-radius:7px; padding:6px 10px; cursor:pointer; }
+  button:hover { border-color:var(--gold); }
+  button.main { background:#3a2a56; border-color:#7d5bbf; }
+  textarea { width:100%; height:150px; background:#0f0d16; color:var(--ink); border:1px solid var(--line); border-radius:6px; font:11.5px/1.4 Consolas, monospace; padding:8px; }
+  @media (max-width: 800px) {
+    .app { grid-template-columns:1fr; grid-template-rows:auto auto; height:auto; }
+    .stage { position:sticky; top:0; z-index:1; background:var(--bg); height:52vh; padding:10px 16px; gap:14px; }
+    .big { height:100%; }
+    .small { width:52px; }
+    .panel { border-left:0; border-top:1px solid var(--line); padding:12px 16px 40px; }
+    .row { grid-template-columns:100px 1fr 44px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage">
+    <div class="big" id="big"></div>
+    <div class="side">
+      <div class="small" id="small"></div>
+      <div class="cap">In a spread</div>
+      <div class="icons">
+        <div id="i1" style="width:96px;height:96px"></div>
+        <div id="i2" style="width:56px;height:56px"></div>
+        <div id="i3" style="width:32px;height:32px;border-radius:7px"></div>
+      </div>
+      <div class="cap">App icon</div>
+    </div>
+  </div>
+  <div class="panel">
+    <h1>Card Lab</h1>
+    <p class="sub">The bear paw card back and app icon, with every part open to tweak. Your settings are kept in this browser.</p>
+    <div class="btns">
+      <button class="main" data-preset="constellation">Constellation paw</button>
+      <button data-preset="dots">Thick dots</button>
+      <button data-preset="solid">Solid line</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+    <div id="controls"></div>
+    <details open>
+      <summary>Save</summary>
+      <div class="btns">
+        <button class="main" id="dlCard">Download card-back.svg</button>
+        <button id="dlIcon">Download icon.svg</button>
+      </div>
+      <p class="sub">Or copy the settings and paste them to Claude to put them in the app.</p>
+      <textarea id="out" readonly></textarea>
+      <div class="btns"><button id="copyBtn">Copy settings</button></div>
+    </details>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const STORE = "card-lab-v1";
+
+// ---------- settings ----------
+// [key, label, min, max, step, default]  (a group title is a plain string)
+const SPEC = [
+  { title: "Paw outline", open: true, rows: [
+    ["pawScale", "Paw size", .2, .5, .005, .355],
+    ["pawY", "Paw up / down", -20, 20, .1, -4.7],
+    ["fill", "Fill strength", 0, .4, .01, .05],
+    ["lineOp", "Line strength", 0, 1, .01, .45],
+    ["lineW", "Line width", .3, 5, .1, 1.1],
+    ["starSize", "Star size", 0, 8, .1, 3.4],
+    ["starGap", "Star spacing", 6, 40, .5, 15],
+    ["starOp", "Star strength", 0, 1, .01, 1],
+    { chk: "innerDots", label: "Faint dotted line inside each shape", def: false },
+  ]},
+  { title: "Claw constellations", rows: [
+    ["tipSize", "Tip star size", 0, 14, .1, 7.5],
+    ["midSize", "Middle star", 0, 5, .1, 2.1],
+    ["baseSize", "Bottom star", 0, 5, .1, 2.6],
+    ["clawLineOp", "Line strength", 0, 1, .01, .75],
+    ["clawLineW", "Line width", .2, 3, .1, 1.1],
+    ["reach", "Reach past tip", -6, 24, .5, 8],
+    ["bend", "Bend outward", -8, 8, .1, 3.2],
+    ["clawGap", "Gap above toe", -6, 12, .5, 0],
+  ]},
+  { title: "Ring", rows: [
+    ["ringR", "Size", 30, 62, .5, 47],
+    ["ringN", "Dots (×4)", 8, 40, 1, 19],
+    ["ringDot", "Dot size", 0, 3, .05, 1.2],
+    ["ringSolid", "Solid ring width", 0, 3, .05, 0],
+    ["glowOp", "Centre glow", 0, .5, .01, .1],
+    ["glowR", "Glow size", 30, 90, 1, 62],
+  ]},
+  { title: "Frame and corners", rows: [
+    ["frameW", "Outer frame", 0, 3, .05, 1.4],
+    ["frame2W", "Inner frame", 0, 2, .05, .7],
+    ["frameGap", "Gap between", 2, 8, .25, 4],
+    ["cornerSize", "Corner size", 0, 2, .05, 1],
+    ["cornerW", "Corner line width", .3, 1.5, .05, .75],
+    ["cornerIn", "Corner inset", 12, 30, .5, 19],
+    { chk: "corners", label: "Show the tarot suits in the corners", def: true },
+  ]},
+  { title: "App icon", rows: [
+    ["iconScale", "Paw size", 1, 2.6, .01, 2.1],
+    ["iconY", "Paw up / down", -60, 60, 1, 0],
+    ["iconLineW", "Line width", .5, 6, .1, 2.6],
+    ["iconStar", "Outline star size", 0, 8, .1, 0],
+    { chk: "iconSolid", label: "Solid outline on the icon (reads better small)", def: true },
+    { chk: "iconRing", label: "Ring round the icon", def: false },
+  ]},
+  { title: "Colours", colors: [["bg", "Card", "#2a2436"], ["iconBg", "Icon", "#15131c"], ["gold1", "Gold light", "#f6e4ad"],
+    ["gold2", "Gold", "#d9b56f"], ["gold3", "Gold dark", "#9c7a3e"], ["star", "Stars", "#ecd59f"]] },
+];
+const DEF = {};
+SPEC.forEach(g => { (g.rows || []).forEach(r => Array.isArray(r) ? DEF[r[0]] = r[5] : DEF[r.chk] = r.def); (g.colors || []).forEach(c => DEF[c[0]] = c[2]); });
+
+const PRESETS = {
+  constellation: { fill: .05, lineOp: .45, lineW: 1.1, starSize: 3.4, starGap: 15, starOp: 1, innerDots: false },
+  dots: { fill: .06, lineOp: 0, lineW: 1.1, starSize: 4.4, starGap: 8.6, starOp: 1, innerDots: false },
+  solid: { fill: .1, lineOp: 1, lineW: 2.6, starSize: 0, starGap: 15, starOp: 1, innerDots: true },
+};
+
+let st = { ...DEF };
+try { const saved = JSON.parse(localStorage.getItem(STORE) || "null"); if (saved) st = { ...DEF, ...saved }; } catch (e) {}
+const save = () => { try { localStorage.setItem(STORE, JSON.stringify(st)); } catch (e) {} };
+
+// ---------- paw geometry (measured from the reference, centre line x = 130) ----------
+const SHAPES = [
+  { d: "M130,125 C137,131 144,140 160,143 C183,147 201,161 201,183 C201,203 195,219 178,225 C162,229 147,222 130,222 C113,222 98,229 82,225 C65,219 59,203 59,183 C59,161 77,147 100,143 C116,140 123,131 130,125Z", c: [130,186], k: .8 },
+  { d: "M130,68 C139.9,79.55 146.5,87.8 146.5,101 C146.5,112.05 138.25,118 130,118 C121.75,118 113.5,112.05 113.5,101 C113.5,87.8 120.1,79.55 130,68Z", c: [130,98], k: .7 },
+  { d: "M87,79 C97.5,91.6 104.5,100.6 104.5,115 C104.5,126.7 95.75,133 87,133 C78.25,133 69.5,126.7 69.5,115 C69.5,100.6 76.5,91.6 87,79Z", c: [87.5,111], k: .7 },
+  { d: "M173,79 C183.5,91.6 190.5,100.6 190.5,115 C190.5,126.7 181.75,133 173,133 C164.25,133 155.5,126.7 155.5,115 C155.5,100.6 162.5,91.6 173,79Z", c: [172.5,111], k: .7 },
+  { d: "M57,112 C63.6,121.45 68,128.2 68,139 C68,150.05 62.5,156 57,156 C51.5,156 46,150.05 46,139 C46,128.2 50.4,121.45 57,112Z", c: [57,137], k: .66 },
+  { d: "M203,112 C209.6,121.45 214,128.2 214,139 C214,150.05 208.5,156 203,156 C197.5,156 192,150.05 192,139 C192,128.2 196.4,121.45 203,112Z", c: [203,137], k: .66 },
+];
+const CLAWS = [[130,33,130,60],[92,51,84,73],[168,51,176,73],[59,85,53,107],[201,85,207,107]];
+// Path lengths, so stars can be spaced evenly with a whole number on each shape.
+(() => { const ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"); s.style.position = "absolute"; s.style.width = 0; document.body.appendChild(s);
+  SHAPES.forEach(sh => { const p = document.createElementNS(ns, "path"); p.setAttribute("d", sh.d); s.appendChild(p); sh.len = p.getTotalLength(); }); s.remove(); })();
+
+const r2 = n => +(+n).toFixed(2);
+const STAR = "M0,-1 Q.13,-.13 .8,0 Q.13,.13 0,1 Q-.13,.13 -.8,0 Q-.13,-.13 0,-1Z";
+
+const defs = (p, o) => `<defs>
+    <linearGradient id="${p}gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${o.gold1}"/><stop offset=".45" stop-color="${o.gold2}"/><stop offset="1" stop-color="${o.gold3}"/></linearGradient>
+    <linearGradient id="${p}line" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${o.gold1}"/><stop offset="1" stop-color="${o.gold2}"/></linearGradient>
+    <radialGradient id="${p}glow"><stop offset="0" stop-color="${o.star}" stop-opacity="${o.glowOp}"/><stop offset="1" stop-color="${o.star}" stop-opacity="0"/></radialGradient>
+  </defs>`;
+
+// The paw in its own 260-wide grid. look = { fill, lineOp, lineW, starSize, starGap, starOp, innerDots }
+function paw(p, o, look) {
+  let out = "";
+  const lineStroke = look.lineOp >= .999 ? `url(#${p}line)` : o.star;
+  out += `<g fill="${o.gold2}" fill-opacity="${look.fill}" stroke="${lineStroke}" stroke-opacity="${look.lineOp}" stroke-width="${look.lineW}" stroke-linejoin="round">${SHAPES.map(s => `<path d="${s.d}"/>`).join("")}</g>`;
+  if (look.innerDots) out += `<g fill="none" stroke="${o.gold2}" stroke-opacity=".45" stroke-dasharray="0 1" stroke-linecap="round">${SHAPES.map(s =>
+    `<path d="${s.d}" pathLength="60" stroke-width="${r2(1.1/s.k)}" transform="translate(${s.c[0]} ${s.c[1]}) scale(${s.k}) translate(${-s.c[0]} ${-s.c[1]})"/>`).join("")}</g>`;
+  if (look.starSize > 0) out += `<g fill="none" stroke="${o.star}" stroke-opacity="${look.starOp}" stroke-width="${look.starSize}" stroke-dasharray="0 1" stroke-linecap="round">${SHAPES.map(s =>
+    `<path d="${s.d}" pathLength="${Math.max(3, Math.round(s.len / look.starGap))}"/>`).join("")}</g>`;
+  // claws
+  const lines = [], stars = [], dots = [];
+  CLAWS.forEach(([x1, y1, x2, y2]) => {
+    const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy), ux = dx / len, uy = dy / len;
+    const side = Math.sign(x1 - 130), px = Math.abs(uy) * side, py = -ux * Math.sign(uy) * side;
+    const base = [x2 - ux * o.clawGap, y2 - uy * o.clawGap];
+    const tip = [x1 - ux * o.reach, y1 - uy * o.reach];
+    const mid = [(tip[0] + base[0]) / 2 + px * o.bend, (tip[1] + base[1]) / 2 + py * o.bend];
+    lines.push(`<polyline points="${[tip, mid, base].map(q => q.map(r2).join(",")).join(" ")}"/>`);
+    if (o.tipSize > 0) stars.push(`<path transform="translate(${r2(tip[0])} ${r2(tip[1])}) scale(${o.tipSize})" d="${STAR}"/>`);
+    if (o.midSize > 0) dots.push(`<circle cx="${r2(mid[0])}" cy="${r2(mid[1])}" r="${o.midSize}"/>`);
+    if (o.baseSize > 0) dots.push(`<circle cx="${r2(base[0])}" cy="${r2(base[1])}" r="${o.baseSize}"/>`);
+  });
+  if (o.clawLineOp > 0) out += `<g fill="none" stroke="${o.star}" stroke-opacity="${o.clawLineOp}" stroke-width="${o.clawLineW}">${lines.join("")}</g>`;
+  out += `<g fill="url(#${p}gold)">${stars.join("")}</g><g fill="${o.star}">${dots.join("")}</g>`;
+  return out;
+}
+
+const SUITS = {
+  wand: `<path d="M0,-4.8 L0,4.8"/><path d="M0,-2 L2,-3.6"/><path d="M0,.4 L-2,-1.2"/>`,
+  sword: `<path d="M0,-5 L1,-3.8 L1,1.4 L-1,1.4 L-1,-3.8Z"/><path d="M-3,1.6 L3,1.6"/><path d="M0,1.6 L0,4.2"/><circle cy="4.8" r=".6"/>`,
+  cup: `<path d="M-3.6,-4.2 L3.6,-4.2 Q3.6,.6 0,.8 Q-3.6,.6 -3.6,-4.2Z"/><path d="M0,.8 L0,3.8"/><path d="M-2.6,4.4 L2.6,4.4"/>`,
+  pentacle: `<circle r="4.6"/><path d="M0,-3.6 L2.12,2.91 L-3.42,-1.11 L3.42,-1.11 L-2.12,2.91Z"/>`,
+};
+
+function cardSVG(p, o) {
+  const cx = 70, cy = 122.5, a = 4.5, b = a + o.frameGap, ci = o.cornerIn;
+  const ringC = 2 * Math.PI * o.ringR;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 245">
+  <!-- Made in card-lab.html -->
+  ${defs(p, o)}
+  <rect width="140" height="245" fill="${o.bg}"/>
+  ${o.glowOp > 0 ? `<circle cx="${cx}" cy="${cy}" r="${o.glowR}" fill="url(#${p}glow)"/>` : ""}
+  ${o.ringSolid > 0 ? `<circle cx="${cx}" cy="${cy}" r="${o.ringR}" fill="none" stroke="url(#${p}line)" stroke-width="${o.ringSolid}"/>` : ""}
+  ${o.ringDot > 0 ? `<circle cx="${cx}" cy="${cy}" r="${o.ringR}" fill="none" stroke="url(#${p}line)" stroke-width="${o.ringDot}" pathLength="${o.ringN * 4}" stroke-dasharray="0 1" stroke-linecap="round"/>` : ""}
+  <g transform="translate(${cx} ${r2(cy + o.pawY)}) scale(${o.pawScale}) translate(-130 -122.7)">${paw(p, o, o)}</g>
+  ${o.frameW > 0 ? `<rect x="${a}" y="${a}" width="${140 - 2*a}" height="${245 - 2*a}" rx="4" fill="none" stroke="url(#${p}line)" stroke-width="${o.frameW}"/>` : ""}
+  ${o.frame2W > 0 ? `<rect x="${b}" y="${b}" width="${140 - 2*b}" height="${245 - 2*b}" rx="2.5" fill="none" stroke="url(#${p}line)" stroke-width="${o.frame2W}"/>` : ""}
+  ${o.corners && o.cornerSize > 0 ? `<g fill="none" stroke="${o.gold2}" stroke-width="${r2(o.cornerW / o.cornerSize)}" stroke-linecap="round" stroke-linejoin="round">
+    ${[["wand", ci, ci + 3], ["sword", 140 - ci, ci + 3], ["cup", ci, 245 - ci - 3], ["pentacle", 140 - ci, 245 - ci - 3]]
+      .map(([s, x, y]) => `<g transform="translate(${x} ${y}) scale(${o.cornerSize})">${SUITS[s]}</g>`).join("")}
+  </g>` : ""}
+</svg>`;
+}
+
+function iconSVG(p, o) {
+  const look = o.iconSolid ? { fill: .1, lineOp: 1, lineW: o.iconLineW, starSize: o.iconStar, starGap: o.starGap, starOp: o.starOp, innerDots: true }
+                           : { fill: o.fill, lineOp: o.lineOp, lineW: o.iconLineW, starSize: o.iconStar || o.starSize, starGap: o.starGap, starOp: o.starOp, innerDots: o.innerDots };
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Made in card-lab.html -->
+  ${defs(p, o)}
+  <rect width="512" height="512" fill="${o.iconBg}"/>
+  ${o.iconRing ? `<circle cx="256" cy="256" r="228" fill="none" stroke="url(#${p}line)" stroke-width="5" pathLength="88" stroke-dasharray="0 1" stroke-linecap="round"/>` : ""}
+  <g transform="translate(256 ${256 + o.iconY}) scale(${o.iconScale}) translate(-130 -122.7)">${paw(p, o, look)}</g>
+</svg>`;
+}
+
+// ---------- panel ----------
+const inputs = {};
+function buildPanel() {
+  const root = $("controls");
+  SPEC.forEach(g => {
+    const d = document.createElement("details"); if (g.open) d.open = true;
+    d.innerHTML = `<summary>${g.title}</summary>`;
+    (g.rows || []).forEach(r => {
+      if (Array.isArray(r)) {
+        const [key, label, min, max, step] = r, row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML = `<label>${label}</label><input type="range" min="${min}" max="${max}" step="${step}"><output></output>`;
+        const inp = row.querySelector("input"), out = row.querySelector("output");
+        inp.addEventListener("input", () => { st[key] = +inp.value; out.textContent = fmt(key, st[key]); render(); });
+        inputs[key] = { set: v => { inp.value = v; out.textContent = fmt(key, v); } };
+        d.appendChild(row);
+      } else {
+        const lab = document.createElement("label"); lab.className = "chk";
+        lab.innerHTML = `<input type="checkbox"> ${r.label}`;
+        const inp = lab.querySelector("input");
+        inp.addEventListener("change", () => { st[r.chk] = inp.checked; render(); });
+        inputs[r.chk] = { set: v => { inp.checked = v; } };
+        d.appendChild(lab);
+      }
+    });
+    if (g.colors) {
+      const w = document.createElement("div"); w.className = "swatches";
+      g.colors.forEach(([key, label]) => {
+        const s = document.createElement("span"); s.innerHTML = `${label} <input type="color">`;
+        const inp = s.querySelector("input");
+        inp.addEventListener("input", () => { st[key] = inp.value; render(); });
+        inputs[key] = { set: v => { inp.value = v; } };
+        w.appendChild(s);
+      });
+      d.appendChild(w);
+    }
+    root.appendChild(d);
+  });
+}
+const fmt = (key, v) => key === "ringN" ? String(v * 4) : (Math.abs(v) >= 10 ? (+v).toFixed(1) : (+v).toFixed(2));
+const syncPanel = () => Object.entries(inputs).forEach(([k, i]) => i.set(st[k]));
+
+function render() {
+  $("big").innerHTML = cardSVG("b", st);
+  $("small").innerHTML = cardSVG("s", st);
+  ["i1", "i2", "i3"].forEach(id => $(id).innerHTML = iconSVG(id, st));
+  const changed = Object.fromEntries(Object.entries(st).filter(([k, v]) => v !== DEF[k]));
+  $("out").value = JSON.stringify(changed, null, 1);
+  save();
+}
+
+document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => { Object.assign(st, PRESETS[b.dataset.preset]); syncPanel(); render(); }));
+$("resetBtn").addEventListener("click", () => { st = { ...DEF }; syncPanel(); render(); });
+const download = (name, text) => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type: "image/svg+xml" })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
+$("dlCard").addEventListener("click", () => download("card-back.svg", cardSVG("", st)));
+$("dlIcon").addEventListener("click", () => download("icon.svg", iconSVG("", st)));
+$("copyBtn").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("out").value); } catch (e) { $("out").select(); document.execCommand("copy"); }
+  $("copyBtn").textContent = "Copied"; setTimeout(() => { $("copyBtn").textContent = "Copy settings"; }, 1400);
+});
+
+buildPanel(); syncPanel(); render();
+</script>
+</body>
+</html>

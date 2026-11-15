@@ -75,7 +75,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* ── Cards (shared) ───────────────────────── */
 
 .cback {
-  background: #2a2436 var(--card-back) center / cover no-repeat;
+  background: #19102d var(--card-back) center / cover no-repeat;
   border-radius: 7px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, .45);
 }
