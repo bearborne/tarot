@@ -9,14 +9,13 @@ const PAT_SPANS = [
 ];
 const SUIT_ORDER = ["Major Arcana", "Wands", "Cups", "Swords", "Pentacles"];
 
-function renderPatterns() {
-  const body = $("patternsBody");
-  body.innerHTML = "";
+// Drawn into the history's Patterns tab.
+function renderPatterns(body) {
   const chips = el("div", "chips pat-spans");
   PAT_SPANS.forEach((sp) => {
     const c = el("button", `chip${PAT.span === sp.id ? " on" : ""}`, sp.name);
     c.setAttribute("aria-pressed", PAT.span === sp.id);
-    c.addEventListener("click", () => { PAT.span = sp.id; renderPatterns(); });
+    c.addEventListener("click", () => { PAT.span = sp.id; renderHistory(); });
     chips.append(c);
   });
   body.append(chips);
@@ -86,14 +85,3 @@ function renderPatterns() {
   const lead = Object.entries(themes).filter(([, n]) => n > 1).sort((a, b) => b[1] - a[1]).slice(0, 3);
   if (lead.length) body.append(tiles("Themes", lead.map(([t, n]) => tile(n, (THEME_TEXT[t] || [t])[0], plural(n, "reading")))));
 }
-
-function openPatterns() {
-  renderPatterns();
-  $("patterns").scrollTop = 0;
-  slideIn($("patterns"));
-}
-$("patternsBtn").addEventListener("click", openPatterns);
-$("patternsBack").addEventListener("click", async () => {
-  await slideOut($("patterns"));
-  $("patterns").hidden = true;
-});

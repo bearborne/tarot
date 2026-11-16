@@ -129,7 +129,9 @@ the history screen says so; after a month the home screen does too.
 
 ## Backing up to Google Drive
 
-Once it's set up, the history screen has **Back up to Google Drive** and **Restore**. The backup is
+On the history screen, **Back up** asks where: **This device** (a file) or **Google Drive**, and
+**Restore from** takes **A file** or **Google Drive**. The first time you tap Google Drive, the app
+shows the setup steps below with a box to paste your client ID into (kept on that device). The backup is
 one file in a hidden app folder in your Drive: only Bearcana can see it, and Bearcana can't see
 any of your other files. Backing up keeps whatever is already in that file from another phone or
 computer and adds what's here, so one device never wipes out another. **Restore** adds the Drive
@@ -149,7 +151,8 @@ Setting it up, once (free, about ten minutes):
 4. **Clients › Create client › Web application**. Under **Authorized JavaScript origins**, add the
    address Bearcana is opened from, e.g. `https://yourname.github.io`, and `http://localhost:8771`
    for Run Tarot.bat. No redirect address is needed.
-5. Copy the client ID (it ends in `.apps.googleusercontent.com`) into **cloud.js**, between the quotes.
+5. Copy the client ID (it ends in `.apps.googleusercontent.com`) and paste it into the app's setup box.
+   To set it for every device at once, put it in **cloud.js** between the quotes instead.
 
 Google sign-in doesn't work when index.html is opened straight from the folder; use Run Tarot.bat
 or the website.

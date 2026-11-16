@@ -6,7 +6,8 @@
 // The history is grouped by month. Only open months draw their cards, so a
 // long history stays quick; a strip of months at the top jumps to any of them.
 // Two lists share the screen: readings, and each day's card of the day.
-const HIST = { open: new Set(), mode: "readings" };
+// days: the days unfolded in the readings list (they start folded).
+const HIST = { open: new Set(), days: new Set(), mode: "readings" };
 const COTD_SPREAD = "Card of the day";
 const monthKey = (t) => { const d = new Date(t); return `${d.getFullYear()}-${d.getMonth()}`; };
 const monthName = (t, long) => new Date(t).toLocaleDateString("en-GB",
@@ -17,6 +18,16 @@ function renderHistory() {
   const box = $("historyList");
   box.innerHTML = "";
   const daily = HIST.mode === "cotd";
+  const tabs = () => document.querySelectorAll("#histTabs .chip").forEach((c) => {
+    c.classList.toggle("on", c.dataset.mode === HIST.mode);
+    c.setAttribute("aria-pressed", c.dataset.mode === HIST.mode);
+  });
+  if (HIST.mode === "patterns") {   // counted across everything, no search
+    tabs();
+    $("histSearchWrap").hidden = true;
+    renderPatterns(box);
+    return;
+  }
   document.querySelectorAll("#histTabs .chip").forEach((c) => {
     c.classList.toggle("on", c.dataset.mode === HIST.mode);
     c.setAttribute("aria-pressed", c.dataset.mode === HIST.mode);
@@ -88,12 +99,14 @@ function renderHistory() {
     const fill = () => {
       if (body.childElementCount) return;
       if (daily) { fillDays(body, m.list); return; }
-      let day = "";
+      // One folded row per day; what's found while searching is shown open.
+      const days = [];
       m.list.forEach((r) => {
         const d = dayName(r.t);
-        if (d !== day) { day = d; body.append(el("h3", "history-day", d)); }
-        body.append(readingItem(r));
+        if (days.at(-1)?.d !== d) days.push({ d, list: [] });
+        days.at(-1).list.push(r);
       });
+      days.forEach(({ d, list }) => body.append(dayRow(d, list, searching)));
     };
     const set = (open) => {
       sec.classList.toggle("open", open);
@@ -137,6 +150,32 @@ $("histSearchClear").addEventListener("click", () => {
   renderHistory();
   $("histSearch").focus();
 });
+
+// A day of readings, folded to one line: the date, how many, and a small
+// fan of the day's cards. Tap to unfold it into the readings themselves.
+function dayRow(d, list, open) {
+  const day = el("details", "history-dayrow");
+  const key = new Date(list[0].t).toDateString();
+  day.open = open || HIST.days.has(key);
+  const sum = el("summary");
+  const n = list.length;
+  const fan = el("span", "day-fan");
+  fan.setAttribute("aria-hidden", "true");
+  const cards = list.flatMap((r) => readingCards(r));
+  cards.slice(0, 6).forEach((c) => fan.append(cardFace(c.card, true, c.reversed)));
+  if (cards.length > 6) fan.append(el("span", "day-more", `+${cards.length - 6}`));
+  sum.append(el("span", "day-date", d), fan, el("span", "day-count", n === 1 ? "1 reading" : `${n} readings`));
+  const body = el("div", "day-body");
+  const fill = () => { if (!body.childElementCount) list.forEach((r) => body.append(readingItem(r))); };
+  if (day.open) fill();
+  day.addEventListener("toggle", () => {
+    if (day.open) fill();
+    if (open) return;   // opened by a search: folds again once it's cleared
+    if (day.open) HIST.days.add(key); else HIST.days.delete(key);
+  });
+  day.append(sum, body);
+  return day;
+}
 
 // A month of daily cards as a grid, newest first; tap one to open it and
 // swipe through the rest of that month.
@@ -200,10 +239,9 @@ function backupDue() {
 }
 function showBackupNudge() {
   const due = backupDue();
-  $("backupNudge").textContent = due ? `${due} · ` : "";
-  if (due) $("backupNudge").append(Object.assign(el("button", "link small gold", "Back up now"),
-    { onclick: () => (driveOn() ? driveBackup() : exportBackup()) }));
-  $("backupNudge").hidden = !due;
+  // The history's backup line says so in gold, in place of "Saved on this device only".
+  $("backupText").textContent = due || "Saved on this device only";
+  $("backupText").classList.toggle("due", !!due);
   // On the home screen only once it's been a month or more (or never).
   const late = due && (due.startsWith("No") || +due.match(/\d+/)[0] >= 30);
   $("homeNudge").hidden = !late;
@@ -416,6 +454,12 @@ function importBackup(data) {
 }
 
 $("exportBtn").addEventListener("click", exportBackup);
+$("backupToggle").addEventListener("click", () => {
+  const open = $("backupPanel").hidden;
+  $("backupPanel").hidden = !open;
+  $("backupToggle").setAttribute("aria-expanded", open);
+  $("backupToggle").textContent = open ? "Close" : "Back up";
+});
 $("importBtn").addEventListener("click", () => $("importFile").click());
 $("importFile").addEventListener("change", async (e) => {
   const file = e.target.files[0];

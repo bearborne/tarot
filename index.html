@@ -110,25 +110,30 @@
       <span class="bar-space"></span>
     </header>
     <div class="history-body">
-      <p class="history-note">Your readings and notes are saved on this device only.
-        Export a backup to keep them safe, or import one on another phone or computer.</p>
-      <div class="history-actions">
-        <button class="pill small" id="exportBtn">Export backup</button>
-        <button class="pill small" id="importBtn">Import backup</button>
-        <input type="file" id="importFile" accept=".json,application/json" hidden>
-      </div>
-      <div class="drive-box" id="driveBox" hidden>
-        <div class="history-actions">
-          <button class="pill small" id="driveBackupBtn">Back up to Google Drive</button>
-          <button class="link small" id="driveRestoreBtn">Restore</button>
+      <!-- One quiet line about backups; "Back up" opens the ways to do it. -->
+      <p class="history-note backup-line">
+        <span id="backupText">Saved on this device only</span> ·
+        <button class="link small gold" id="backupToggle" aria-expanded="false" aria-controls="backupPanel">Back up</button>
+      </p>
+      <div class="backup-panel" id="backupPanel" hidden>
+        <div class="backup-row">
+          <span class="backup-ask">Back up to</span>
+          <button class="chip" id="exportBtn">This device</button>
+          <button class="chip" id="driveBackupBtn">Google Drive</button>
         </div>
-        <p class="drive-status" id="driveStatus"></p>
+        <div class="backup-row">
+          <span class="backup-ask">Restore from</span>
+          <button class="chip" id="importBtn">A file</button>
+          <button class="chip" id="driveRestoreBtn">Google Drive</button>
+        </div>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+        <p class="drive-status" id="driveStatus" hidden></p>
+        <div class="drive-setup" id="driveSetup" hidden></div>
       </div>
-      <p class="backup-nudge" id="backupNudge" hidden></p>
-      <button class="pill small patterns-btn" id="patternsBtn">✦ Your patterns</button>
       <div class="chips hist-tabs" id="histTabs">
         <button class="chip on" data-mode="readings" aria-pressed="true">Readings</button>
         <button class="chip" data-mode="cotd" aria-pressed="false">Card of the day</button>
+        <button class="chip" data-mode="patterns" aria-pressed="false">Patterns</button>
       </div>
       <div class="hist-search" id="histSearchWrap">
         <input type="search" id="histSearch" placeholder="Search by name, card or date"
@@ -151,16 +156,6 @@
       <button class="pill small theme-none" id="themeNone" hidden>No theme</button>
       <div id="themedList"></div>
     </div>
-  </div>
-
-  <!-- 6c. Your patterns: what comes back across your readings -->
-  <div class="sheet" id="patterns" hidden>
-    <header class="bar">
-      <button class="link" id="patternsBack">‹ Back</button>
-      <span class="bar-title">Your patterns</span>
-      <span class="bar-space"></span>
-    </header>
-    <div class="history-body" id="patternsBody"></div>
   </div>
 
   <!-- 6d. Making or changing a theme of your own -->

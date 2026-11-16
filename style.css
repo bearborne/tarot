@@ -2291,15 +2291,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 
 /* The backup reminder */
-.backup-nudge { margin: -8px 0 14px; text-align: center; color: var(--muted); font-size: .9rem; }
 .home-nudge { display: block; margin: 10px auto 0; opacity: .85; }
-.patterns-btn { display: block; margin: 0 auto 18px; }
 
 /* Your patterns */
-#patternsBody { max-width: 40rem; margin: 0 auto; }
 .pat-spans { justify-content: center; margin: 2px 0 6px; }
-#patternsBody .summary-cards { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 76px)); justify-content: center; gap: 10px; }
-#patternsBody .related-card { flex: none; width: 100%; }
+#historyList .summary-cards { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 76px)); justify-content: center; gap: 10px; }
+#historyList .summary-cards .related-card { flex: none; width: 100%; }
 
 /* A month of daily cards as a calendar, Monday first */
 .month-body.cal {
@@ -2376,5 +2373,78 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .own-status { text-align: center; min-height: 1.2em; color: var(--gold); }
 
 /* Google Drive backup, on the history screen */
-.drive-box .history-actions { margin-bottom: 6px; }
-.drive-status { margin: 0 0 16px; text-align: center; color: var(--muted); font-size: .85rem; }
+.drive-status { margin: 0; text-align: center; color: var(--muted); font-size: .82rem; }
+
+/* The history's top: one backup line, opening to the ways to back up */
+.history-note.backup-line { margin: 0 0 12px; font-size: .9rem; }
+#backupText.due { color: var(--gold); }
+.backup-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: -4px 0 14px;
+  padding: 10px 8px;
+  border: 1px solid rgba(201, 169, 110, .2);
+  border-radius: 10px;
+}
+.backup-row { display: flex; justify-content: center; align-items: center; gap: 8px; }
+.backup-ask { width: 6.2em; text-align: right; color: var(--muted); font-size: .85rem; white-space: nowrap; }
+.backup-row .chip { min-width: 7.4em; }
+.drive-setup { margin-top: 4px; padding-top: 10px; border-top: 1px solid rgba(201, 169, 110, .2); text-align: left; }
+.drive-setup .asks-title { text-align: center; }
+.drive-help { margin: 0 0 8px; color: var(--muted); font-size: .88rem; line-height: 1.45; }
+.drive-steps { margin: 0 0 10px; padding-left: 1.4em; font-size: .88rem; line-height: 1.5; }
+.drive-steps li { margin-bottom: 4px; }
+.drive-steps a, .drive-steps b { color: var(--gold); }
+.drive-steps code { font-size: .82rem; color: var(--gold); }
+.drive-origin {
+  display: block;
+  margin: 4px 0 2px;
+  padding: 4px 10px;
+  border: 1px dashed rgba(201, 169, 110, .45);
+  border-radius: 6px;
+  background: none;
+  color: var(--gold);
+  font-family: ui-monospace, monospace;
+  font-size: .82rem;
+}
+.drive-id { margin-bottom: 6px; font-family: ui-monospace, monospace; font-size: .85rem; }
+.drive-setup .backup-row { justify-content: flex-start; }
+
+/* A day of readings, folded to one line: date, a small fan of its cards, how many */
+.history-dayrow { border-bottom: 1px solid rgba(201, 169, 110, .14); }
+.history-dayrow:first-child { margin-top: 6px; }
+.history-dayrow > summary {
+  display: grid;
+  grid-template-columns: 6.6em minmax(0, 1fr) auto 1em;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 4px;
+  list-style: none;
+  cursor: pointer;
+}
+.history-dayrow > summary::-webkit-details-marker { display: none; }
+.history-dayrow > summary::after {
+  content: "›";
+  color: var(--muted);
+  text-align: center;
+  transition: transform .2s;
+}
+.history-dayrow[open] > summary::after { transform: rotate(90deg); }
+.day-date { color: var(--gold); font-size: .95rem; white-space: nowrap; }
+.day-count { color: var(--muted); font-size: .82rem; white-space: nowrap; }
+.day-fan { display: flex; align-items: center; min-width: 0; height: 30px; overflow: hidden; }
+.day-fan .cface {
+  flex: none;
+  width: 17px;
+  height: 30px;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+}
+.day-fan .cface + .cface { margin-left: -5px; }
+.day-fan .cface img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.day-fan .placeholder { font-size: 0; }
+.day-more { margin-left: 6px; color: var(--muted); font-size: .75rem; }
+.day-body { padding: 0 0 10px; }
+.day-body .reading:first-child { margin-top: 2px; }
