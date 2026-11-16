@@ -73,14 +73,20 @@ function driveToken() {
 }
 
 async function driveFetch(path, opts = {}) {
+  // A connection that drops before Google answers is tried again, up to
+  // three times, a little later each time (some networks are patchy).
   let res;
-  try {
-    res = await fetch(DRIVE_API + path, {
-      ...opts,
-      headers: { ...(opts.headers || {}), Authorization: `Bearer ${DRIVE.token}` },
-    });
-  } catch (e) {
-    throw new Error(`network: ${e?.message || e}`);   // never reached Google
+  for (let k = 0; ; k++) {
+    try {
+      res = await fetch(DRIVE_API + path, {
+        ...opts,
+        headers: { ...(opts.headers || {}), Authorization: `Bearer ${DRIVE.token}` },
+      });
+      break;
+    } catch (e) {
+      if (k === 2) throw new Error(`network: ${e?.message || e}`);   // never reached Google
+      await wait(800 * (k + 1));
+    }
   }
   if (res.status === 401) DRIVE.token = null;
   if (!res.ok) {
