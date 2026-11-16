@@ -2971,19 +2971,6 @@ const PLACES = {
   lesson:    ["Lesson",      ["The lesson: {c}."]],
 };
 
-// The ways to read a spread, by its number of cards.
-const LENSES = {
-  1: [["message"], ["advice"], ["lesson"]],
-  2: [["present", "future"], ["self", "other"], ["pathA", "pathB"], ["challenge", "advice"], ["keep", "release"]],
-  3: [["past", "present", "future"], ["situation", "challenge", "advice"], ["mind", "body", "spirit"],
-      ["self", "other", "between"], ["keep", "release", "welcome"], ["root", "present", "outcome"],
-      ["strength", "challenge", "advice"]],
-  4: [["past", "present", "future", "advice"], ["situation", "challenge", "advice", "outcome"],
-      ["mind", "body", "heart", "spirit"], ["self", "other", "between", "outcome"]],
-  5: [["past", "present", "future", "challenge", "advice"], ["situation", "hidden", "challenge", "advice", "outcome"],
-      ["root", "past", "present", "future", "outcome"], ["mind", "body", "heart", "spirit", "advice"]],
-};
-
 // Recognises a spread position's own label ("Past", "The obstacle"…).
 const PLACE_WORDS = [
   ["past", /\bpast|behind|before\b/i], ["present", /\bpresent|now|today\b/i], ["future", /\bfuture|next|ahead|coming\b/i],
@@ -2999,19 +2986,19 @@ function placeOf(label) {
   return hit ? hit[0] : null;
 }
 
-// The lenses on offer: the spread's own positions first, if they say something.
-function lensesFor(entries) {
-  const n = entries.length;
-  const out = [];
+// A lens from labelled places: each label is read for the kind of place it
+// names (placeOf), and kept as the place's heading, with its question.
+const labelLens = (name, labels, questions, theme = null) =>
+  ({ name, places: labels.map((l) => placeOf(l) || "own"), own: true, labels, questions, theme });
+// The spread as it was laid out, if its positions say something.
+function laidOutLens(entries) {
   const labelled = entries.some((e) => e.label && !/^card \d+$/i.test(e.label) && e.label !== "Your card");
-  if (labelled) {
-    out.push({ name: "As laid out", places: entries.map((e) => placeOf(e.label) || "own"), own: true });
-  }
-  (LENSES[Math.min(n, 5)] || []).forEach((places) => {
-    if (places.length !== n) return;
-    out.push({ name: places.map((p) => PLACES[p][0]).join(" · "), places });
-  });
-  return out;
+  return labelled ? labelLens("As laid out", entries.map((e) => e.label), entries.map((e) => e.question || "")) : null;
+}
+// One of the table's themes, laid over a spread of n cards (as on the table).
+function themeLens(theme, n) {
+  const ps = themePlaces(theme, n);
+  return labelLens(theme.name, ps.map((p) => p.label), ps.map((p) => p.question), theme);
 }
 
 function phrases(card, reversed) {
@@ -3023,44 +3010,24 @@ function phrases(card, reversed) {
 }
 
 // One card read in one place of the lens.
-function placeLine(entry, place, i) {
+function placeLine(entry, place, i, label) {
   const { g, a, c } = phrases(entry.card, entry.reversed);
   // A reversed card also carries its advice, so it always points somewhere.
   const withAdvice = (line) => (entry.reversed ? `${line.slice(0, -1)}; ${a}.` : line);
-  if (place === "own") return withAdvice(`${entry.label}: ${g}.`);
+  if (place === "own") return withAdvice(`${label || entry.label}: ${g}.`);
   const forms = PLACES[place][1];
   const form = forms[(CARDS.indexOf(entry.card) + i) % forms.length];
   const line = form.replace("{g}", g).replace("{a}", a).replace("{c}", c);
   return form.includes("{g}") ? withAdvice(line) : line;
 }
 
-const placeName = (lens, i, entry) => (lens.own ? entry.label : PLACES[lens.places[i]][0]);
-
-// ── How a card follows the one before it ────────────────
-// A short note shown under the later card's line in "The reading".
+const placeName = (lens, i, entry) => (lens.own ? (lens.labels ? lens.labels[i] : entry.label) : PLACES[lens.places[i]][0]);
 
 const numberOf = (card) => (card.court ? null : +((card.correspondences || {}).number || NaN));
 
-function pairLine(a, b) {
-  const bits = [];
-  const na = numberOf(a.card), nb = numberOf(b.card);
-  const minorA = !isMajorCard(a.card), minorB = !isMajorCard(b.card);
-  if (minorA && minorB && na >= 1 && nb >= 1) {
-    if (nb === na + 1) bits.push("numbers climb: a step forward");
-    else if (nb === na) bits.push("same number: its lesson underlined");
-    else if (nb < na) bits.push("numbers fall: an earlier stage");
-  }
-  if (!minorA && minorB) bits.push("a big lesson enters daily life");
-  if (minorA && !minorB) bits.push("a daily matter opens up");
-  if (!a.reversed && b.reversed) bits.push("energy turns inward");
-  if (a.reversed && !b.reversed) bits.push("held energy flows");
-  if (!bits.length) return "";
-  return bits.slice(0, 2).join("; ");
-}
-
 // ── The arc of the whole spread ─────────────────────────
 // One line on where the spread travels, from its first card to its last:
-// these clauses, then the number arcs (numberArcBits), joined. (Themes,
+// these clauses, joined. (Themes,
 // elements and counts have their own tiles, so they aren't repeated here.)
 
 function arcBits(entries) {
@@ -3339,44 +3306,11 @@ function mirrorItems(entries, nameOf) {
   return items.slice(0, 5);
 }
 
-// ── Number arcs ─────────────────────────────────────────
-// The Fool's journey through the Major cards, in three rows of seven.
-const STAGES = ["the threshold", "the outer world", "the inner world", "the greater forces"];
-const stageOf = (k) => (k === 0 ? 0 : k <= 7 ? 1 : k <= 14 ? 2 : 3);
-
-// Short clauses for the reading's arc line (see arcBits): how the Minor
-// cards' numbers move, and where the Major cards sit on the Fool's journey.
-// nameOf(i) names place i in the chosen lens.
-function numberArcBits(entries, nameOf) {
-  const bits = [];
-  const pips = whichCards(entries, (e) => !isMajorCard(e.card) && numberOf(e.card) >= 1);
-  if (pips.length >= 3) {
-    const v = pips.map((i) => numberOf(entries[i].card));
-    const d = v.slice(1).map((x, k) => Math.sign(x - v[k]));
-    const max = Math.max(...v), min = Math.min(...v);
-    const peak = v.indexOf(max), low = v.indexOf(min);
-    if (d.every((x) => x >= 0) && d.some((x) => x > 0)) bits.push("the numbers rise");
-    else if (d.every((x) => x <= 0) && d.some((x) => x < 0)) bits.push("the numbers fall back");
-    else if (peak > 0 && peak < v.length - 1 && d[0] > 0 && d[d.length - 1] < 0) bits.push(`the numbers peak at ${nameOf(pips[peak])}`);
-    else if (low > 0 && low < v.length - 1 && d[0] < 0 && d[d.length - 1] > 0) bits.push(`the numbers dip at ${nameOf(pips[low])}`);
-    else if (d.some((x) => x)) bits.push("the numbers rise and fall");
-  }
-  const majors = whichCards(entries, (e) => isMajorCard(e.card));
-  const st = majors.map((i) => stageOf(CARDS.indexOf(entries[i].card)));
-  if (majors.length >= 2) {
-    const kinds = [...new Set(st)];
-    if (kinds.length === 1) bits.push(`the Majors all from ${STAGES[kinds[0]]}`);
-    else if (st.every((s, k) => !k || s >= st[k - 1])) bits.push("forward on the Fool's journey");
-    else if (st.every((s, k) => !k || s <= st[k - 1])) bits.push("back on the Fool's journey");
-    else bits.push("across the Fool's journey");
-  }
-  return bits;
-}
-
 // What the reading asks: questions for the spread as a whole, then one from
-// each card, headed by the place it holds in the chosen lens. Every question
-// for the whole names the cards that raised it, so it belongs to this reading
-// alone; one that would read the same for any spread isn't asked.
+// each card, headed by the place it holds in the chosen lens. The questions
+// for the whole never name cards (the row of cards above shows them); they
+// quote the cards' own ideas and advice, or count the cards that raised them,
+// so each still belongs to this reading alone.
 const ELEMENT_ASK = {
   Fire:  ["where is that drive pulling you?", "where could a little more passion or courage help?"],
   Water: ["what are those feelings telling you?", "what would change if you let yourself feel this fully?"],
@@ -3388,15 +3322,10 @@ function summaryQuestions(entries, lens) {
   const { themes, topEl, els, majors, revs } = patternParts(entries);
   const sets = themeSets(entries);
   const lower = (q) => q[0].toLowerCase() + q.slice(1);
-  // "The Tower", "The Tower and Death", "The Tower, Death and the Star"; past four, a count.
-  const who = (idx) => {
-    if (idx.length > 4) return `${idx.length} of the ${n} cards`;
-    const names = idx.map((i, k) => (k ? entries[i].card.name.replace(/^The /, "the ") : entries[i].card.name));
-    return names.length > 1 ? `${names.slice(0, -1).join(", ")} and ${names.at(-1)}` : names[0];
-  };
-  const mid = (name) => name.replace(/^The /, "the ");
-  // "The Hermit's", "the Lovers'" (start = at the start of the question).
-  const poss = (i, start) => { const m = entries[i].card.name; const x = start ? m : mid(m); return x + (/[^s]s$/.test(x) ? "'" : "'s"); };
+  // "One card", "2 of the 5 cards", "Both cards", "All 3 cards" — never names.
+  const who = (idx) => (idx.length === n ? (n === 2 ? "Both cards" : `All ${n} cards`) : idx.length === 1 ? "One card" : `${idx.length} of the ${n} cards`);
+  const verb = (idx, one, many) => (idx.length === 1 ? one : many);
+  const kw = (e) => (filled(keywordsFor(e.card, e.reversed))[0] || "").toLowerCase();
   const whole = [];
 
   // Two cards' key ideas that meet in one theme: quoted, so the question
@@ -3429,33 +3358,37 @@ function summaryQuestions(entries, lens) {
   }));
   if (bridge) {
     const { i, j, x, y, t: bt } = bridge;
-    whole.push(`${poss(i, true)} “${clause(x, bt)}” and ${poss(j)} “${clause(y, bt)}”: ${lower(THEME_TEXT[bt][2])}`);
+    whole.push(`“${cap(clause(x, bt))}” and “${clause(y, bt)}”: ${lower(THEME_TEXT[bt][2])}`);
   }
 
   // The lens's challenge and advice, in the card's own words.
   const placeAt = (p) => (lens ? lens.places.indexOf(p) : -1);
   const ci = placeAt("challenge"), ai = placeAt("advice");
-  if (ci >= 0) whole.push(`${poss(ci, true)} challenge, ${phrases(entries[ci].card, entries[ci].reversed).c}: what makes that hard right now?`);
+  if (ci >= 0) whole.push(`The challenge, ${phrases(entries[ci].card, entries[ci].reversed).c}: what makes that hard right now?`);
   if (ai >= 0) {
-    whole.push(`${poss(ai, true)} advice, ${phrases(entries[ai].card, entries[ai].reversed).a}: what would that look like this week?`);
+    whole.push(`The advice, ${phrases(entries[ai].card, entries[ai].reversed).a}: what would that look like this week?`);
   } else if (n >= 2) {
     // No advice place: the first and last cards' advice, side by side.
     const [a1, a2] = [entries[0], entries[n - 1]].map((e) => (e.card.inReading || {})[e.reversed ? "reversedAdvice" : "advice"] || (e.card.inReading || {}).advice);
-    if (a1 && a2 && a1 !== a2) whole.push(`${entries[0].card.name} says ${a1}; ${mid(entries[n - 1].card.name)}, ${a2}. Which comes first?`);
+    if (a1 && a2 && a1 !== a2) whole.push(`${cap(a1)}, or ${a2}: which comes first?`);
   }
 
   themes.slice(0, 3).forEach((t) => {
     if (bridge && bridge.t === t) return;   // already asked, in the cards' own ideas
     const idx = whichCards(entries, (e, i) => sets[i].has(t));
     const what = t === "heart" ? "the heart" : THEME_TEXT[t][0].toLowerCase();
-    if (idx.length < n || n <= 3) whole.push(`${who(idx)} speak of ${what}: ${lower(THEME_TEXT[t][2])}`);
+    if (idx.length < n || n <= 3) whole.push(`${who(idx)} ${verb(idx, "speaks", "speak")} of ${what}: ${lower(THEME_TEXT[t][2])}`);
   });
   const t = tensionsOf(entries)[0];
-  if (t) whole.push(`${who(t.a)} against ${mid(who(t.b))}: ${lower(t.ask)}`);
-  if (n >= 3) whole.push(`How does ${mid(entries[0].card.name)} lead to ${mid(entries[n - 1].card.name)}?`);
+  if (t) whole.push(cap(t.ask));
+  if (n >= 3) {
+    // By the first and last cards' key words ("How does conflict lead to teamwork?").
+    const [f0, fN] = [kw(entries[0]), kw(entries[n - 1])];
+    if (f0 && fN && f0 !== fN) whole.push(`How does ${f0} lead to ${fN}?`);
+  }
   if (topEl && els[topEl] >= 2) {
     const idx = whichCards(entries, (e) => elementFor(e.card) === topEl);
-    whole.push(`${who(idx)} carry ${topEl}: ${ELEMENT_ASK[topEl][0]}`);
+    whole.push(`${who(idx)} ${verb(idx, "carries", "carry")} ${topEl}: ${ELEMENT_ASK[topEl][0]}`);
   }
   const missing = Object.keys(ELEMENT_ASK).filter((x) => !els[x]);
   if (n >= 4 && missing.length === 1) whole.push(`No ${missing[0]} among ${n} cards: ${ELEMENT_ASK[missing[0]][1]}`);
@@ -3466,10 +3399,10 @@ function summaryQuestions(entries, lens) {
     whole.push(`${who(whichCards(entries, (e) => e.reversed))} ${revs > 1 ? "are" : "is"} reversed: what is still forming, and needs time rather than pressure?`);
   }
   // Two figures facing each other.
-  const nameOf = (i) => (lens ? placeName(lens, i, entries[i]) : entries[i].label || entries[i].card.name);
+  const nameOf = (i) => (lens ? placeName(lens, i, entries[i]) : entries[i].label || "");
   const f = entries.map(facingOf);
   const meet = f.findIndex((d, i) => d === "right" && f[i + 1] === "left");
-  if (meet >= 0) whole.push(`What are ${nameOf(meet)} and ${nameOf(meet + 1)} saying to each other?`.replace(/ The /g, " the "));
+  if (meet >= 0 && nameOf(meet) && nameOf(meet + 1)) whole.push(`What are ${nameOf(meet)} and ${nameOf(meet + 1)} saying to each other?`.replace(/ The /g, " the "));
 
   // As many questions for the reading as it has cards (each card asks one too).
   const asked = [...new Set(whole)].slice(0, n);
@@ -3572,12 +3505,10 @@ function threadable(node, cards, head) {
 
 function listItems(items) {
   const ul = el("ul");
-  items.forEach(({ head, text, ideas, sub, link, cards }) => {
+  items.forEach(({ head, text, ideas, sub, cards }) => {
     const li = el("li");
     threadable(li, cards, head);
     if (head) li.append(el("strong", "", head));
-    // link: how this card follows the one before it
-    if (link) li.append(el("em", "summary-link", `↳ ${cap(link)}`));
     if (text) li.append(el("span", "", text));
     // ideas: the card's key ideas that connect to the rest of the reading
     if (ideas && ideas.length) li.append(el("span", "summary-ideas", ideas.join("\n")));
@@ -3830,9 +3761,10 @@ function openSummary(entries, title, magic = false, named = null) {
   }, { passive: true });
   new ResizeObserver(() => thread && showThread()).observe(row);
 
-  // Every lens as its own button; the chosen one is lit, and the parts
-  // that change with it follow.
-  const lenses = lensesFor(entries);
+  // "Read it as": the spread as laid out, or any of the table's themes,
+  // chosen in two steps (a topic, then one of its themes). The chosen one
+  // is lit, and the parts that change with it follow.
+  const laidOut = laidOutLens(entries);
   const lensBox = el("div", "lens");
   lensBox.setAttribute("role", "group");
   lensBox.setAttribute("aria-label", "Read it as");
@@ -3858,14 +3790,11 @@ function openSummary(entries, title, magic = false, named = null) {
   // Each card's key ideas that relate most to the other cards, shown under
   // its line in "The reading".
   const linked = connectedIdeas(entries);
-  let current = 0;
+  let lens = laidOut;
+  let topic = null;           // the topic whose themes are listed, or null for the topics
   let placeAsks = () => {};   // set once the columns are built (below)
   const render = () => {
-    const lens = lenses[current];
-    [...lensBox.children].forEach((c, i) => {
-      c.classList.toggle("on", i === current);
-      c.setAttribute("aria-pressed", i === current ? "true" : "false");
-    });
+    drawLensBox();
     // (One card: its place is already the lit lens button and the reading's heading.)
     entries.forEach((e, i) => { placeLabels[i].textContent = n === 1 ? "" : lens ? placeName(lens, i, e) : e.label || ""; });
     // The deeper patterns name the cards by their place, so they follow the lens.
@@ -3874,23 +3803,21 @@ function openSummary(entries, title, magic = false, named = null) {
       slot.innerHTML = "";
       if (p && p.items.length) slot.append(partSection(p, cardCols));
     };
-    // The arc line: where the spread travels, then how its numbers move.
-    const bits = [...spreadArc, ...numberArcBits(entries, nameOf)];
-    const arc = bits.length ? `${cap(bits.join(", "))}.` : "";
+    // The arc line: where the spread travels, when it clearly does.
+    const arc = spreadArc.length ? `${cap(spreadArc.join(", "))}.` : "";
     fill(gazeSlot, gazePart(entries, nameOf));
     fill(mirrorSlot, part("Mirrors & tensions", mirrorItems(entries, nameOf), { tiles: true, wrap: true }));
     fillSummaryAsks(asks, asksEach, entries, lens);
     lensPart.innerHTML = "";
     if (lens) {
       // One section: the arc of the whole spread on top, then each card in
-      // its place, with a short note on how it follows the card before it.
+      // its place.
       const sec = listSection("The reading", entries.map((e, i) => ({
         head: placeName(lens, i, e),
         // The place is already the heading, so drop the line's own "Ahead: " lead-in.
-        text: (() => { const t = placeLine(e, lens.places[i], i).replace(/^[^:]+:\s*/, ""); return t.charAt(0).toUpperCase() + t.slice(1); })(),
+        text: (() => { const t = placeLine(e, lens.places[i], i, placeName(lens, i, e)).replace(/^[^:]+:\s*/, ""); return t.charAt(0).toUpperCase() + t.slice(1); })(),
         ideas: linked[i],
-        sub: lens.own && e.question ? e.question : "",
-        link: i ? pairLine(entries[i - 1], e) : "",
+        sub: lens.own ? lens.questions[i] || "" : "",
         cards: [i],
       })));
       const title = sec.querySelector(".asks-title");
@@ -3898,29 +3825,50 @@ function openSummary(entries, title, magic = false, named = null) {
       const sw = sharedTiles();
       if (sw) title.after(sw);
       lensPart.append(sec);
-    } else if (arc || patterns["Shared words"]) {
+    } else {
+      // No theme: each card by its name, with what it brings (and, reversed,
+      // its advice) and its connecting ideas.
       const sec = el("section", "summary-part");
       sec.append(el("p", "asks-title", "The reading"));
       const sw = sharedTiles();
       if (sw) sec.append(sw);
       if (arc) sec.append(el("p", "summary-arc", arc));
-      if (linked.some((l) => l.length)) sec.append(listItems(entries.map((e, i) => ({
-        head: e.label || e.card.name, text: "", ideas: linked[i], cards: [i],
-      }))));
+      sec.append(listItems(entries.map((e, i) => {
+        const { g, a } = phrases(e.card, e.reversed);
+        return { head: e.card.name, text: `${cap(g)}${e.reversed ? `; ${a}` : ""}.`, ideas: linked[i], cards: [i] };
+      })));
       lensPart.append(sec);
     }
     showThread();
     placeAsks();
   };
-  lenses.forEach((lens, i) => {
-    const b = el("button", "lens-btn", lens.name);
-    b.addEventListener("click", () => { current = i; render(); });
-    lensBox.append(b);
-  });
-  if (lenses.length > 1) {
-    side.append(el("p", "lens-title", "Read it as"), lensBox);
-    fitOneLine([...lensBox.children]);
+  function drawLensBox() {
+    lensBox.innerHTML = "";
+    const btn = (text, on, go, cls = "lens-btn") => {
+      const b = el("button", cls, text);
+      if (on !== null) { b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); }
+      b.addEventListener("click", go);
+      return b;
+    };
+    const pick = (l) => () => { lens = l; render(); };
+    if (laidOut) lensBox.append(btn("As laid out", lens === laidOut, pick(laidOut)));
+    else lensBox.append(btn("No theme", !lens, pick(null)));
+    if (!topic) {
+      // The topics, as small tiles; the one holding the chosen theme is marked.
+      const grid = el("div", "lens-topics");
+      Object.keys(THEME_TOPICS).forEach((t) => {
+        const b = btn(t, lens && lens.theme ? lens.theme.topic === t : false, () => { topic = t; drawLensBox(); }, "lens-btn lens-topic");
+        grid.append(b);
+      });
+      lensBox.append(grid);
+    } else {
+      lensBox.append(btn(`‹ ${topic}`, null, () => { topic = null; drawLensBox(); }, "lens-back"));
+      const themes = THEMES_LIST.filter((th) => th.topic === topic);
+      themes.forEach((th) => lensBox.append(btn(th.name, !!(lens && lens.theme === th), pick(themeLens(th, n)))));
+    }
+    fitOneLine([...lensBox.querySelectorAll(".lens-btn:not(.lens-topic)")]);
   }
+  side.append(el("p", "lens-title", "Read it as"), lensBox);
   render();
 
   const sectionOf = (title) => patterns[title] && partSection(patterns[title], cardCols);

@@ -539,8 +539,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
   gap: 10px;
   width: max-content;
 }
-.summary-btn { background: rgba(201, 169, 110, .14); border-color: rgba(201, 169, 110, .85); }
-#newBtn { padding: 9px 22px; font-size: .95rem; }
+/* Both sit over the rune ring and its lines: an opaque dark fill keeps the text legible */
+.summary-btn {
+  position: relative;
+  background: linear-gradient(rgba(201, 169, 110, .16), rgba(201, 169, 110, .16)), #15131c;
+  border-color: rgba(201, 169, 110, .85);
+  color: #f3dfae;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .9);
+}
+#newBtn { position: relative; padding: 9px 22px; font-size: .95rem; background: #15131c; }
 
 /* The reading's summary */
 .summary-title { margin-bottom: 10px; }
@@ -630,12 +637,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .summary-arc { margin: -4px 0 12px; font-style: italic; color: var(--ink); font-size: 1.05rem; }
 /* the shared words' tiles, right under the reading's title */
 .summary-part > .tiles:not(:last-child) { margin-bottom: 16px; }
-.summary-link { display: block; margin: 0 0 2px; color: var(--muted); font-size: .8rem; }
 /* The summary's reading text in the screen-reading font; the gold
    headings keep the deck's own serif. */
 .summary-page .col-main li > span,
 .summary-page .col-main .summary-q,
-.summary-page .col-main .summary-link,
 .summary-arc { font-family: var(--read); }
 
 /* The lens buttons: each reads the spread from another angle */
@@ -1461,6 +1466,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (hover: hover) {
   .lens-btn:hover { border-color: rgba(201, 169, 110, .7); color: var(--ink); }
 }
+/* The table's themes, in two steps: topics as small tiles, then a topic's themes */
+.lens-topics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.lens-topic { padding: 7px 4px; font-size: .85rem; text-overflow: ellipsis; }
+.lens-back {
+  align-self: flex-start;
+  padding: 2px 4px;
+  background: none;
+  border: 0;
+  color: var(--gold);
+  font-size: .9rem;
+}
 .lens-btn.on {
   background: rgba(201, 169, 110, .16);
   border-color: var(--gold);
@@ -1529,7 +1545,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .summary-page .summary-part li strong { font-size: 1.25rem; margin-bottom: 4px; }
   .summary-page .summary-q { font-size: 1rem; margin-top: 6px; }
   .summary-page .summary-arc { font-size: 1.2rem; }
-  .summary-page .summary-link { font-size: .95rem; margin-bottom: 4px; }
   .summary-page .summary-asks li { font-size: 1.2rem; font-family: var(--read); }
 
   /* The card's page, laid out like the summary: the card big on the
