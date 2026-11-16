@@ -73,12 +73,22 @@ function driveToken() {
 }
 
 async function driveFetch(path, opts = {}) {
-  const res = await fetch(DRIVE_API + path, {
-    ...opts,
-    headers: { ...(opts.headers || {}), Authorization: `Bearer ${DRIVE.token}` },
-  });
+  let res;
+  try {
+    res = await fetch(DRIVE_API + path, {
+      ...opts,
+      headers: { ...(opts.headers || {}), Authorization: `Bearer ${DRIVE.token}` },
+    });
+  } catch (e) {
+    throw new Error(`network: ${e?.message || e}`);   // never reached Google
+  }
   if (res.status === 401) DRIVE.token = null;
-  if (!res.ok) throw new Error(`drive ${res.status}`);
+  if (!res.ok) {
+    // Google says why in its answer; keep the gist for the status line.
+    let why = "";
+    try { const j = await res.json(); why = j.error?.errors?.[0]?.reason || j.error?.status || j.error?.message || ""; } catch {}
+    throw new Error(`drive ${res.status}${why ? ` ${why}` : ""}`);
+  }
   return res;
 }
 
@@ -127,8 +137,9 @@ function driveTrouble(e) {
   const m = e?.message || "";
   if (m === "offline" || !navigator.onLine) return "No internet connection";
   if (m === "loading") return "Google is still loading, try again in a moment";
-  if (/closed|access_denied|popup/.test(m)) return "Google sign-in was closed";
-  return "Couldn't reach Google Drive";
+  if (/closed|access_denied/.test(m)) return "Google sign-in was closed";
+  // Anything else: say what it was, briefly, so it can be looked into.
+  return `Couldn't reach Google Drive (${m.slice(0, 80) || "unknown"})`;
 }
 
 let driveBusy = false;
