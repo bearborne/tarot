@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bear card backs</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&display=swap">
+<style>
+  :root { --bg:#15131c; --ink:#e9e2d3; --muted:#a79f8f; --gold:#c9a96e; --line:rgba(201,169,110,.2);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0d0c12; color:var(--ink); font-family:var(--serif); padding:24px 16px 48px; }
+  h1 { font-family:"IM Fell English SC",var(--serif); color:var(--gold); text-align:center; font-weight:normal; margin:0 0 4px; }
+  .intro { text-align:center; color:var(--muted); margin:0 0 28px; font-size:.95rem; }
+  .row { display:flex; flex-wrap:wrap; gap:28px; justify-content:center; }
+  .opt { width:360px; max-width:100%; background:var(--bg); border:1px solid #2c2838; border-radius:18px; padding:16px; }
+  .opt h2 { margin:0 0 2px; color:var(--gold); font-weight:normal; font-size:1.15rem; text-align:center; font-family:"IM Fell English SC",var(--serif); }
+  .opt .why { margin:0 0 14px; color:var(--muted); font-size:.82rem; text-align:center; font-style:italic; }
+  .cards { display:flex; justify-content:center; gap:10px; align-items:flex-end; }
+  .cards svg.card { width:200px; height:350px; border-radius:7px; box-shadow:0 6px 18px rgba(0,0,0,.5); display:block; }
+  .cards svg.card.sm { width:70px; height:122.5px; border-radius:4px; }
+  .icons { display:flex; justify-content:center; align-items:flex-end; gap:14px; margin-top:16px; }
+  .icons svg { display:block; border-radius:22%; outline:1px solid #3a3448; }
+  .icons .i1 { width:150px; height:150px; } .icons .i2 { width:56px; height:56px; } .icons .i3 { width:32px; height:32px; border-radius:6px; }
+  .glyphs { display:flex; justify-content:center; gap:18px; margin-top:10px; } .glyphs svg { width:44px; height:44px; }
+  .label { font-size:.62rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); text-align:center; margin:14px 0 0; }
+</style>
+</head>
+<body>
+<h1>Bearcana — bear &amp; magic</h1>
+<p class="intro">The four elements in the corners instead of stars. Fire and air on top, water and earth below.</p>
+<div class="row" id="row"></div>
+
+<script>
+const G = "#c9a96e", GL = "#ecd59f", GD = "#9c7a3e", BG = "#2a2436", NIGHT = "#15131c";
+
+// Walking bear, facing right, in a 110 x 62 box (feet on y = 60).
+const BEAR = "M8,30 C8,19 20,13 34,13 C46,13 54,9 62,9 C70,9 75,13 80,17 C83,19 86,19 88,18 L90,14.5 L93,17.5 C96,19.5 100,23 103,26 C105.5,27.5 105,30.5 102.5,31 C98,32 93,33 89,36 C85,39 83,43 82,48 L83,56 C86,57 88,58 88,60 L72,60 L71,50 C62,48 50,48 40,49 L37,56 C40,57 41,58 41,60 L24,60 C22,54 21,50 18,47 C12,43 8,37 8,30 Z";
+
+const sparkle = (x, y, s, fill = G, op = 1) =>
+  `<path transform="translate(${x} ${y}) scale(${s})" d="M0,-1 Q.13,-.13 .8,0 Q.13,.13 0,1 Q-.13,.13 -.8,0 Q-.13,-.13 0,-1Z" fill="${fill}" opacity="${op}"/>`;
+const bear = (x, y, s, fill, extra = "") =>
+  `<path transform="translate(${x} ${y}) scale(${s})" d="${BEAR}" fill="${fill}" ${extra}/>`;
+const dots = (list, r = .9, op = .7) => list.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="${GL}" opacity="${op}"/>`).join("");
+
+// Frame shared by every card back (matches the current one).
+const frame = inner => `
+  <rect width="140" height="245" fill="${BG}"/>
+  ${inner}
+  <rect x="5" y="5" width="130" height="235" rx="4" fill="none" stroke="${G}" stroke-opacity=".55" stroke-width=".9"/>
+  <rect x="9" y="9" width="122" height="227" rx="2.5" fill="none" stroke="${G}" stroke-opacity=".4" stroke-width=".6" stroke-dasharray="1 3"/>
+  ${sparkle(20, 22, 4.5)}${sparkle(120, 22, 4.5)}${sparkle(20, 223, 4.5)}${sparkle(120, 223, 4.5)}`;
+
+const starfield = dots([[30,52],[52,40],[96,46],[112,64],[24,92],[118,110],[28,150],[114,170],[40,196],[100,200],[70,214],[58,58],[86,30]], .7, .55);
+
+// Paw with sparkle toes, centred on (0,0), roughly 60 wide.
+const paw = (fill, toeFill = fill) => `
+  <path d="M0,28 C-15,28 -24,18 -20,6 C-17,-3 -8,-6 0,-6 C8,-6 17,-3 20,6 C24,18 15,28 0,28Z" fill="${fill}"/>
+  ${sparkle(-24, -16, 9, toeFill)}${sparkle(-9, -30, 10, toeFill)}${sparkle(9, -30, 10, toeFill)}${sparkle(24, -16, 9, toeFill)}`;
+
+// Bear head, front view, centred on (0,0), about 60 wide.
+const head = (fill, cut) => `
+  <circle cx="-19" cy="-20" r="9" fill="${fill}"/><circle cx="19" cy="-20" r="9" fill="${fill}"/>
+  <circle cx="-19" cy="-20" r="4" fill="${cut}" opacity=".5"/><circle cx="19" cy="-20" r="4" fill="${cut}" opacity=".5"/>
+  <path d="M0,-26 C17,-26 27,-14 27,1 C27,18 14,27 0,27 C-14,27 -27,18 -27,1 C-27,-14 -17,-26 0,-26Z" fill="${fill}"/>
+  <ellipse cx="0" cy="11" rx="11" ry="8.5" fill="${cut}" opacity=".35"/>
+  <path d="M-4.5,6 Q0,4 4.5,6 Q4,10 0,11.5 Q-4,10 -4.5,6Z" fill="${cut}"/>
+  <circle cx="-9.5" cy="-3" r="2.2" fill="${cut}"/><circle cx="9.5" cy="-3" r="2.2" fill="${cut}"/>`;
+
+// Big Dipper laid on the bear's back (bear coordinates).
+const DIPPER = [[14,22],[24,17],[34,18],[45,21],[62,17],[64,32],[47,33]];
+const OTHER = [[96,25],[86,22],[80,44],[84,58],[74,58],[40,56],[30,58],[22,50]];
+
+const options = [
+  {
+    id: "moon", name: "Moon walker", why: "A bear crossing a full moon",
+    card: (id) => frame(`
+      <defs><radialGradient id="m${id}" cx="45%" cy="40%" r="60%"><stop offset="0" stop-color="${GL}"/><stop offset="1" stop-color="${G}"/></radialGradient></defs>
+      ${starfield}
+      <circle cx="70" cy="118" r="48" fill="${G}" opacity=".12"/>
+      <circle cx="70" cy="118" r="42" fill="url(#m${id})"/>
+      <circle cx="56" cy="104" r="6" fill="${GD}" opacity=".25"/><circle cx="84" cy="96" r="4" fill="${GD}" opacity=".2"/><circle cx="88" cy="128" r="5" fill="${GD}" opacity=".18"/>
+      ${bear(24, 124, .84, NIGHT)}
+      <path d="M14,175 Q70,166 126,175" stroke="${G}" stroke-width=".8" fill="none" opacity=".6"/>`),
+    icon: (id) => `
+      <defs><radialGradient id="im${id}" cx="45%" cy="40%" r="60%"><stop offset="0" stop-color="${GL}"/><stop offset="1" stop-color="${G}"/></radialGradient></defs>
+      <rect width="512" height="512" fill="${NIGHT}"/>
+      <circle cx="256" cy="236" r="172" fill="url(#im${id})"/>
+      ${bear(62, 236, 3.5, NIGHT)}
+      ${sparkle(86, 96, 22)}${sparkle(430, 400, 16)}`
+  },
+  {
+    id: "crescent", name: "Crescent rider", why: "Bear standing in a crescent moon",
+    card: (id) => frame(`
+      ${starfield}
+      <defs><mask id="c${id}"><rect width="140" height="245" fill="#fff"/><circle cx="70" cy="122" r="41" fill="#000"/></mask></defs>
+      <circle cx="70" cy="138" r="44" fill="${G}" mask="url(#c${id})"/>
+      ${bear(30, 117, .73, GL)}
+      ${sparkle(70, 66, 7, GL)}${sparkle(44, 80, 3.5)}${sparkle(98, 82, 3.5)}`),
+    icon: (id) => `
+      <rect width="512" height="512" fill="${NIGHT}"/>
+      <defs><mask id="ic${id}"><rect width="512" height="512" fill="#fff"/><circle cx="256" cy="250" r="160" fill="#000"/></mask></defs>
+      <circle cx="256" cy="310" r="176" fill="${G}" mask="url(#ic${id})"/>
+      ${bear(98, 204, 2.86, GL)}
+      ${sparkle(256, 100, 34, GL)}`
+  },
+  {
+    id: "paw", name: "Star paw", why: "A paw print whose toes are stars",
+    card: (id) => frame(`
+      ${starfield}
+      <g fill="none" stroke="${G}" stroke-linecap="round">
+        <circle cx="70" cy="122.5" r="52" stroke-width=".6" stroke-dasharray="1 3.2" stroke-opacity=".7"/>
+        <circle cx="70" cy="122.5" r="45" stroke-width="1.1"/>
+      </g>
+      <g transform="translate(70 128) scale(.95)">${paw(G, GL)}</g>
+      <path d="M64,58 a10,10 0 1 0 12,0 a8,8 0 1 1 -12,0Z" fill="${GL}" transform="rotate(-90 70 60)"/>
+      ${sparkle(70, 190, 5)}`),
+    icon: (id) => `
+      <rect width="512" height="512" fill="${NIGHT}"/>
+      <circle cx="256" cy="256" r="200" fill="none" stroke="${G}" stroke-width="10" opacity=".55"/>
+      <g transform="translate(256 278) scale(3.9)">${paw(G, GL)}</g>`
+  },
+  {
+    id: "ursa", name: "Ursa Major", why: "The Great Bear drawn in its stars",
+    card: (id) => frame(`
+      ${starfield}
+      <g transform="translate(16 92) scale(.98)">
+        <path d="${BEAR}" fill="${G}" fill-opacity=".1" stroke="${G}" stroke-opacity=".45" stroke-width=".8" stroke-dasharray="1.5 2"/>
+        <polyline points="${DIPPER.slice(0,5).map(p=>p.join(',')).join(' ')} ${DIPPER[5].join(',')} ${DIPPER[6].join(',')} ${DIPPER[3].join(',')}" fill="none" stroke="${GL}" stroke-width=".7" opacity=".85"/>
+        ${DIPPER.map(([x,y]) => sparkle(x, y, 3.2, GL)).join("")}
+        ${OTHER.map(([x,y]) => `<circle cx="${x}" cy="${y}" r="1.2" fill="${GL}" opacity=".8"/>`).join("")}
+      </g>
+      <path d="M100,40 a12,12 0 1 0 6,22 a10,10 0 1 1 -6,-22Z" fill="${G}"/>
+      <path d="M26,182 L114,182" stroke="${G}" stroke-width=".6" opacity=".5"/>
+      <circle cx="70" cy="182" r="2" fill="${G}"/>`),
+    icon: (id) => `
+      <rect width="512" height="512" fill="${NIGHT}"/>
+      <g transform="translate(40 150) scale(3.9)">
+        <path d="${BEAR}" fill="${G}" fill-opacity=".22" stroke="${G}" stroke-opacity=".7" stroke-width="1.1"/>
+        <polyline points="${DIPPER.slice(0,5).map(p=>p.join(',')).join(' ')} ${DIPPER[5].join(',')} ${DIPPER[6].join(',')} ${DIPPER[3].join(',')}" fill="none" stroke="${GL}" stroke-width="1.1"/>
+        ${DIPPER.map(([x,y]) => sparkle(x, y, 4.2, GL)).join("")}
+      </g>`
+  },
+  {
+    id: "head", name: "Moon-cradled bear", why: "A bear face held in a crescent",
+    card: (id) => frame(`
+      ${starfield}
+      <defs><mask id="h${id}"><rect width="140" height="245" fill="#fff"/><circle cx="84" cy="114" r="44" fill="#000"/></mask></defs>
+      <circle cx="70" cy="122.5" r="50" fill="${G}" mask="url(#h${id})"/>
+      <g transform="translate(80 120) scale(.95)">${head(GL, BG)}</g>
+      ${sparkle(36, 70, 4)}${sparkle(112, 170, 5)}`),
+    icon: (id) => `
+      <rect width="512" height="512" fill="${NIGHT}"/>
+      <defs><mask id="ih${id}"><rect width="512" height="512" fill="#fff"/><circle cx="300" cy="238" r="168" fill="#000"/></mask></defs>
+      <circle cx="256" cy="268" r="196" fill="${G}" mask="url(#ih${id})"/>
+      <g transform="translate(290 262) scale(3.6)">${head(GL, NIGHT)}</g>`
+  }
+];
+
+// ---- Round 2: star paw, five toes, no moon, more gold ----
+const GOLD = id => `<defs>
+  <linearGradient id="g${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6e4ad"/><stop offset=".45" stop-color="#d9b56f"/><stop offset="1" stop-color="#9c7a3e"/></linearGradient>
+  <linearGradient id="gs${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6e4ad"/><stop offset="1" stop-color="#b8924f"/></linearGradient>
+  <radialGradient id="gl${id}" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ecd59f" stop-opacity=".1"/><stop offset="1" stop-color="#ecd59f" stop-opacity="0"/></radialGradient></defs>`;
+const TOES = [[-27,-8,-62],[-15,-24,-30],[0,-30,0],[15,-24,30],[27,-8,62]]; // x, y, angle
+const pad = fill => `<path d="M0,26 C-10,26 -14,20 -20,19 C-27,18 -29,8 -24,1 C-18,-7 -9,-9 0,-9 C9,-9 18,-7 24,1 C29,8 27,18 20,19 C14,20 10,26 0,26Z" fill="${fill}"/>`;
+// Five toes as four-point stars, the top point long like a claw.
+const pawStars = fill => pad(fill) + TOES.map(([x,y,a]) =>
+  `<path transform="translate(${x} ${y}) rotate(${a})" d="M0,-12 Q1.3,-2 6,0 Q1.3,1.3 0,6 Q-1.3,1.3 -6,0 Q-1.3,-2 0,-12Z" fill="${fill}"/>`).join("");
+// Five round toes, each with a hooked claw above it.
+const pawClaws = (fill, clawFill = fill) => pad(fill) + TOES.map(([x,y,a]) =>
+  `<g transform="translate(${x} ${y}) rotate(${a})"><ellipse rx="5.6" ry="6.6" fill="${fill}"/>
+   <path d="M-2.6,-7.5 Q-2.2,-15 1.6,-18.5 Q.9,-13 2.6,-7.5 Q0,-6.2 -2.6,-7.5Z" fill="${clawFill}"/></g>`).join("");
+
+const ticks = (cx, cy, r1, r2, n, w, stroke) => Array.from({length:n}, (_, i) => {
+  const t = i / n * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
+  return `<path d="M${cx + c*r1},${cy + s*r1}L${cx + c*r2},${cy + s*r2}"/>`; }).join("");
+const ringDots = (cx, cy, r, n, rr, fill) => Array.from({length:n}, (_, i) => {
+  const t = (i + .5) / n * Math.PI * 2; return `<circle cx="${cx + Math.cos(t)*r}" cy="${cy + Math.sin(t)*r}" r="${rr}" fill="${fill}"/>`; }).join("");
+
+const goldFrame = (id, inner, bg = BG) => `${GOLD(id)}
+  <rect width="140" height="245" fill="${bg}"/>
+  ${inner}
+  <rect x="4.5" y="4.5" width="131" height="236" rx="4" fill="none" stroke="url(#gs${id})" stroke-width="1.4"/>
+  <rect x="8.5" y="8.5" width="123" height="228" rx="2.5" fill="none" stroke="url(#gs${id})" stroke-width=".7"/>
+  ${[[19,21],[121,21],[19,224],[121,224]].map(([x,y]) => sparkle(x, y, 5, `url(#g${id})`)).join("")}`;
+
+const medallion = (id, pawSvg) => `
+  <circle cx="70" cy="122.5" r="62" fill="url(#gl${id})"/>
+  <g fill="none" stroke="url(#gs${id})" stroke-linecap="round">
+    <circle cx="70" cy="122.5" r="53" stroke-width=".8" stroke-dasharray="1 3"/>
+    <circle cx="70" cy="122.5" r="47" stroke-width="1.6"/>
+    <circle cx="70" cy="122.5" r="40" stroke-width=".8"/>
+    <g stroke-width=".9">${ticks(70, 122.5, 40, 47, 12)}</g>
+  </g>
+  ${ringDots(70, 122.5, 43.5, 12, 1.2, GL)}
+  <g transform="translate(70 128) scale(.86)">${pawSvg}</g>
+  ${sparkle(70, 52, 4, `url(#g${id})`)}${sparkle(70, 193, 4, `url(#g${id})`)}
+  ${dots([[30,48],[110,48],[26,96],[114,150],[30,200],[110,200],[40,70],[100,175]], .8, .7)}`;
+
+const goldIcon = (id, pawSvg, bg = NIGHT, ring = true) => `${GOLD(id)}
+  <rect width="512" height="512" fill="${bg}"/>
+  ${ring ? `<circle cx="256" cy="256" r="236" fill="url(#gl${id})"/>
+  <circle cx="256" cy="256" r="206" fill="none" stroke="url(#gs${id})" stroke-width="12"/>` : ""}
+  <g transform="translate(256 276) scale(3.9)">${pawSvg}</g>`;
+
+options.length = 0;
+options.push(
+  {
+    id: "c1", name: "Star claws", why: "Five toes drawn as stars, pointed like claws",
+    card: id => goldFrame(id, medallion(id, pawStars(`url(#g${id})`))),
+    icon: id => goldIcon(id, pawStars(`url(#g${id})`))
+  },
+  {
+    id: "c2", name: "Bear claws", why: "Round toes, each with a hooked golden claw",
+    card: id => goldFrame(id, medallion(id, pawClaws(`url(#g${id})`, GL))),
+    icon: id => goldIcon(id, pawClaws(`url(#g${id})`, GL))
+  },
+  {
+    id: "c3", name: "Gold leaf", why: "A gold card with the paw pressed in dark",
+    card: id => `${GOLD(id)}
+      <rect width="140" height="245" fill="url(#g${id})"/>
+      <rect x="4.5" y="4.5" width="131" height="236" rx="4" fill="none" stroke="${BG}" stroke-opacity=".7" stroke-width="1.2"/>
+      <rect x="8.5" y="8.5" width="123" height="228" rx="2.5" fill="none" stroke="${BG}" stroke-opacity=".5" stroke-width=".6" stroke-dasharray="1 3"/>
+      <g fill="none" stroke="${BG}" stroke-opacity=".75" stroke-linecap="round">
+        <circle cx="70" cy="122.5" r="47" stroke-width="1.5"/><circle cx="70" cy="122.5" r="40" stroke-width=".7"/>
+        <g stroke-width=".9">${ticks(70, 122.5, 40, 47, 12)}</g>
+      </g>
+      <g transform="translate(70 128) scale(.86)">${pawClaws(BG)}</g>
+      ${[[19,21],[121,21],[19,224],[121,224],[70,52],[70,193]].map(([x,y]) => sparkle(x, y, 5, BG, .8)).join("")}`,
+    icon: id => goldIcon(id, pawClaws(BG), `url(#g${id})`, false)
+  }
+);
+
+// ---- Round 3: C1 redrawn from the reference paw; plain circle + dotted ring ----
+// Toe egg, pointed at the top, with a thin claw spike above it.
+const egg = (rx, ry) => `M0,${-ry} C${rx*.72},${-ry} ${rx},${-ry*.2} ${rx},${ry*.25} C${rx},${ry*.8} ${rx*.55},${ry} 0,${ry} C${-rx*.55},${ry} ${-rx},${ry*.8} ${-rx},${ry*.25} C${-rx},${-ry*.2} ${-rx*.72},${-ry} 0,${-ry}Z`;
+const claw = (ry, len) => `M-1.5,${-ry-3.6} Q-.8,${-ry-3.6-len*.6} 0,${-ry-3.6-len} Q.8,${-ry-3.6-len*.6} 1.5,${-ry-3.6} Q0,${-ry-2.9} -1.5,${-ry-3.6}Z`;
+const REF_TOES = [ // x, y, angle, rx, ry, claw length
+  [-35,-21,-40,5.2,8,11], [-18,-38,-17,6.3,9.5,13], [0,-44,0,6.5,10,14], [18,-38,17,6.3,9.5,13], [35,-21,40,5.2,8,11]];
+const refPaw = (fill, clawFill = fill) =>
+  `<path d="M-28,-10 C-22,-19 -10,-22 0,-22 C10,-22 22,-19 28,-10 C32,-3 31,6 26,14 C21,22 14,25 6,23 C2,22 -2,22 -6,23 C-14,25 -21,22 -26,14 C-31,6 -32,-3 -28,-10Z" fill="${fill}"/>` +
+  REF_TOES.map(([x,y,a,rx,ry,l]) => `<g transform="translate(${x} ${y}) rotate(${a})"><path d="${egg(rx,ry)}" fill="${fill}"/><path d="${claw(ry,l)}" fill="${clawFill}"/></g>`).join("");
+
+const plainMedallion = (id, pawSvg) => `
+  <circle cx="70" cy="122.5" r="62" fill="url(#gl${id})"/>
+  <circle cx="70" cy="122.5" r="53" fill="none" stroke="url(#gs${id})" stroke-width=".8" stroke-dasharray="1 3" stroke-linecap="round"/>
+  <circle cx="70" cy="122.5" r="47" fill="none" stroke="url(#gs${id})" stroke-width="1.6"/>
+  <g transform="translate(70 139.5) scale(.72)">${pawSvg}</g>
+  ${sparkle(70, 52, 4, `url(#g${id})`)}${sparkle(70, 193, 4, `url(#g${id})`)}
+  ${dots([[30,48],[110,48],[26,96],[114,150],[30,200],[110,200],[40,70],[100,175]], .8, .7)}`;
+
+options.length = 0;
+options.push({
+  id: "c1r", name: "Star claws", why: "Paw and claws after your reference, plain ring",
+  card: id => goldFrame(id, plainMedallion(id, refPaw(`url(#g${id})`, GL))),
+  icon: id => `${GOLD(id)}
+    <rect width="512" height="512" fill="${NIGHT}"/>
+    <circle cx="256" cy="256" r="236" fill="url(#gl${id})"/>
+    <circle cx="256" cy="256" r="228" fill="none" stroke="url(#gs${id})" stroke-width="4" stroke-dasharray="4 12" stroke-linecap="round"/>
+    <circle cx="256" cy="256" r="206" fill="none" stroke="url(#gs${id})" stroke-width="12"/>
+    <g transform="translate(256 333) scale(3.35)">${refPaw(`url(#g${id})`, GL)}</g>`
+});
+
+// ---- Round 4: shapes measured from the reference image (its pixel grid, centre x = 130) ----
+const M = x => 260 - x; // mirror across the centre line
+const toeL = (t, w, b, top, mid, bot) => // left-side toe: top point, half width, bottom
+  `M${t},${top} C${t+w*.6},${top+(mid-top)*.35} ${t+w},${mid-(mid-top)*.4} ${t+w},${mid} C${t+w},${mid+(bot-mid)*.65} ${t+w*.5},${bot} ${t},${bot} C${t-w*.5},${bot} ${t-w},${mid+(bot-mid)*.65} ${t-w},${mid} C${t-w},${mid-(mid-top)*.4} ${t-w*.6},${top+(mid-top)*.35} ${t},${top}Z`;
+const SHAPES = [
+  // pad: pointed top, concave shoulders, wide straight sides, flat bottom
+  { d: "M130,125 C137,131 144,140 160,143 C183,147 201,161 201,183 C201,203 195,219 178,225 C162,229 147,222 130,222 C113,222 98,229 82,225 C65,219 59,203 59,183 C59,161 77,147 100,143 C116,140 123,131 130,125Z", c: [130,186], k: .8 },
+  { d: toeL(130, 16.5, 0, 68, 101, 118), c: [130,98], k: .7 },
+  { d: toeL(87, 17.5, 0, 79, 115, 133), c: [87.5,111], k: .7 },
+  { d: toeL(173, 17.5, 0, 79, 115, 133), c: [172.5,111], k: .7 },
+  { d: toeL(57, 11, 0, 112, 139, 156), c: [57,137], k: .66 },
+  { d: toeL(203, 11, 0, 112, 139, 156), c: [203,137], k: .66 },
+];
+// Claws from the reference: tip -> base, then drawn as little constellations.
+const CLAWS = [[130,33,130,60],[92,51,84,73],[M(92),51,M(84),73],[59,85,53,107],[M(59),85,M(53),107]];
+const clawStars = (fill) => CLAWS.map(([x1,y1,x2,y2]) => {
+  const dx = x2-x1, dy = y2-y1, len = Math.hypot(dx,dy), ux = dx/len, uy = dy/len;
+  const tip = [x1 - ux*8, y1 - uy*8];                      // reach a little past the reference tip
+  const side = Math.sign(x1 - 130);                         // -1 left, 0 middle, 1 right
+  const px = Math.abs(uy) * side, py = -ux * Math.sign(uy) * side; // perpendicular, pointing away from the centre line
+  const midp = [x1 + dx*.45 + px*3.2, y1 + dy*.45 + py*3.2];
+  const base = [x2, y2];
+  return `<polyline points="${[tip,midp,base].map(p=>p.join(',')).join(' ')}" fill="none" stroke="${GL}" stroke-width="1.1" stroke-opacity=".75"/>
+    ${sparkle(tip[0], tip[1], 7.5, fill)}<circle cx="${midp[0]}" cy="${midp[1]}" r="2.1" fill="${GL}"/><circle cx="${base[0]}" cy="${base[1]}" r="2.6" fill="${GL}"/>`;
+}).join("");
+
+// solid: gold shapes with an engraved inner line; line: outlines only
+const paw4 = (id, style, ink = BG) => SHAPES.map(({d, c:[cx,cy], k}) => style === "solid"
+    ? `<path d="${d}" fill="url(#g${id})"/><path d="${d}" fill="none" stroke="${ink}" stroke-opacity=".55" stroke-width="${1.6/k}" transform="translate(${cx} ${cy}) scale(${k}) translate(${-cx} ${-cy})"/>`
+    : `<path d="${d}" fill="${G}" fill-opacity=".1" stroke="url(#gs${id})" stroke-width="2.6" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${G}" stroke-opacity=".45" stroke-width="${1/k}" pathLength="60" stroke-dasharray="0 1" stroke-linecap="round" transform="translate(${cx} ${cy}) scale(${k}) translate(${-cx} ${-cy})"/>`
+  ).join("") + clawStars(`url(#g${id})`);
+const place = (x, y, s, inner) => `<g transform="translate(${x} ${y}) scale(${s}) translate(-130 -136)">${inner}</g>`;
+
+const medallion4 = (id, inner) => `
+  <circle cx="70" cy="122.5" r="62" fill="url(#gl${id})"/>
+  <circle cx="70" cy="122.5" r="47" fill="none" stroke="url(#gs${id})" stroke-width="1.2" pathLength="76" stroke-dasharray="0 1" stroke-linecap="round"/>
+  ${place(70, 122.5, .355, inner)}`;
+const icon4 = (id, inner) => `${GOLD(id)}
+  <rect width="512" height="512" fill="${NIGHT}"/>
+  <g transform="translate(256 256) scale(2.1) translate(-130 -122.7)">${inner}</g>`;
+
+options.length = 0;
+options.push(
+  { id: "c4l", name: "Gold line", why: "The same paw drawn in fine gold lines",
+    card: id => goldFrame(id, medallion4(id, paw4(id, "line"))), icon: id => icon4(id, paw4(id, "line")) }
+);
+
+// ---- Round 5: the four elements in the corners instead of stars ----
+// Each glyph is drawn around (0,0), about 9 units across, as thin gold lines.
+const EL_STROKE = `fill="none" stroke="#d9b56f" stroke-width=".75" stroke-linecap="round" stroke-linejoin="round"`;
+const tri = (up, bar) => { const s = up ? 1 : -1;
+  return `<path d="M0,${-4.6*s} L4.4,${3*s} L-4.4,${3*s}Z"/>` + (bar ? `<path d="M-3.6,${-.4*s} L3.6,${-.4*s}"/>` : ""); };
+const ELEMENT_SETS = {
+  alchemy: { name: "Alchemy", why: "The old alchemical triangles: rising fire and air on top, falling water and earth below",
+    fire: tri(true, false), air: tri(true, true), water: tri(false, false), earth: tri(false, true) },
+  suits: { name: "Tarot suits", why: "The four suits: wand (fire), sword (air), cup (water), pentacle (earth)",
+    fire: `<path d="M0,-4.8 L0,4.8"/><path d="M0,-2 L2,-3.6"/><path d="M0,.4 L-2,-1.2"/>`,
+    air: `<path d="M0,-5 L1,-3.8 L1,1.4 L-1,1.4 L-1,-3.8Z"/><path d="M-3,1.6 L3,1.6"/><path d="M0,1.6 L0,4.2"/><circle cy="4.8" r=".6"/>`,
+    water: `<path d="M-3.6,-4.2 L3.6,-4.2 Q3.6,.6 0,.8 Q-3.6,.6 -3.6,-4.2Z"/><path d="M0,.8 L0,3.8"/><path d="M-2.6,4.4 L2.6,4.4"/>`,
+    earth: `<circle r="4.6"/><path d="${Array.from({length:5}, (_, i) => { const t = -Math.PI/2 + i*4*Math.PI/5; return (i ? "L" : "M") + (3.6*Math.cos(t)).toFixed(2) + "," + (3.6*Math.sin(t)).toFixed(2); }).join(" ")}Z"/>` },
+  nature: { name: "Nature", why: "Flame, wind, drop and mountain",
+    fire: `<path d="M0,-4.8 C2.6,-2.2 3.6,-.2 3.4,1.8 C3.2,3.8 1.6,4.8 0,4.8 C-1.6,4.8 -3.2,3.8 -3.4,1.8 C-3.6,-.2 -2.6,-2.2 0,-4.8Z"/><path d="M0,.4 C1,1.4 1.4,2.2 1.2,3 C1,3.7 .5,4 0,4 C-.5,4 -1,3.7 -1.2,3 C-1.4,2.2 -1,1.4 0,.4Z"/>`,
+    air: `<path d="M-4.4,-2.2 L1.6,-2.2 A1.6,1.6 0 1 0 0,-3.8"/><path d="M-4.4,.6 L3,.6"/><path d="M-4.4,3.2 L.8,3.2 A1.5,1.5 0 1 1 -.7,4.7"/>`,
+    water: `<path d="M0,-4.8 C1.4,-2.6 3.4,-.6 3.4,1.4 A3.4,3.4 0 0 1 -3.4,1.4 C-3.4,-.6 -1.4,-2.6 0,-4.8Z"/>`,
+    earth: `<path d="M-4.8,3.6 L-1.4,-3 L.9,1 L2.1,-1 L4.8,3.6Z"/>` }
+};
+// top corners: fire (left) and air (right); bottom corners: water (left) and earth (right)
+const elementCorners = set => [["fire",19,22],["air",121,22],["water",19,223],["earth",121,223]]
+  .map(([e,x,y]) => `<g transform="translate(${x} ${y})" ${EL_STROKE}>${set[e]}</g>`).join("");
+const elemFrame = (id, inner, set) => `${GOLD(id)}
+  <rect width="140" height="245" fill="${BG}"/>
+  ${inner}
+  <rect x="4.5" y="4.5" width="131" height="236" rx="4" fill="none" stroke="url(#gs${id})" stroke-width="1.4"/>
+  <rect x="8.5" y="8.5" width="123" height="228" rx="2.5" fill="none" stroke="url(#gs${id})" stroke-width=".7"/>
+  ${elementCorners(set)}`;
+
+const lineOpt = options[0];
+options.length = 0;
+Object.entries(ELEMENT_SETS).forEach(([key, set]) => options.push({
+  id: "el" + key, name: set.name, why: set.why, set,
+  card: id => elemFrame(id, medallion4(id, paw4(id, "line")), set), icon: lineOpt.icon
+}));
+
+const row = document.getElementById("row");
+options.forEach((o, n) => {
+  const el = document.createElement("div");
+  el.className = "opt";
+  el.innerHTML = `
+    <h2>${"Corners " + (n + 1)} · ${o.name}</h2>
+    <p class="why">${o.why}</p>
+    <div class="cards">
+      <svg class="card" viewBox="0 0 140 245">${o.card(o.id + "a")}</svg>
+      <svg class="card sm" viewBox="0 0 140 245">${o.card(o.id + "b")}</svg>
+    </div>
+    ${o.set ? `<p class="label">Corners up close: fire · air · water · earth</p><div class="glyphs">${["fire","air","water","earth"].map(e => `<svg viewBox="-7 -7 14 14"><g ${EL_STROKE}>${o.set[e]}</g></svg>`).join("")}</div>` : ""}
+    <p class="label">App icon</p>
+    <div class="icons">
+      <svg class="i1" viewBox="0 0 512 512">${o.icon(o.id + "1")}</svg>
+      <svg class="i2" viewBox="0 0 512 512">${o.icon(o.id + "2")}</svg>
+      <svg class="i3" viewBox="0 0 512 512">${o.icon(o.id + "3")}</svg>
+    </div>`;
+  row.appendChild(el);
+});
+</script>
+</body>
+</html>

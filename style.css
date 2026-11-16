@@ -1222,7 +1222,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* Search */
 .hist-search { position: relative; margin: 2px 0 4px; }
 .hist-search[hidden] { display: none; }
-#histSearch {
+.hist-search input {
   width: 100%;
   padding: 10px 40px 10px 16px;
   color: var(--ink);
@@ -1235,10 +1235,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
   -webkit-appearance: none;
   appearance: none;
 }
-#histSearch::-webkit-search-cancel-button { display: none; }
-#histSearch::placeholder { color: var(--muted); font-style: italic; }
-#histSearch:focus { border-color: var(--gold); }
-#histSearchClear {
+.hist-search input::-webkit-search-cancel-button { display: none; }
+.hist-search input::placeholder { color: var(--muted); font-style: italic; }
+.hist-search input:focus { border-color: var(--gold); }
+.hist-search .link {
   position: absolute;
   right: 8px;
   top: 50%;
@@ -2269,3 +2269,112 @@ button { font: inherit; color: inherit; cursor: pointer; }
   font-size: .8rem;
   letter-spacing: .03em;
 }
+
+/* ── Added: reading notes, patterns, own themes, calendar, browse search ── */
+
+/* The summary's Share link sits where the bar's spacer was */
+.bar .bar-end { width: 80px; text-align: right; }
+
+/* Your reflection, at the foot of a saved reading's summary */
+.summary-part.reflection { margin-top: 26px; padding-top: 14px; border-top: 1px solid rgba(201, 169, 110, .2); }
+.summary-part.reflection .note-box { margin: 10px 0 0; }
+
+/* A reading's note, short, under its cards in the history */
+.reading-note {
+  margin: 2px 6px 4px;
+  font-family: var(--read);
+  font-size: .85rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* The backup reminder */
+.backup-nudge { margin: -8px 0 14px; text-align: center; color: var(--muted); font-size: .9rem; }
+.home-nudge { display: block; margin: 10px auto 0; opacity: .85; }
+.patterns-btn { display: block; margin: 0 auto 18px; }
+
+/* Your patterns */
+#patternsBody { max-width: 40rem; margin: 0 auto; }
+.pat-spans { justify-content: center; margin: 2px 0 6px; }
+#patternsBody .summary-cards { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 76px)); justify-content: center; gap: 10px; }
+#patternsBody .related-card { flex: none; width: 100%; }
+
+/* A month of daily cards as a calendar, Monday first */
+.month-body.cal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px 5px;
+  padding: 12px 0 8px;
+  max-width: 34rem;
+  margin: 0 auto;
+}
+.month-body.cal[hidden] { display: none; }
+.cal-head { text-align: center; font-size: .7rem; letter-spacing: .1em; color: var(--muted); }
+.cal-day {
+  position: relative;
+  aspect-ratio: 4 / 7;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  overflow: hidden;
+}
+.cal-day .cface { width: 100%; height: 100%; }
+.cal-day.empty {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 4px;
+  font-size: .7rem;
+  color: var(--muted);
+  opacity: .45;
+  border: 1px solid rgba(201, 169, 110, .12);
+}
+.cal-num {
+  position: absolute;
+  z-index: 1;
+  top: 2px;
+  left: 0;
+  right: 0;
+  font-size: .62rem;
+  color: var(--ink);
+  text-shadow: 0 0 3px #000, 0 0 6px #000;
+}
+.cal-day.today { outline: 1px solid var(--gold); outline-offset: 1px; }
+.cal-day.empty.today { opacity: .9; }
+.search-count.streak { margin: 8px 0 0; color: var(--gold); }
+
+/* Browse: search above the suits */
+#browseFilters .hist-search { margin: 0 0 10px; }
+
+/* Your own theme */
+.own-new { display: block; margin: 0 auto 14px; }
+.own-form { max-width: 36rem; margin: 0 auto; }
+.own-field { display: flex; flex-direction: column; gap: 4px; margin: 0 0 12px; flex: 1; min-width: 0; }
+.own-label { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); opacity: .85; }
+.own-input {
+  width: 100%;
+  padding: 9px 12px;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid rgba(201, 169, 110, .3);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.own-input:focus { border-color: var(--gold); }
+.own-input::placeholder { color: var(--muted); font-style: italic; }
+.own-place { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 8px; align-items: end; }
+.own-place .own-field { margin-bottom: 8px; }
+.own-place .own-field:nth-child(2) .own-label { visibility: hidden; }
+.own-status { text-align: center; min-height: 1.2em; color: var(--gold); }
+
+/* Google Drive backup, on the history screen */
+.drive-box .history-actions { margin-bottom: 6px; }
+.drive-status { margin: 0 0 16px; text-align: center; color: var(--muted); font-size: .85rem; }

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ring Options</title>
+<style>
+  :root { --ink:#e9e2d3; --muted:#a79f8f; --gold:#c9a96e; --line:rgba(201,169,110,.2);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0d0c12; color:var(--ink); font-family:var(--serif); padding:20px 16px 48px; }
+  h1 { margin:0 0 4px; color:var(--gold); font-weight:normal; text-align:center; }
+  .intro { margin:0 auto 20px; color:var(--muted); text-align:center; font-size:.92rem; max-width:640px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:18px; max-width:1200px; margin:0 auto; }
+  .opt { background:#16131f; border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .opt h2 { margin:0; color:var(--gold); font-weight:normal; font-size:1.1rem; }
+  .opt h2 span { color:var(--muted); font-size:.85rem; margin-right:6px; }
+  .opt p { margin:2px 0 8px; color:var(--muted); font-size:.82rem; font-style:italic; min-height:2.4em; }
+  .views { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  iframe { width:100%; aspect-ratio:1; border:0; border-radius:8px; background:#0c0b11; display:block; }
+  .lbl { font-size:.68rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); text-align:center; margin-top:3px; }
+  .opt a { display:inline-block; margin-top:8px; color:var(--gold); font-size:.85rem; }
+</style>
+</head>
+<body>
+<h1>Main rune band: options</h1>
+<p class="intro">The main ring and the line inside it, with the runes between, as one band. Today it is two solid lines, like the small band and the outer band; each option gives it a thin, minimal look of its own, the way the dotted crown has one, and turns as one piece. Whole circle on the left, close-up of the top on the right.</p>
+<div class="grid" id="grid"></div>
+<script>
+const OPTIONS = [
+  ["classic", "Current: two solid lines", "What the app has now, for comparison."],
+  ["threaded", "Runes on a thread", "No edges: one hairline through the middle, parting around each rune."],
+  ["dotsBelow", "Line above, dots below", "One fine outer line; a dot of light beneath each rune."],
+  ["ticks", "One line, hanging ticks", "Only the outer line, a short tick between each pair of runes."],
+  ["brackets", "Bracketed runes", "A short arc above and below each rune; open between."],
+  ["cells", "Runes in cells", "Very faint lines, a thin divider giving each rune its own cell."],
+];
+const grid = document.getElementById("grid");
+OPTIONS.forEach(([key, name, desc], i) => {
+  const d = document.createElement("div");
+  d.className = "opt";
+  d.innerHTML = `<h2><span>${i ? String.fromCharCode(64 + i) : "–"}</span>${name}</h2><p>${desc}</p>
+    <div class="views">
+      <div><iframe loading="lazy" src="rune-lab.html?embed=1&ring=${key}" title="${name}, whole circle"></iframe><div class="lbl">Whole</div></div>
+      <div><iframe loading="lazy" src="rune-lab.html?embed=1&zoom=2.6&ring=${key}" title="${name}, close-up"></iframe><div class="lbl">Close-up</div></div>
+    </div>
+    <a href="rune-lab.html?ring=${key}">Try it in Rune Lab →</a>`;
+  grid.append(d);
+});
+</script>
+</body>
+</html>

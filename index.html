@@ -38,6 +38,7 @@
       <button class="pill" id="historyBtn">Your history</button>
       <button class="pill sky-link" id="skyBtn">✦ Sky now</button>
     </div>
+    <button class="link small gold home-nudge" id="homeNudge" hidden>Back up your readings</button>
     <div class="options" id="options"></div>
   </section>
 
@@ -90,6 +91,11 @@
     </header>
     <div class="browse-body">
       <div id="browseFilters">
+        <div class="hist-search">
+          <input type="search" id="browseSearch" placeholder="Search by name, word, sign or element"
+            aria-label="Search the cards" autocomplete="off" spellcheck="false">
+          <button class="link small" id="browseSearchClear" aria-label="Clear the search" hidden>×</button>
+        </div>
         <div class="chips" id="suitChips"></div>
       </div>
       <div class="grid" id="grid"></div>
@@ -111,6 +117,15 @@
         <button class="pill small" id="importBtn">Import backup</button>
         <input type="file" id="importFile" accept=".json,application/json" hidden>
       </div>
+      <div class="drive-box" id="driveBox" hidden>
+        <div class="history-actions">
+          <button class="pill small" id="driveBackupBtn">Back up to Google Drive</button>
+          <button class="link small" id="driveRestoreBtn">Restore</button>
+        </div>
+        <p class="drive-status" id="driveStatus"></p>
+      </div>
+      <p class="backup-nudge" id="backupNudge" hidden></p>
+      <button class="pill small patterns-btn" id="patternsBtn">✦ Your patterns</button>
       <div class="chips hist-tabs" id="histTabs">
         <button class="chip on" data-mode="readings" aria-pressed="true">Readings</button>
         <button class="chip" data-mode="cotd" aria-pressed="false">Card of the day</button>
@@ -138,6 +153,26 @@
     </div>
   </div>
 
+  <!-- 6c. Your patterns: what comes back across your readings -->
+  <div class="sheet" id="patterns" hidden>
+    <header class="bar">
+      <button class="link" id="patternsBack">‹ Back</button>
+      <span class="bar-title">Your patterns</span>
+      <span class="bar-space"></span>
+    </header>
+    <div class="history-body" id="patternsBody"></div>
+  </div>
+
+  <!-- 6d. Making or changing a theme of your own -->
+  <div class="sheet" id="ownTheme" hidden>
+    <header class="bar">
+      <button class="link" id="ownBack">‹ Back</button>
+      <span class="bar-title" id="ownTitle">New theme</span>
+      <span class="bar-space"></span>
+    </header>
+    <form class="history-body own-form" id="ownForm" autocomplete="off"></form>
+  </div>
+
   <!-- 7. Sky now: the planets this moment -->
   <div class="sheet" id="skySheet" hidden>
     <canvas class="sky sky-stars" id="skyStars" aria-hidden="true"></canvas>
@@ -149,11 +184,28 @@
     <div class="history-body sky-body" id="skyBody"></div>
   </div>
 
+  <script src="cloud.js"></script>
   <script src="cards.js"></script>
   <script src="symbols.js"></script>
   <script src="spreads.js"></script>
   <script src="pickfx.js"></script>
   <script src="astronomy.js"></script>
-  <script src="app.js"></script>
+  <!-- How the app works, in this order. You normally only need to edit cards.js and spreads.js. -->
+  <script src="js/core.js"></script>
+  <script src="js/home.js"></script>
+  <script src="js/table.js"></script>
+  <script src="js/table-magic.js"></script>
+  <script src="js/arcane-circle.js"></script>
+  <script src="js/summary.js"></script>
+  <script src="js/portal.js"></script>
+  <script src="js/card-pages.js"></script>
+  <script src="js/browse.js"></script>
+  <script src="js/sky.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/drive.js"></script>
+  <script src="js/reading-notes.js"></script>
+  <script src="js/patterns.js"></script>
+  <script src="js/own-themes.js"></script>
+  <script src="js/share.js"></script>
 </body>
 </html>

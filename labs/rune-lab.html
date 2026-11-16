@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rune Lab</title>
+<style>
+  :root { --bg:#0c0b11; --panel:#16131f; --ink:#e9e2d3; --muted:#a79f8f; --gold:#c9a96e; --line:rgba(201,169,110,.18);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--serif); font-size:14px; }
+  .app { display:grid; grid-template-columns:1fr 380px; height:100vh; }
+  .stage { position:relative; overflow:hidden; }
+  #cv { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .hud { position:absolute; left:12px; top:10px; color:var(--muted); font-size:12px; line-height:1.5; pointer-events:none; font-variant-numeric:tabular-nums; }
+  .hud b { color:var(--gold); font-weight:normal; font-size:15px; }
+  .panel { background:var(--panel); border-left:1px solid var(--line); overflow-y:auto; padding:12px 14px 40px; }
+  h1 { margin:0 0 2px; font-weight:normal; color:var(--gold); font-size:20px; }
+  .sub { margin:0 0 10px; color:var(--muted); font-size:12px; font-style:italic; }
+  details { border-top:1px solid var(--line); padding:8px 0; }
+  summary { cursor:pointer; color:var(--gold); font-size:15px; list-style:none; user-select:none; }
+  summary::before { content:"▸ "; color:var(--muted); }
+  details[open] > summary::before { content:"▾ "; }
+  .row { display:grid; grid-template-columns:110px 1fr 52px; gap:8px; align-items:center; margin:7px 0; }
+  .row label { color:var(--muted); font-size:12.5px; }
+  .row output { text-align:right; font-variant-numeric:tabular-nums; font-size:12px; color:var(--ink); }
+  input[type=range] { width:100%; accent-color:var(--gold); }
+  input[type=color] { width:30px; height:22px; padding:0; border:1px solid var(--line); background:none; border-radius:4px; cursor:pointer; }
+  .ring { display:grid; grid-template-columns:18px 30px 70px 1fr 46px; gap:6px; align-items:center; margin:5px 0; }
+  .ring .nm { font-size:12px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ring output { text-align:right; font-size:11.5px; font-variant-numeric:tabular-nums; }
+  .grp { font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:10px 0 2px; opacity:.7; }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
+  button { font:inherit; font-size:13px; color:var(--ink); background:#241f31; border:1px solid var(--line); border-radius:7px; padding:6px 10px; cursor:pointer; }
+  button:hover { border-color:var(--gold); }
+  button.main { background:#3a2a56; border-color:#7d5bbf; }
+  button.on { background:#4b3670; border-color:var(--gold); }
+  .chk { display:flex; gap:6px; align-items:center; color:var(--muted); font-size:12.5px; margin:6px 0; }
+  #graph { width:100%; height:90px; display:block; background:#0f0d16; border:1px solid var(--line); border-radius:6px; margin-top:6px; }
+  textarea { width:100%; height:200px; background:#0f0d16; color:var(--ink); border:1px solid var(--line); border-radius:6px; font:11.5px/1.4 Consolas, monospace; padding:8px; }
+  .swatches { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:6px 0; color:var(--muted); font-size:12px; }
+  select { width:100%; font:inherit; color:var(--ink); background:#241f31; border:1px solid var(--line); border-radius:7px; padding:6px 8px; }
+  .embed .panel, .embed .hud { display:none; }
+  .embed .app { grid-template-columns:1fr; grid-template-rows:1fr; height:100vh; }
+  .embed .stage { height:100vh; position:relative; }
+  @media (max-width: 800px) {
+    .app { grid-template-columns:1fr; grid-template-rows:56vh auto; height:auto; }
+    .stage { height:56vh; position:sticky; top:0; z-index:1; background:var(--bg); }
+    .panel { border-left:0; border-top:1px solid var(--line); padding:12px 16px 40px; }
+    .row { grid-template-columns:96px 1fr 48px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage">
+    <canvas id="cv"></canvas>
+    <div class="hud"><b id="hudMult">×1.00</b> speed<br><span id="hudFast"></span></div>
+  </div>
+  <div class="panel">
+    <h1>Rune Lab</h1>
+    <p class="sub">The great arcane circle from app.js, with its colours, speeds and spin-up open to tweak.</p>
+
+    <div class="btns">
+      <button class="main" id="spinBtn">Spin up</button>
+      <button class="main" id="holdBtn">Hold to charge</button>
+      <button id="pauseBtn">Pause</button>
+      <button id="presetGold">Table gold</button>
+      <button id="presetPortal">Portal purple</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+
+    <details open>
+      <summary>Main rune band</summary>
+      <div class="row" style="grid-template-columns:1fr"><select id="ringShape"></select></div>
+      <p class="sub" id="ringDesc" style="margin:0"></p>
+      <div id="threadCtl">
+        <div class="row"><label>Places on thread</label><input type="range" id="threadN" min="4" max="48" step="1"><output></output></div>
+        <div class="row"><label>Node circle every</label><input type="range" id="threadEvery" min="0" max="12" step="1"><output></output></div>
+      </div>
+      <p class="sub" style="margin:4px 0 0"><a href="ring-options.html" style="color:var(--gold)">See all side by side</a></p>
+    </details>
+
+    <details open>
+      <summary>Colour</summary>
+      <div class="row"><label>Tint strength</label><input type="range" id="tintStrength" min="0" max="1" step="0.01"><output></output></div>
+      <div class="swatches">Paint all rings:
+        <input type="color" id="allColor" value="#b058ff"><button id="applyAll">Apply</button>
+      </div>
+      <div class="row"><label>Brightness</label><input type="range" id="bright" min="0.1" max="2" step="0.01"><output></output></div>
+      <div class="row"><label>Glow / bloom</label><input type="range" id="glow" min="0" max="4" step="0.05"><output></output></div>
+      <div class="row"><label>Haze</label><input type="range" id="haze" min="0" max="4" step="0.05"><output></output></div>
+      <div class="swatches">Energy <input type="color" id="energy"> Background <input type="color" id="bgc"></div>
+      <label class="chk"><input type="checkbox" id="pulses"> Energy running round the rings</label>
+    </details>
+
+    <details open>
+      <summary>Rotation</summary>
+      <div class="row"><label>Overall speed</label><input type="range" id="speed" min="0" max="10" step="0.05"><output></output></div>
+      <div class="row"><label>Speed swing</label><input type="range" id="swing" min="0" max="1" step="0.01"><output></output></div>
+      <div class="row"><label>Swing cycle ×</label><input type="range" id="cycleMul" min="0.2" max="4" step="0.05"><output></output></div>
+      <label class="chk"><input type="checkbox" id="reverse"> Reverse every ring</label>
+      <p class="sub" style="margin:8px 0 0">Each ring: show · colour · pace in degrees a second (sign = direction)</p>
+      <div id="rings"></div>
+    </details>
+
+    <details open>
+      <summary>Acceleration (spin-up)</summary>
+      <div class="row"><label>Peak speed ×</label><input type="range" id="peak" min="1" max="30" step="0.1"><output></output></div>
+      <div class="row"><label>Ramp up (s)</label><input type="range" id="ramp" min="0.1" max="6" step="0.05"><output></output></div>
+      <div class="row"><label>Curve</label><input type="range" id="curve" min="0.3" max="5" step="0.05"><output></output></div>
+      <div class="row"><label>Hold at peak (s)</label><input type="range" id="hold" min="0" max="5" step="0.05"><output></output></div>
+      <div class="row"><label>Slow down (s)</label><input type="range" id="decay" min="0.1" max="8" step="0.05"><output></output></div>
+      <div class="row"><label>Surge wobble</label><input type="range" id="surge" min="0" max="1" step="0.01"><output></output></div>
+      <div class="row"><label>Glow with charge</label><input type="range" id="glowCharge" min="0" max="6" step="0.05"><output></output></div>
+      <label class="chk"><input type="checkbox" id="loop"> Repeat the spin-up</label>
+      <canvas id="graph"></canvas>
+      <p class="sub" style="margin:4px 0 0">Curve below 1 jumps off fast then eases in; above 1 starts lazy and whips up at the end.</p>
+    </details>
+
+    <details>
+      <summary>Export</summary>
+      <p class="sub">Values in app.js's own shapes, to paste back.</p>
+      <div class="btns"><button id="copyBtn">Copy</button></div>
+      <textarea id="out" readonly></textarea>
+    </details>
+  </div>
+</div>
+
+<script>
+"use strict";
+// ── Runes and geometry, copied from app.js ─────────────────
+const dot = (x, y, r = 0.55) => `M${x - r} ${y}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0`;
+const RUNE_D = [
+  "M9 2C2 3 2 13 9 14" + dot(7, 8),
+  "M6 8C1 6 2 0 6 1C10 2 9 6 6 8C2 10 2 16 6 15C10 14 10 10 6 8",
+  "M9 5C9 1 3 1 3 5C3 8 9 8 9 5C9 10 7 14 3 16",
+  "M2 14L10 2" + dot(9, 10),
+  "M9 2C4 2 4 7 7 7C3 7 3 13 9 13M2 1L11 15",
+  "M6 1L11 8L6 15L1 8ZM6 5L8 8L6 11L4 8Z",
+  "M9 1C5 1 5 6 6 9C7 12 5 15 2 14" + dot(9, 12),
+  "M1 4L5 14L11 1M3 9H9",
+  "M2 3C2 10 10 10 10 3M6 1V15M3 15H9",
+  "M4 1C10 4 10 12 3 15" + dot(3, 7),
+  "M6 1C1 5 1 11 3 15M6 1C11 5 11 11 9 15M6 4V8" + dot(6, 11, 1.5),
+  "M3 1V9C3 15 10 15 10 9V5" + dot(6, 5),
+  "M2 3L7 8L2 13M6 3L11 8L6 13",
+  "M1 2C4 6 5 10 6 15C7 9 9 4 12 3" + dot(10, 9),
+  "M6 15V7C6 2 1 1 1 5M6 7C6 2 11 1 11 5",
+  "M10 3C5 0 2 5 6 8C10 11 7 16 2 13" + dot(10, 14),
+  "M3 15V5C3 1 9 1 9 5C9 8 5 8 5 5",
+  "M2 9V5C2 1 10 1 10 5V9M6 1V15M4 12H8",
+];
+const RUNES = RUNE_D.map((d) => new Path2D(d));
+const SEAL = 5;
+const ARC_GLOW = "255, 190, 110", ARC_DEEP = "255, 160, 70", ARC_HOT = "255, 249, 232";
+const TAU = Math.PI * 2;
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
+const easeIO = (p) => (p < 0.5 ? 2 * p * p : 1 - Math.pow(2 - 2 * p, 2) / 2);
+
+function addRune(path, k, x, y, size, angle) {
+  const m = new DOMMatrix().translateSelf(x, y).rotateSelf((angle * 180) / Math.PI).scaleSelf(size / 16).translateSelf(-6, -8);
+  path.addPath(RUNES[k % RUNES.length], m);
+}
+function sigilCanvas(R, scale) {
+  const size = 2 * (R + 30);
+  const c = document.createElement("canvas");
+  c.width = c.height = Math.ceil(size * scale);
+  const x = c.getContext("2d");
+  x.scale(scale, scale); x.translate(size / 2, size / 2);
+  x.lineCap = "round"; x.lineJoin = "round";
+  return { c, x, size, scale };
+}
+function lightStroke(s, path, alpha, w) {
+  const x = s.x;
+  x.save();
+  x.shadowColor = `rgba(${ARC_DEEP}, ${0.45 * alpha})`; x.shadowBlur = 9 * s.scale;
+  x.strokeStyle = `rgba(${ARC_DEEP}, ${0.07 * alpha})`; x.lineWidth = w * 3.2; x.stroke(path);
+  x.shadowColor = `rgba(${ARC_GLOW}, ${0.8 * alpha})`; x.shadowBlur = 4 * s.scale;
+  x.strokeStyle = `rgba(${ARC_GLOW}, ${0.32 * alpha})`; x.lineWidth = w * 1.8; x.stroke(path);
+  x.shadowBlur = 0;
+  x.strokeStyle = `rgba(${ARC_HOT}, ${Math.min(1, alpha * 1.15)})`; x.lineWidth = w * 0.85; x.stroke(path);
+  x.restore();
+}
+function shrink(src, f) {
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(src.width * f)); c.height = Math.max(1, Math.round(src.height * f));
+  const x = c.getContext("2d"); x.imageSmoothingQuality = "high";
+  x.drawImage(src, 0, 0, c.width, c.height);
+  return c;
+}
+function makeBloom(s) {
+  const q = shrink(shrink(s.c, 0.5), 0.5), e = shrink(q, 0.5), w = shrink(shrink(e, 0.5), 0.5);
+  const c = document.createElement("canvas"); c.width = q.width; c.height = q.height;
+  const x = c.getContext("2d");
+  x.globalCompositeOperation = "lighter"; x.imageSmoothingQuality = "high";
+  x.globalAlpha = 0.7; x.drawImage(q, 0, 0);
+  x.globalAlpha = 0.35; x.drawImage(e, 0, 0, c.width, c.height);
+  x.globalAlpha = 0.2; x.drawImage(w, 0, 0, c.width, c.height);
+  x.globalCompositeOperation = "source-atop"; x.fillStyle = `rgba(${ARC_DEEP}, .25)`; x.fillRect(0, 0, c.width, c.height);
+  return c;
+}
+const circlePath = (p, r, x = 0, y = 0) => { p.moveTo(x + r, y); p.arc(x, y, r, 0, TAU); return p; };
+function runeBand(s, r, n, every, size, offset, alpha) {
+  const runes = new Path2D(), nodes = new Path2D();
+  for (let k = 0; k < n; k++) {
+    const a = (k / n) * TAU - Math.PI / 2, x = Math.cos(a) * r, y = Math.sin(a) * r;
+    if (k % every === 0) { circlePath(nodes, size * 0.42, x, y); circlePath(nodes, size * 0.08, x, y); }
+    else addRune(runes, (k * 7 + offset) % RUNES.length, x, y, size * (k % 2 ? 1 : 0.86), a + Math.PI / 2);
+  }
+  lightStroke(s, runes, alpha, 0.85); lightStroke(s, nodes, alpha * 0.9, 0.8);
+}
+function starLines(path, r, n, turn, over) {
+  for (let k = 0; k < n; k++) {
+    const a1 = turn + (k / n) * TAU, a2 = turn + ((k + 1) / n) * TAU;
+    const p1 = { x: Math.cos(a1) * r, y: Math.sin(a1) * r }, p2 = { x: Math.cos(a2) * r, y: Math.sin(a2) * r };
+    const d = Math.hypot(p2.x - p1.x, p2.y - p1.y), ux = (p2.x - p1.x) / d, uy = (p2.y - p1.y) / d;
+    path.moveTo(p1.x - ux * over, p1.y - uy * over); path.lineTo(p2.x + ux * over, p2.y + uy * over);
+  }
+}
+function sparkle(path, x, y, a, long, short) {
+  const c = Math.cos(a), s = Math.sin(a);
+  const pts = [[c * long, s * long], [-s * short, c * short], [-c * long, -s * long], [s * short, -c * short]];
+  path.moveTo(x + pts[0][0], y + pts[0][1]);
+  for (let k = 1; k <= 4; k++) path.quadraticCurveTo(x, y, x + pts[k % 4][0], y + pts[k % 4][1]);
+}
+function diamond(path, ang, R, long, wide) {
+  const x = Math.cos(ang) * R, y = Math.sin(ang) * R, tx = -Math.sin(ang), ty = Math.cos(ang);
+  path.moveTo(x + tx * long, y + ty * long); path.lineTo(x + Math.cos(ang) * wide, y + Math.sin(ang) * wide);
+  path.lineTo(x - tx * long, y - ty * long); path.lineTo(x - Math.cos(ang) * wide, y - Math.sin(ang) * wide);
+  path.closePath();
+}
+// ── The main band of runes: options ───────────────────────
+// The main ring's line, the line just inside it and the runes between them
+// are one band. Each option draws the whole band. "Current" keeps the app's
+// split (lines in the ring part, runes in their own, turning apart); every
+// other option draws the whole band into the runes part, so it turns as one,
+// clockwise, and the ring part is left empty.
+const Pt = (a, r) => [Math.cos(a) * r, Math.sin(a) * r];
+// Where the band's runes sit: n places at radius R1 - 11, a node circle every `per`.
+function bandSlots(R1) {
+  const per = Math.max(4, Math.round((TAU * R1) / 24 / 6)), n = 6 * per;
+  return { per, n, r: R1 - 11, at: (k) => (k / n) * TAU - Math.PI / 2 };
+}
+const bandRunes = (s, R1) => { const b = bandSlots(R1); runeBand(s, b.r, b.n, b.per, 11, 0, 0.75); return b; };
+const THREAD = { n: 12, every: 4 };
+const RING_SHAPES = {
+  classic: {
+    name: "Current: two solid lines",
+    desc: "What the app has now: a bright outer line with a faint one beside it, a line inside, runes between.",
+    draw(ring, runes, R1) {
+      lightStroke(ring, circlePath(new Path2D(), R1), 0.85, 1.2);
+      lightStroke(ring, circlePath(new Path2D(), R1 - 22), 0.6, 0.8);
+      lightStroke(ring, circlePath(new Path2D(), R1 + 5), 0.3, 0.5);
+      bandRunes(runes, R1);
+    },
+  },
+  threaded: {
+    name: "Runes on a thread",
+    desc: "No edges at all: one hairline runs through the middle and parts around each rune, as if they were strung on it.",
+    draw(ring, runes, R1) {
+      // Far fewer places than the other bands: THREAD.n of them, a node circle every THREAD.every.
+      const n = THREAD.n, every = THREAD.every || 1e9, r = R1 - 11, p = new Path2D();
+      runeBand(runes, r, n, every, 11, 0, 0.75);
+      const at = (k) => (k / n) * TAU - Math.PI / 2, gap = (k) => (k % every === 0 ? 7 : 6.5) / r;
+      for (let k = 0; k < n; k++) {
+        const a0 = at(k) + gap(k), a1 = at(k + 1) - gap(k + 1);
+        p.moveTo(...Pt(a0, r)); p.arc(0, 0, r, a0, a1);
+      }
+      lightStroke(runes, p, 0.55, 0.6);
+    },
+  },
+  dotsBelow: {
+    name: "Line above, dots below",
+    desc: "A single fine outer line; the inner edge is only a dot of light beneath each rune.",
+    draw(ring, runes, R1) {
+      const b = bandRunes(runes, R1), dots = new Path2D();
+      for (let k = 0; k < b.n; k++) circlePath(dots, 0.55, ...Pt(b.at(k), R1 - 22));
+      lightStroke(runes, circlePath(new Path2D(), R1), 0.7, 0.8);
+      lightStroke(runes, dots, 0.7, 0.6);
+    },
+  },
+  ticks: {
+    name: "One line, hanging ticks",
+    desc: "Just the outer line, with a short tick dropping from it between each pair of runes. No inner line.",
+    draw(ring, runes, R1) {
+      const b = bandRunes(runes, R1), t = new Path2D();
+      for (let k = 0; k < b.n; k++) {
+        const a = (b.at(k) + b.at(k + 1)) / 2;
+        t.moveTo(...Pt(a, R1)); t.lineTo(...Pt(a, R1 - 4.5));
+      }
+      lightStroke(runes, circlePath(new Path2D(), R1), 0.75, 0.8);
+      lightStroke(runes, t, 0.55, 0.55);
+    },
+  },
+  brackets: {
+    name: "Bracketed runes",
+    desc: "No running lines: each rune has a short arc above and below it, and the gaps between are left open.",
+    draw(ring, runes, R1) {
+      const b = bandRunes(runes, R1), p = new Path2D();
+      for (let k = 0; k < b.n; k++) {
+        if (k % b.per === 0) continue;
+        const a = b.at(k);
+        [[R1 - 2.5, 6], [R1 - 19.5, 5]].forEach(([r, w]) => { const h = w / r; p.moveTo(...Pt(a - h, r)); p.arc(0, 0, r, a - h, a + h); });
+      }
+      lightStroke(runes, p, 0.6, 0.65);
+    },
+  },
+  cells: {
+    name: "Runes in cells",
+    desc: "Two very faint hairlines with a thin divider between each rune, every rune in a cell of its own.",
+    draw(ring, runes, R1) {
+      const b = bandRunes(runes, R1), d = new Path2D();
+      for (let k = 0; k < b.n; k++) {
+        const a = (b.at(k) + b.at(k + 1)) / 2;
+        d.moveTo(...Pt(a, R1 - 1)); d.lineTo(...Pt(a, R1 - 21));
+      }
+      lightStroke(runes, circlePath(circlePath(new Path2D(), R1), R1 - 22), 0.4, 0.55);
+      lightStroke(runes, d, 0.4, 0.5);
+    },
+  },
+};
+
+function buildSigils(R1, dpr, shape = "classic") {
+  const R2 = Math.round(R1 * 1.34 + 12), R3 = R2 + 44;
+  const scale = Math.min(dpr, 2000 / (2 * (R3 + 60)));
+  const top = -Math.PI / 2, Rm = R1 * 0.56, parts = {};
+  const part = (key, R) => (parts[key] = sigilCanvas(R, scale));
+  lightStroke(part("core", R1 * 0.3 + 4), circlePath(circlePath(new Path2D(), R1 * 0.3), R1 * 0.3 - 5), 0.45, 0.7);
+  const mid = part("midband", Rm + 4);
+  lightStroke(mid, circlePath(circlePath(new Path2D(), Rm), Rm - 13), 0.4, 0.6);
+  runeBand(mid, Rm - 6.5, 6 * Math.max(3, Math.round((TAU * Rm) / 18 / 6)), 1e9, 8, 5, 0.45);
+  // The main band: its lines (ring) and its runes, drawn by the chosen option.
+  (RING_SHAPES[shape] || RING_SHAPES.classic).draw(part("ring", R1 + 8), part("runes", R1 + 8), R1);
+  const oring = part("oring", R2 + 4);
+  lightStroke(oring, circlePath(new Path2D(), R2), 0.8, 1.1);
+  lightStroke(oring, circlePath(new Path2D(), R2 - 26), 0.55, 0.8);
+  const oper = Math.max(3, Math.round((TAU * R2) / 26 / 8));
+  runeBand(part("orunes", R2 - 2), R2 - 13, 8 * oper, oper, 12.5, 3, 0.7);
+  const sq = new Path2D();
+  starLines(sq, R2 - 26, 4, top, 16); starLines(sq, R2 - 26, 4, top + Math.PI / 4, 16);
+  lightStroke(part("squares", R2 - 6), sq, 0.42, 0.75);
+  const edge = part("arcs", R2 + 24), arcs = new Path2D(), stars = new Path2D(), trail = new Path2D();
+  const RE = R2 + 13, arcAt = (p, r, a0, a1) => { p.moveTo(Math.cos(a0) * r, Math.sin(a0) * r); p.arc(0, 0, r, a0, a1); };
+  for (let k = 0; k < 8; k++) {
+    const m = top + (k / 8) * TAU, half = (k % 2 ? 7 : 17) * (Math.PI / 180), fin = 4 / RE;
+    if (k % 2) arcAt(arcs, RE, m - half, m + half);
+    else {
+      const gap = 8 / RE;
+      [RE - 2, RE + 2].forEach((r) => { arcAt(arcs, r, m - half, m - gap); arcAt(arcs, r, m + gap, m + half); });
+      sparkle(stars, Math.cos(m) * RE, Math.sin(m) * RE, m + Math.PI / 2, 6.5, 4.5);
+    }
+    diamond(arcs, m - half - fin, RE, 3.2, 1.8);
+    diamond(arcs, m + half + fin, RE, 3.2, 1.8);
+    const g = m + TAU / 16;
+    [-2, -1, 0, 1, 2].forEach((j) => {
+      const b = g + (j * 6) / RE;
+      circlePath(trail, [0.45, 0.7, 1.2][2 - Math.abs(j)], Math.cos(b) * RE, Math.sin(b) * RE);
+    });
+  }
+  lightStroke(edge, arcs, 0.5, 0.75); lightStroke(edge, stars, 0.7, 0.75); lightStroke(edge, trail, 0.55, 0.7);
+  const crown = part("crown", R3 + 22), M = 8, medR = 14;
+  const beads = new Path2D(), meds = new Path2D(), medRunes = new Path2D();
+  for (let k = 0; k < M; k++) {
+    const a = top + (k / M) * TAU, x = Math.cos(a) * R3, y = Math.sin(a) * R3;
+    circlePath(meds, medR, x, y);
+    addRune(medRunes, [SEAL, 10, 14, 8][k % 4], x, y, 15, a + Math.PI / 2);
+    const span = TAU / M, clear = (medR + 6) / R3, n = Math.max(6, Math.round(((span - 2 * clear) * R3) / 7));
+    for (let j = 0; j <= n; j++) {
+      const b = a + clear + (j / n) * (span - 2 * clear);
+      circlePath(beads, 0.4, Math.cos(b) * R3, Math.sin(b) * R3);
+    }
+  }
+  lightStroke(crown, beads, 0.5, 0.55); lightStroke(crown, meds, 0.55, 0.8); lightStroke(crown, medRunes, 0.65, 0.85);
+  Object.values(parts).forEach((p) => { p.bloom = makeBloom(p); });
+  return { R1, R2, R3, parts };
+}
+function drawSigil(ctx, s, cx, cy, rot, k, alpha, glow) {
+  if (alpha <= 0.005) return;
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot); ctx.scale(k, k);
+  if (s.bloom && glow > 0) { ctx.globalAlpha = Math.min(1, alpha * glow * 0.4); ctx.drawImage(s.bloom, -s.size / 2, -s.size / 2, s.size, s.size); }
+  ctx.globalAlpha = Math.min(1, alpha); ctx.drawImage(s.c, -s.size / 2, -s.size / 2, s.size, s.size);
+  if (alpha > 1.02) { ctx.globalAlpha = Math.min(1, alpha - 1); ctx.drawImage(s.c, -s.size / 2, -s.size / 2, s.size, s.size); }
+  ctx.restore();
+}
+function tint(src, rgb, strength) {
+  const c = document.createElement("canvas"); c.width = src.width; c.height = src.height;
+  const x = c.getContext("2d"); x.drawImage(src, 0, 0);
+  x.globalCompositeOperation = "source-atop"; x.fillStyle = `rgba(${rgb.join(",")}, ${strength})`; x.fillRect(0, 0, c.width, c.height);
+  return c;
+}
+let glowDot = null;
+function glowAt(ctx, x, y, r, alpha, rgb) {
+  if (alpha <= 0.01) return;
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, `rgba(${ARC_HOT}, ${alpha})`); g.addColorStop(0.3, `rgba(${rgb}, ${alpha * 0.5})`); g.addColorStop(1, `rgba(${rgb}, 0)`);
+  ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+}
+function ringPulses(ctx, t, cx, cy, radii, alpha, rgb) {
+  if (alpha <= 0.01) return;
+  ctx.save(); ctx.lineCap = "round";
+  radii.forEach(([r, dir, sp], j) => {
+    for (let n = 0; n < 2; n++) {
+      const head = dir * (t / sp) + n * Math.PI + j * 1.7, len = 0.42 + 0.12 * Math.sin(t / 1900 + j + n);
+      const a0 = dir > 0 ? head - len : head, a1 = dir > 0 ? head : head + len;
+      const fill = (o) => {
+        if (!ctx.createConicGradient) return `rgba(${rgb}, ${o * 0.5})`;
+        const g = ctx.createConicGradient(a0, cx, cy), L = len / TAU;
+        for (let k = 0; k <= 8; k++) { const u = k / 8, along = dir > 0 ? u : 1 - u; g.addColorStop(u * L, `rgba(${along > 0.8 ? ARC_HOT : rgb}, ${o * Math.pow(along, 1.7)})`); }
+        g.addColorStop(Math.min(1, L + 0.002), `rgba(${rgb}, 0)`);
+        return g;
+      };
+      ctx.beginPath(); ctx.arc(cx, cy, r, a0, a1);
+      ctx.strokeStyle = fill(alpha * 0.25); ctx.lineWidth = 4; ctx.stroke();
+      ctx.strokeStyle = fill(alpha * 0.85); ctx.lineWidth = 1.1; ctx.stroke();
+      glowAt(ctx, cx + Math.cos(head) * r, cy + Math.sin(head) * r, 4.5, alpha * 0.8, rgb);
+    }
+  });
+  ctx.restore();
+}
+
+// ── Settings ───────────────────────────────────────────────
+// Pace (deg/s), cycle (s) and phase from app.js SPIN_DEG; colours from PART_TINT / CIRCLE_TINTS.
+const T_DEEP = "#701ecd", T_PURPLE = "#b058ff", T_INDIGO = "#485cff";
+const RINGS = [
+  { key: "core",    name: "Core",          group: "Inner sigil", pace:  9.0, cycle:  7.0, phase: 0.0, color: T_DEEP },
+  { key: "midband", name: "Small runes",   group: "Inner sigil", pace: -6.0, cycle:  8.0, phase: 1.1, color: T_INDIGO },
+  { key: "ring",    name: "Main ring",     group: "Inner sigil", pace: -1.6, cycle: 11.0, phase: 0.7, color: T_DEEP },
+  { key: "runes",   name: "Main runes",    group: "Inner sigil", pace:  2.8, cycle:  8.5, phase: 3.1, color: T_PURPLE },
+  { key: "oring",   name: "Outer ring",    group: "Outer sigil", pace: -1.1, cycle: 12.0, phase: 1.9, color: T_PURPLE },
+  { key: "orunes",  name: "Outer runes",   group: "Outer sigil", pace:  2.2, cycle: 10.0, phase: 5.0, color: T_INDIGO },
+  { key: "squares", name: "Squares",       group: "Outer sigil", pace: -3.0, cycle:  9.5, phase: 2.8, color: T_DEEP },
+  { key: "arcs",    name: "Arcs & ticks",  group: "Outer sigil", pace:  0.7, cycle: 14.0, phase: 0.4, color: T_INDIGO },
+  { key: "crown",   name: "Crown",         group: "Crown",       pace: -0.5, cycle: 16.0, phase: 3.6, color: T_PURPLE },
+];
+const DEFAULTS = {
+  ringShape: "threaded", threadN: 12, threadEvery: 4, tintStrength: 0.88, bright: 0.9, glow: 1, haze: 1, energy: "#ffbe6e", bgc: "#0c0b11", pulses: true,
+  speed: 1, swing: 0.75, cycleMul: 1, reverse: false,
+  peak: 6, ramp: 1.6, curve: 1.8, hold: 0.6, decay: 1.6, surge: 0.3, glowCharge: 2.4, loop: false,
+  rings: Object.fromEntries(RINGS.map((r) => [r.key, { pace: r.pace, color: r.color, show: true }])),
+};
+const STORE = "rune-lab-v1";
+const clone = (o) => JSON.parse(JSON.stringify(o));
+let st = clone(DEFAULTS);
+try {
+  const saved = JSON.parse(localStorage.getItem(STORE) || "null");
+  if (saved) st = { ...st, ...saved, rings: { ...st.rings, ...(saved.rings || {}) } };
+} catch (e) {}
+// ?ring=braid picks a ring shape; &embed=1 shows just the circle (gold, no
+// energy, nothing saved) for the options gallery; &zoom=2.4 closes in on the
+// top of the main ring.
+const Q = new URLSearchParams(location.search), EMBED = Q.has("embed"), ZOOM = Math.max(1, +Q.get("zoom") || 1);
+if (EMBED) {
+  st = clone(DEFAULTS); st.tintStrength = 0; st.pulses = false; st.glow = 1.2;
+  document.documentElement.classList.add("embed");
+}
+if (!RING_SHAPES[st.ringShape]) st.ringShape = "classic";
+if (RING_SHAPES[Q.get("ring")]) st.ringShape = Q.get("ring");
+const save = () => { if (EMBED) return; try { localStorage.setItem(STORE, JSON.stringify(st)); } catch (e) {} };
+const hexRGB = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+
+// ── Controls ───────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+const fmt = (id, v) => (["ramp", "hold", "decay"].includes(id) ? v.toFixed(2) + "s" : ["speed", "peak", "cycleMul"].includes(id) ? "×" + v.toFixed(2) : v.toFixed(2));
+const SLIDERS = ["tintStrength", "bright", "glow", "haze", "speed", "swing", "cycleMul", "peak", "ramp", "curve", "hold", "decay", "surge", "glowCharge"];
+SLIDERS.forEach((id) => {
+  const inp = $(id);
+  inp.addEventListener("input", () => {
+    st[id] = +inp.value; inp.nextElementSibling.value = fmt(id, st[id]);
+    if (id === "tintStrength") dirtyTint = true;
+    changed();
+  });
+});
+["pulses", "reverse", "loop"].forEach((id) => $(id).addEventListener("change", () => { st[id] = $(id).checked; changed(); }));
+["energy", "bgc"].forEach((id) => $(id).addEventListener("input", () => { st[id] = $(id).value; changed(); }));
+
+const ringsEl = $("rings");
+let lastGroup = "";
+RINGS.forEach((r) => {
+  if (r.group !== lastGroup) { const g = document.createElement("div"); g.className = "grp"; g.textContent = r.group; ringsEl.append(g); lastGroup = r.group; }
+  const row = document.createElement("div");
+  row.className = "ring";
+  row.innerHTML = `<input type="checkbox" title="Show"><input type="color"><span class="nm">${r.name}</span>
+    <input type="range" min="-30" max="30" step="0.1"><output></output>`;
+  const [show, col, , rng, out] = row.children;
+  show.addEventListener("change", () => { st.rings[r.key].show = show.checked; changed(); });
+  col.addEventListener("input", () => { st.rings[r.key].color = col.value; dirtyTint = true; changed(); });
+  rng.addEventListener("input", () => { st.rings[r.key].pace = +rng.value; out.value = (+rng.value).toFixed(1) + "°"; changed(); });
+  rng.addEventListener("dblclick", () => { rng.value = r.pace; rng.dispatchEvent(new Event("input")); });
+  r.ui = { show, col, rng, out };
+  ringsEl.append(row);
+});
+
+const shapeSel = $("ringShape");
+Object.entries(RING_SHAPES).forEach(([k, v]) => shapeSel.add(new Option(v.name, k)));
+const showThread = () => { $("threadCtl").style.display = st.ringShape === "threaded" ? "" : "none"; };
+shapeSel.addEventListener("change", () => { st.ringShape = shapeSel.value; $("ringDesc").textContent = RING_SHAPES[st.ringShape].desc; showThread(); sig = null; resize(); changed(); });
+[["threadN", (v) => String(v)], ["threadEvery", (v) => (v ? String(v) : "none")]].forEach(([id, f]) => {
+  $(id).addEventListener("input", () => {
+    st[id] = +$(id).value; $(id).nextElementSibling.value = f(st[id]);
+    sig = null; resize(); changed();
+  });
+});
+
+function syncUI() {
+  shapeSel.value = st.ringShape; $("ringDesc").textContent = RING_SHAPES[st.ringShape].desc; showThread();
+  $("threadN").value = st.threadN; $("threadN").nextElementSibling.value = String(st.threadN);
+  $("threadEvery").value = st.threadEvery; $("threadEvery").nextElementSibling.value = st.threadEvery ? String(st.threadEvery) : "none";
+  SLIDERS.forEach((id) => { $(id).value = st[id]; $(id).nextElementSibling.value = fmt(id, st[id]); });
+  ["pulses", "reverse", "loop"].forEach((id) => { $(id).checked = st[id]; });
+  ["energy", "bgc"].forEach((id) => { $(id).value = st[id]; });
+  RINGS.forEach((r) => {
+    const v = st.rings[r.key];
+    r.ui.show.checked = v.show; r.ui.col.value = v.color; r.ui.rng.value = v.pace; r.ui.out.value = v.pace.toFixed(1) + "°";
+  });
+}
+$("applyAll").addEventListener("click", () => { RINGS.forEach((r) => { st.rings[r.key].color = $("allColor").value; }); dirtyTint = true; syncUI(); changed(); });
+$("presetGold").addEventListener("click", () => { st.tintStrength = 0; dirtyTint = true; syncUI(); changed(); });
+$("presetPortal").addEventListener("click", () => {
+  st.tintStrength = 0.88; RINGS.forEach((r) => { st.rings[r.key].color = r.color; }); dirtyTint = true; syncUI(); changed();
+});
+$("resetBtn").addEventListener("click", () => { st = clone(DEFAULTS); dirtyTint = true; syncUI(); changed(); });
+$("pauseBtn").addEventListener("click", () => { paused = !paused; $("pauseBtn").classList.toggle("on", paused); $("pauseBtn").textContent = paused ? "Play" : "Pause"; });
+
+function changed() { save(); writeExport(); drawGraph(); }
+
+// ── Spin-up engine ─────────────────────────────────────────
+// phase: idle → up (ramp, curve) → hold (peak) → down (eased back to ×1).
+let acc = { phase: "idle", u: 0, t: 0, from: 1, held: false, runT: 0 };
+const upMult = (u) => 1 + (st.peak - 1) * Math.pow(clamp01(u), st.curve);
+// Starts (or restarts) the climb from whatever speed it's turning at now.
+function startSpin(held) {
+  const m = accMult(), u = m > 1 && st.peak > 1 ? Math.pow(clamp01((m - 1) / (st.peak - 1)), 1 / st.curve) : 0;
+  acc = { phase: "up", u, t: 0, from: 1, held, runT: u * st.ramp };
+}
+function releaseSpin() { if (acc.phase === "up" || acc.phase === "hold") acc = { ...acc, phase: "down", t: 0, from: accMult(), held: false }; }
+let lastMult = 1;
+function accMult() {
+  if (acc.phase === "up") return upMult(acc.u);
+  if (acc.phase === "hold") return st.peak;
+  if (acc.phase === "down") return acc.from + (1 - acc.from) * easeIO(clamp01(acc.t / st.decay));
+  return 1;
+}
+function stepAcc(dt) {
+  acc.runT += dt;
+  if (acc.phase === "up") {
+    acc.u = Math.min(1, acc.u + dt / st.ramp);
+    if (acc.u >= 1) { acc.phase = "hold"; acc.t = 0; }
+  } else if (acc.phase === "hold") {
+    acc.t += dt;
+    if (!acc.held && acc.t >= st.hold) { acc.phase = "down"; acc.t = 0; acc.from = st.peak; }
+  } else if (acc.phase === "down") {
+    acc.t += dt;
+    if (acc.t >= st.decay) { acc.phase = "idle"; acc.t = 0; if (st.loop) { acc.phase = "wait"; } }
+  } else if (acc.phase === "wait") {
+    acc.t += dt;
+    if (acc.t >= 1) startSpin(false);
+  }
+}
+$("spinBtn").addEventListener("click", () => startSpin(false));
+const hb = $("holdBtn");
+hb.addEventListener("pointerdown", (e) => { hb.setPointerCapture(e.pointerId); hb.classList.add("on"); startSpin(true); });
+["pointerup", "pointercancel"].forEach((ev) => hb.addEventListener(ev, () => { hb.classList.remove("on"); releaseSpin(); }));
+addEventListener("keydown", (e) => { if (e.code === "Space" && !e.repeat && e.target.tagName !== "TEXTAREA") { e.preventDefault(); startSpin(true); } });
+addEventListener("keyup", (e) => { if (e.code === "Space") releaseSpin(); });
+
+// ── The profile graph ──────────────────────────────────────
+const gcv = $("graph"), gctx = gcv.getContext("2d");
+function profileAt(t) {   // multiplier t seconds into a "Spin up" press
+  const { ramp, hold, decay, peak } = st;
+  if (t < ramp) return upMult(t / ramp);
+  if (t < ramp + hold) return peak;
+  if (t < ramp + hold + decay) return peak + (1 - peak) * easeIO((t - ramp - hold) / decay);
+  return 1;
+}
+function drawGraph(markT) {
+  const d = Math.min(devicePixelRatio || 1, 2), w = gcv.clientWidth, h = gcv.clientHeight;
+  if (gcv.width !== Math.round(w * d)) { gcv.width = Math.round(w * d); gcv.height = Math.round(h * d); }
+  gctx.setTransform(d, 0, 0, d, 0, 0); gctx.clearRect(0, 0, w, h);
+  const total = st.ramp + st.hold + st.decay + 0.4, top = Math.max(st.peak, 1.5) * 1.1;
+  const X = (t) => 6 + (t / total) * (w - 12), Y = (m) => h - 14 - (m / top) * (h - 24);
+  gctx.strokeStyle = "rgba(201,169,110,.18)"; gctx.lineWidth = 1;
+  gctx.beginPath(); gctx.moveTo(6, Y(1)); gctx.lineTo(w - 6, Y(1)); gctx.stroke();
+  gctx.fillStyle = "rgba(167,159,143,.8)"; gctx.font = "10px sans-serif";
+  gctx.fillText("×1", 8, Y(1) - 3); gctx.fillText(`×${st.peak.toFixed(1)}`, X(st.ramp) + 3, Y(st.peak) + 11);
+  gctx.fillText(`${(total - 0.4).toFixed(1)}s`, w - 34, h - 3);
+  gctx.strokeStyle = "#b58cff"; gctx.lineWidth = 1.6; gctx.beginPath();
+  for (let i = 0; i <= 200; i++) { const t = (i / 200) * total; i ? gctx.lineTo(X(t), Y(profileAt(t))) : gctx.moveTo(X(t), Y(profileAt(t))); }
+  gctx.stroke();
+  if (markT != null) { gctx.fillStyle = "#ffd98a"; gctx.beginPath(); gctx.arc(X(Math.min(markT, total)), Y(lastMult), 3.5, 0, TAU); gctx.fill(); }
+}
+
+// ── Export ─────────────────────────────────────────────────
+function writeExport() {
+  const sgn = st.reverse ? -1 : 1, pad = (s, n) => (s + " ".repeat(n)).slice(0, n);
+  const spin = RINGS.map((r) => {
+    const p = (st.rings[r.key].pace * st.speed * sgn).toFixed(2), c = (r.cycle * st.cycleMul).toFixed(1);
+    return `  ${pad(r.key + ":", 9)}[${p.padStart(6)}, ${c.padStart(5)}, ${r.phase.toFixed(1)}],`;
+  }).join("\n");
+  const tints = RINGS.map((r) => `  ${pad(r.key + ":", 9)}[${hexRGB(st.rings[r.key].color).join(", ")}],`).join("\n");
+  const hidden = RINGS.filter((r) => !st.rings[r.key].show).map((r) => r.key);
+  $("out").value =
+`// SPIN_DEG (app.js): pace deg/s, cycle s, phase. Overall speed and reverse are baked in.
+const SPIN_DEG = {
+${spin}
+};
+// Speed swing (0.75 in partTurn): ${st.swing.toFixed(2)}
+
+// Each ring's colour (replaces CIRCLE_TINTS[PART_TINT[key]]), tint strength ${st.tintStrength.toFixed(2)} (app.js: .88)
+const RING_RGB = {
+${tints}
+};
+
+// Spin-up
+const SPIN_UP = { peak: ${st.peak.toFixed(2)}, ramp: ${st.ramp.toFixed(2)}, curve: ${st.curve.toFixed(2)}, hold: ${st.hold.toFixed(2)}, decay: ${st.decay.toFixed(2)}, surge: ${st.surge.toFixed(2)}, glowCharge: ${st.glowCharge.toFixed(2)} };
+// Main rune band: ${st.ringShape}${st.ringShape === "threaded" ? `, ${st.threadN} places, node every ${st.threadEvery || "none"}` : ""}
+// Look: brightness ${st.bright.toFixed(2)}, glow ${st.glow.toFixed(2)}, haze ${st.haze.toFixed(2)}, energy ${st.energy}${hidden.length ? `\n// Hidden: ${hidden.join(", ")}` : ""}`;
+}
+$("copyBtn").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText($("out").value); $("copyBtn").textContent = "Copied"; }
+  catch (e) { $("out").select(); document.execCommand("copy"); $("copyBtn").textContent = "Copied"; }
+  setTimeout(() => { $("copyBtn").textContent = "Copy"; }, 1400);
+});
+
+// ── Drawing ────────────────────────────────────────────────
+const cv = $("cv"), ctx = cv.getContext("2d");
+let sig = null, tinted = {}, dirtyTint = true, W = 0, H = 0, dpr = 1, paused = false;
+const ang = Object.fromEntries(RINGS.map((r) => [r.key, 0]));
+function resize() {
+  dpr = Math.min(devicePixelRatio || 1, 2);
+  W = cv.clientWidth; H = cv.clientHeight;
+  // In the gallery the frames are small: draw at a phone-sized 640 square
+  // (the circle as big as it is in the app) and let the browser shrink it.
+  if (EMBED) { W = H = 640; dpr = Math.max(1, (Math.min(cv.clientWidth, cv.clientHeight) * dpr) / 640); }
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  // Fit the crown (R3 + 22 = 1.34 R1 + 78) with a little room.
+  const half = Math.min(W, H) / 2 - 8;
+  const R1 = Math.max(60, Math.round((half - 78) / 1.34));
+  if (!sig || sig.R1 !== R1 || sig.shape !== st.ringShape) {
+    THREAD.n = st.threadN; THREAD.every = st.threadEvery;
+    sig = buildSigils(R1, dpr * ZOOM, st.ringShape); sig.shape = st.ringShape; dirtyTint = true;
+  }
+}
+function retint() {
+  tinted = {};
+  RINGS.forEach((r) => {
+    const p = sig.parts[r.key];
+    tinted[r.key] = st.tintStrength > 0.001
+      ? { c: tint(p.c, hexRGB(st.rings[r.key].color), st.tintStrength), bloom: tint(p.bloom, hexRGB(st.rings[r.key].color), st.tintStrength), size: p.size }
+      : p;
+  });
+  dirtyTint = false;
+}
+let rt = null;
+addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { resize(); drawGraph(); }, 150); });
+
+let last = 0, clock = 0, pulseT = 0;
+function frame(now) {
+  const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+  last = now;
+  if (dirtyTint) retint();
+  if (!paused) { stepAcc(dt); clock += dt; }
+  const base = accMult();
+  const charge = st.peak > 1 ? clamp01((base - 1) / (st.peak - 1)) : 0;
+  const wob = 1 + st.surge * charge * (0.67 * Math.sin(clock * 4.3) + 0.33 * Math.sin(clock * 7.7 + 1));
+  const mult = base * wob;
+  lastMult = mult;
+  const sgn = st.reverse ? -1 : 1;
+  let fastest = 0;
+  RINGS.forEach((r) => {
+    const v = st.rings[r.key];
+    const P = r.cycle * st.cycleMul;
+    const degS = v.pace * st.speed * mult * sgn * (1 + st.swing * Math.cos((clock * TAU) / P + r.phase));
+    if (!paused) ang[r.key] += (degS * Math.PI / 180) * dt;
+    if (v.show) fastest = Math.max(fastest, Math.abs(degS));
+  });
+  if (!paused) pulseT += dt * 1000 * (1 + 1.5 * charge);
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = 1;
+  ctx.fillStyle = st.bgc; ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = "lighter";
+  const cx = W / 2, cy = H / 2, R1 = sig.R1, R2 = sig.R2;
+  ctx.save();
+  if (ZOOM > 1) { ctx.translate(W / 2, H / 2); ctx.scale(ZOOM, ZOOM); ctx.translate(-cx, -(cy - R1)); }
+
+  // Haze, coloured by the main ring's tint as far as the tint goes.
+  if (st.haze > 0) {
+    const m = hexRGB(st.rings.ring.color), d = hexRGB("#ffa046"), k = st.tintStrength;
+    const hz = d.map((v, i) => Math.round(v + (m[i] - v) * k)).join(","), a = st.haze * (1 + 2.5 * charge), r = sig.R3 * 1.25;
+    const g = ctx.createRadialGradient(cx, cy, r * 0.15, cx, cy, r);
+    g.addColorStop(0, `rgba(${hz}, ${0.03 * a})`); g.addColorStop(0.55, `rgba(${hz}, ${0.04 * a})`);
+    g.addColorStop(0.8, `rgba(150,100,220, ${0.025 * a})`); g.addColorStop(1, "rgba(150,100,220,0)");
+    ctx.fillStyle = g; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  }
+  const glow = st.glow * (1 + st.glowCharge * Math.pow(charge, 1.2));
+  const a = st.bright * (1 + 0.6 * charge);
+  RINGS.forEach((r) => {
+    if (!st.rings[r.key].show) return;
+    drawSigil(ctx, tinted[r.key], cx, cy, ang[r.key], 1, r.group === "Inner sigil" ? a : a * 0.9, glow);
+  });
+  if (st.pulses) {
+    const rgb = hexRGB(st.energy).join(", ");
+    const band = st.ringShape === "classic" ? [[R1, 1, 5200], [R1 - 22, -1, 4300]] : [[R1 - 11, 1, 5200]];
+    ringPulses(ctx, pulseT, cx, cy, [...band, [R1 * 0.56, 1, 3600], [R2, -1, 7600], [R2 - 26, 1, 6400]], 0.55 + 0.45 * charge, rgb);
+  }
+  ctx.restore();
+
+  $("hudMult").textContent = "×" + mult.toFixed(2);
+  $("hudFast").textContent = `fastest ring ${fastest.toFixed(1)}°/s · ${(fastest / 6).toFixed(2)} rpm` + (paused ? " · paused" : "");
+  if (acc.phase !== "idle" || !frame.idleDrawn) { drawGraph(acc.phase === "idle" || acc.phase === "wait" ? null : acc.runT); frame.idleDrawn = acc.phase === "idle"; }
+  requestAnimationFrame(frame);
+}
+
+syncUI();
+resize();
+writeExport();
+drawGraph();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

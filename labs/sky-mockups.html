@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sky now mockups</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Literata:opsz,wght@7..72,400;7..72,500&display=swap">
+<style>
+  :root { --bg:#15131c; --panel:#1f1b29; --ink:#e9e2d3; --muted:#a79f8f; --gold:#c9a96e;
+    --line:rgba(201,169,110,.2); --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; --read:"Literata",Georgia,serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0d0c12; color:var(--ink); font-family:var(--serif); padding:24px 16px 48px; }
+  h1 { font-family:"IM Fell English SC",var(--serif); color:var(--gold); text-align:center; font-weight:normal; margin:0 0 4px; }
+  .intro { text-align:center; color:var(--muted); margin:0 0 24px; font-size:.95rem; }
+  .row { display:flex; flex-wrap:wrap; gap:28px; justify-content:center; }
+  .opt { width:360px; max-width:100%; }
+  .opt h2 { margin:0 0 2px; color:var(--gold); font-weight:normal; font-size:1.15rem; text-align:center; }
+  .opt .why { margin:0 0 10px; color:var(--muted); font-size:.82rem; text-align:center; font-style:italic; }
+  .phone { background:var(--bg); border:1px solid #2c2838; border-radius:28px; padding:16px 14px 20px; min-height:600px; }
+  .bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .bar .back { color:var(--muted); font-size:.9rem; } .bar .t { color:var(--gold); font-size:1.1rem; } .bar span:last-child { width:40px; }
+  .when { text-align:center; color:var(--muted); font-size:.82rem; margin:0 0 12px; }
+  .g { font-family:"Segoe UI Symbol","Apple Symbols","Noto Sans Symbols",sans-serif; color:var(--gold); }
+  .rx { color:#d0907e; font-size:.8em; }
+  .muted { color:var(--muted); }
+  .label { font-size:.62rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); text-align:center; margin:14px 0 6px; }
+
+  /* A: plain list */
+  .list { border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  .li { display:grid; grid-template-columns:26px 1fr auto; gap:8px; align-items:center; padding:7px 10px; border-top:1px solid var(--line); }
+  .li:first-child { border-top:0; }
+  .li .g { font-size:1.1rem; text-align:center; }
+  .li .what { font-size:.95rem; } .li .what small { display:block; font-family:var(--read); font-size:.7rem; color:var(--muted); }
+  .li .where { text-align:right; font-size:.95rem; } .li .where small { display:block; font-family:var(--read); font-size:.7rem; color:var(--muted); }
+
+  /* B: sentence cards */
+  .moonbox { text-align:center; border:1px solid var(--line); border-radius:10px; padding:8px; background:rgba(201,169,110,.035); }
+  .moonbox b { font-weight:normal; font-size:1rem; } .moonbox small { display:block; font-family:var(--read); font-size:.72rem; color:var(--muted); }
+  .sent { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .sc { border:1px solid var(--line); border-radius:8px; padding:7px 6px; text-align:center; background:rgba(201,169,110,.035); }
+  .sc .top { font-size:.6rem; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .sc .main { font-size:.95rem; margin:1px 0; }
+  .sc .note { font-family:var(--read); font-size:.72rem; color:var(--gold); }
+
+  /* C: by sign */
+  .signs { display:flex; flex-direction:column; gap:6px; }
+  .sg { display:grid; grid-template-columns:34px 1fr; gap:8px; align-items:center; border:1px solid var(--line); border-radius:10px; padding:7px 10px; }
+  .sg .big { font-size:1.5rem; text-align:center; }
+  .sg .name { font-size:.98rem; } .sg .name small { font-family:var(--read); font-size:.72rem; color:var(--muted); margin-left:6px; }
+  .chips { display:flex; flex-wrap:wrap; gap:4px; margin-top:3px; }
+  .chip { font-size:.75rem; border:1px solid rgba(201,169,110,.35); border-radius:999px; padding:1px 8px; color:var(--ink); }
+
+  /* D: wheel */
+  .wheel { display:block; margin:0 auto; }
+  .legend { display:grid; grid-template-columns:1fr 1fr; gap:3px 12px; font-size:.8rem; margin-top:8px; }
+  .legend div { display:flex; gap:6px; } .legend .g { width:16px; text-align:center; }
+
+  /* E: headline */
+  .big3 { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  .b3 { border:1px solid rgba(201,169,110,.45); border-radius:10px; padding:10px 4px; text-align:center; background:rgba(201,169,110,.06); }
+  .b3 .g { font-size:1.4rem; display:block; } .b3 .k { font-size:.6rem; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  .b3 .s { font-size:.9rem; display:block; white-space:nowrap; } .b3 .m { font-family:var(--read); font-size:.7rem; color:var(--gold); }
+  .rest { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }
+  .r { border:1px solid var(--line); border-radius:8px; padding:6px 2px; text-align:center; font-size:.78rem; line-height:1.3; }
+  .r .g { display:block; font-size:1rem; }
+  .tip { font-family:var(--read); font-size:.72rem; color:var(--muted); text-align:center; margin-top:12px; }
+</style>
+</head>
+<body>
+<h1>Sky now · pick a look</h1>
+<p class="intro">Five ways to show the same sky (14 Nov 2026 · 04:39). No tarot links. Tell me a letter, or mix them.</p>
+<div class="row" id="row"></div>
+
+<script>
+const SKY = [
+  ["Sun", "Scorpio", 21, false], ["Moon", "Capricorn", 14, false], ["Mercury", "Scorpio", 5, false],
+  ["Venus", "Libra", 22, false], ["Mars", "Leo", 24, false], ["Jupiter", "Leo", 25, false],
+  ["Saturn", "Aries", 8, true], ["Uranus", "Gemini", 4, true], ["Neptune", "Aries", 1, true], ["Pluto", "Aquarius", 3, false],
+];
+const MOON = { name: "Waxing crescent", lit: 20, day: 5, icon: "🌒" };
+const PG = { Sun:"☉", Moon:"☽", Mercury:"☿", Venus:"♀", Mars:"♂", Jupiter:"♃", Saturn:"♄", Uranus:"♅", Neptune:"♆", Pluto:"♇" };
+const ABOUT = { Sun:"you, your energy", Moon:"feelings", Mercury:"thinking, talk", Venus:"love, beauty", Mars:"drive, action",
+  Jupiter:"luck, growth", Saturn:"rules, lessons", Uranus:"sudden change", Neptune:"dreams", Pluto:"deep change" };
+const SIGNS = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+const SG = { Aries:"♈", Taurus:"♉", Gemini:"♊", Cancer:"♋", Leo:"♌", Virgo:"♍", Libra:"♎", Scorpio:"♏", Sagittarius:"♐", Capricorn:"♑", Aquarius:"♒", Pisces:"♓" };
+const MOOD = { Aries:"bold", Taurus:"steady", Gemini:"curious", Cancer:"caring", Leo:"proud", Virgo:"careful", Libra:"fair",
+  Scorpio:"intense", Sagittarius:"free", Capricorn:"ambitious", Aquarius:"original", Pisces:"dreamy" };
+const T = (s) => s + "︎";
+const rx = (r) => r ? ' <span class="rx">℞</span>' : "";
+
+const frame = (letter, title, why, inner) => `
+  <div class="opt"><h2>${letter} · ${title}</h2><p class="why">${why}</p>
+  <div class="phone"><div class="bar"><span class="back">‹ Back</span><span class="t">Sky now</span><span></span></div>
+  <p class="when">14 Nov 2026 · 04:39</p>${inner}</div></div>`;
+
+const moonBox = `<div class="moonbox"><b>${MOON.icon} ${MOON.name}</b><small>${MOON.lit}% lit · day ${MOON.day} of 29</small></div>`;
+
+// A: plain list
+const A = moonBox + `<p class="label">The planets</p><div class="list">` + SKY.map(([p, s, d, r]) => `
+  <div class="li"><span class="g">${T(PG[p])}</span>
+  <span class="what">${p}<small>${ABOUT[p]}</small></span>
+  <span class="where">${s} ${d}°${rx(r)}<small>${MOOD[s]}</small></span></div>`).join("") + `</div>
+  <p class="tip">℞ retrograde: moving backwards, a time to look back</p>`;
+
+// B: tiles with plain sentence
+const B = moonBox + `<p class="label">The planets</p><div class="sent">` + SKY.map(([p, s, d, r]) => `
+  <div class="sc"><div class="top">${T(PG[p])} ${p}</div><div class="main">${s} ${d}°${rx(r)}</div>
+  <div class="note"><span class="muted">${ABOUT[p]}:</span> ${MOOD[s]}</div></div>`).join("") + `</div>
+  <p class="tip">℞ retrograde: moving backwards, a time to look back</p>`;
+
+// C: grouped by sign
+const bySign = {};
+SKY.forEach(([p, s, d, r]) => (bySign[s] ||= []).push([p, d, r]));
+const C = moonBox + `<p class="label">Where the planets are</p><div class="signs">` +
+  SIGNS.filter((s) => bySign[s]).map((s) => `
+  <div class="sg"><span class="g big">${T(SG[s])}</span><div><div class="name">${s}<small>${MOOD[s]}</small></div>
+  <div class="chips">${bySign[s].map(([p, d, r]) => `<span class="chip"><span class="g">${T(PG[p])}</span> ${p} ${d}°${r ? " ℞" : ""}</span>`).join("")}</div></div></div>`).join("") +
+  `</div><p class="tip">${SIGNS.length - Object.keys(bySign).length} signs are empty right now</p>`;
+
+// D: wheel
+function wheel() {
+  const R = 150, cx = 160, cy = 160;
+  let svg = `<svg class="wheel" width="320" height="320" viewBox="0 0 320 320">`;
+  svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="rgba(201,169,110,.5)"/>`;
+  svg += `<circle cx="${cx}" cy="${cy}" r="${R - 30}" fill="none" stroke="rgba(201,169,110,.3)"/>`;
+  svg += `<circle cx="${cx}" cy="${cy}" r="62" fill="none" stroke="rgba(201,169,110,.15)"/>`;
+  // Aries on the left, going anticlockwise, as charts usually do
+  const pt = (lon, r) => { const a = Math.PI - lon * Math.PI / 180; return [cx + r * Math.cos(a), cy - r * Math.sin(a)]; };
+  SIGNS.forEach((s, i) => {
+    const [x1, y1] = pt(i * 30, R), [x2, y2] = pt(i * 30, R - 30);
+    svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(201,169,110,.3)"/>`;
+    const [tx, ty] = pt(i * 30 + 15, R - 15);
+    svg += `<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="central" font-size="15" class="g" fill="#c9a96e">${T(SG[s])}</text>`;
+  });
+  // Planets: nudge close ones inward so they don't overlap
+  const placed = [];
+  SKY.map(([p, s, d, r]) => [p, SIGNS.indexOf(s) * 30 + d, r]).sort((a, b) => a[1] - b[1]).forEach(([p, lon, r]) => {
+    let ring = R - 48;
+    while (placed.some(([l, rr]) => Math.abs(l - lon) < 9 && rr === ring)) ring -= 22;
+    placed.push([lon, ring]);
+    const [x, y] = pt(lon, ring), [lx, ly] = pt(lon, R - 30), [lx2, ly2] = pt(lon, R - 34);
+    svg += `<line x1="${lx}" y1="${ly}" x2="${lx2}" y2="${ly2}" stroke="#e9e2d3"/>`;
+    svg += `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-size="17" fill="${r ? "#d0907e" : "#e9e2d3"}" style="font-family:'Segoe UI Symbol','Apple Symbols',sans-serif">${T(PG[p])}</text>`;
+  });
+  svg += `<text x="${cx}" y="${cy - 8}" text-anchor="middle" font-size="22">${MOON.icon}</text>`;
+  svg += `<text x="${cx}" y="${cy + 16}" text-anchor="middle" font-size="11" fill="#a79f8f">${MOON.lit}% lit</text>`;
+  return svg + `</svg>`;
+}
+const D = wheel() + `<div class="legend">` + SKY.map(([p, s, d, r]) =>
+  `<div><span class="g">${T(PG[p])}</span><span>${p} <span class="muted">${s} ${d}°</span>${rx(r)}</span></div>`).join("") +
+  `</div><p class="tip">Red glyphs are retrograde</p>`;
+
+// E: headline big three, then the rest small
+const big = SKY.slice(0, 2);
+const E = `<div class="big3">` + big.map(([p, s, d]) => `
+  <div class="b3"><span class="g">${T(PG[p])}</span><span class="k">${p}</span><span class="s">${s} ${d}°</span><span class="m">${MOOD[s]}</span></div>`).join("") +
+  `<div class="b3"><span class="g" style="font-family:inherit">${MOON.icon}</span><span class="k">Phase</span><span class="s">Waxing</span><span class="m">${MOON.lit}% lit</span></div></div>
+  <p class="label">The other planets</p><div class="rest">` +
+  SKY.slice(2).map(([p, s, d, r]) => `<div class="r"><span class="g">${T(PG[p])}</span>${p}<br><span class="muted">${T(SG[s])} ${s.slice(0, 3)} ${d}°</span>${rx(r)}</div>`).join("") +
+  `</div><p class="tip">℞ retrograde: moving backwards, a time to look back</p>`;
+
+document.getElementById("row").innerHTML =
+  frame("A", "Plain list", "One line per planet, what it means and where it is", A) +
+  frame("B", "Tiles with words", "Like the summary tiles, with a plain meaning", B) +
+  frame("C", "By sign", "Planets gathered under the sign they're in", C) +
+  frame("D", "Wheel", "A simple zodiac wheel with a key underneath", D) +
+  frame("E", "Big three first", "Sun, Moon and phase large; the rest small", E);
+</script>
+</body>
+</html>

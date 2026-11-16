@@ -115,6 +115,51 @@ history screen and keep the file somewhere safe (iCloud Drive, email). **Import 
 backup's readings and notes to what's already there; nothing is overwritten. It also moves your
 history between devices.
 
+A saved reading's summary ends with **Your reflection**: a note on what the reading says to you,
+and after a day has passed, a **Looking back** box for how it turned out. The note shows under the
+reading in the history, and the search finds it. **Share** at the top of a summary makes a picture
+of the reading to send or save.
+
+The **Card of the day** tab shows each month as a calendar, with your current and longest streak.
+**Your patterns** counts what comes back across your readings over 30 days, this year or all time:
+the cards that keep coming up, suits, elements, reversals and themes.
+
+When five or more readings have been added since your last backup (and two weeks have gone by),
+the history screen says so; after a month the home screen does too.
+
+## Backing up to Google Drive
+
+Once it's set up, the history screen has **Back up to Google Drive** and **Restore**. The backup is
+one file in a hidden app folder in your Drive: only Bearcana can see it, and Bearcana can't see
+any of your other files. Backing up keeps whatever is already in that file from another phone or
+computer and adds what's here, so one device never wipes out another. **Restore** adds the Drive
+backup to this device, like Import backup. Nothing is overwritten either way.
+
+Anyone else using the app signs in with their own Google account and backs up to their own Drive.
+Their backups and yours never mix, and you can't see theirs.
+
+Setting it up, once (free, about ten minutes):
+
+1. Go to console.cloud.google.com and create a project, e.g. "Bearcana".
+2. **APIs & Services › Library**: find **Google Drive API** and press **Enable**.
+3. **Google Auth Platform** (or **OAuth consent screen**): choose **External**, give the app a name
+   and your email. Under **Data access**, add the scope `.../auth/drive.appdata`. Under
+   **Audience › Test users**, add your own Google address. (While the app is in "Testing", only
+   test users can sign in. To let anyone use it, press **Publish app**.)
+4. **Clients › Create client › Web application**. Under **Authorized JavaScript origins**, add the
+   address Bearcana is opened from, e.g. `https://yourname.github.io`, and `http://localhost:8771`
+   for Run Tarot.bat. No redirect address is needed.
+5. Copy the client ID (it ends in `.apps.googleusercontent.com`) into **cloud.js**, between the quotes.
+
+Google sign-in doesn't work when index.html is opened straight from the folder; use Run Tarot.bat
+or the website.
+
+## Your own themes
+
+On the card table, **Add a theme** › **Yours** › **New theme** lets you make a spread of your own:
+a name and up to five places, each with a label and a question, in reading order. A spread of fewer
+cards takes the first places. Your themes are kept in backups.
+
 On a card's page, swipe left or right (or use the arrows at the top, or the arrow keys) to move
 through the reading, the card list or the related cards you opened it from.
 
@@ -149,3 +194,13 @@ The site updates in a minute or two.
 1. Open the address in **Safari**.
 2. Tap **Share** (the square with the arrow), then **Add to Home Screen**.
 3. It now has its own icon and opens full screen like an app. After the first visit it also works without internet.
+
+## Where things are
+
+- **cards.js**, **spreads.js**, **symbols.js**: the deck, spreads, themes and symbols, for you to edit.
+- **cloud.js**: your Google client ID, for backing up to Google Drive.
+- **js/**: how the app works, one file per part (home, table, summary, history and so on).
+  index.html loads them in order.
+- **labs/**: design mockups and test pages. They aren't part of the app.
+- **sw.js**: saves the whole app and every card picture on the device, so it works offline.
+  When you add a file to js/, add it to the list in sw.js too.
