@@ -2390,26 +2390,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .backup-row { display: flex; justify-content: center; align-items: center; gap: 8px; }
 .backup-ask { width: 6.2em; text-align: right; color: var(--muted); font-size: .85rem; white-space: nowrap; }
 .backup-row .chip { min-width: 7.4em; }
-.drive-setup { margin-top: 4px; padding-top: 10px; border-top: 1px solid rgba(201, 169, 110, .2); text-align: left; }
-.drive-setup .asks-title { text-align: center; }
-.drive-help { margin: 0 0 8px; color: var(--muted); font-size: .88rem; line-height: 1.45; }
-.drive-steps { margin: 0 0 10px; padding-left: 1.4em; font-size: .88rem; line-height: 1.5; }
-.drive-steps li { margin-bottom: 4px; }
-.drive-steps a, .drive-steps b { color: var(--gold); }
-.drive-steps code { font-size: .82rem; color: var(--gold); }
-.drive-origin {
-  display: block;
-  margin: 4px 0 2px;
-  padding: 4px 10px;
-  border: 1px dashed rgba(201, 169, 110, .45);
-  border-radius: 6px;
-  background: none;
-  color: var(--gold);
-  font-family: ui-monospace, monospace;
-  font-size: .82rem;
-}
-.drive-id { margin-bottom: 6px; font-family: ui-monospace, monospace; font-size: .85rem; }
-.drive-setup .backup-row { justify-content: flex-start; }
 
 /* A day of readings, folded to one line: date, a small fan of its cards, how many */
 .history-dayrow { border-bottom: 1px solid rgba(201, 169, 110, .14); }

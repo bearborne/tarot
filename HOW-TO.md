@@ -130,32 +130,23 @@ the history screen says so; after a month the home screen does too.
 ## Backing up to Google Drive
 
 On the history screen, **Back up** asks where: **This device** (a file) or **Google Drive**, and
-**Restore from** takes **A file** or **Google Drive**. The first time you tap Google Drive, the app
-shows the setup steps below with a box to paste your client ID into (kept on that device). The backup is
-one file in a hidden app folder in your Drive: only Bearcana can see it, and Bearcana can't see
-any of your other files. Backing up keeps whatever is already in that file from another phone or
-computer and adds what's here, so one device never wipes out another. **Restore** adds the Drive
-backup to this device, like Import backup. Nothing is overwritten either way.
+**Restore from** takes **A file** or **Google Drive**. The backup is one file in a hidden app folder
+in your Drive: only Bearcana can see it, and Bearcana can't see any of your other files. Backing up
+keeps whatever is already in that file from another phone or computer and adds what's here, so one
+device never wipes out another. Restore adds the Drive backup to this device, like Import backup.
+Nothing is overwritten either way.
 
-Anyone else using the app signs in with their own Google account and backs up to their own Drive.
-Their backups and yours never mix, and you can't see theirs.
+The Google Drive buttons are only for you. They show on a device once it has opened the app with
+`?drive` at the end of its address, e.g. `https://bearborne.github.io/tarot/?drive` (and
+`?drive=off` hides them again). Everyone else only sees This device and A file. Even if someone
+found the switch, Google only lets the project's test users sign in, and that's just you.
 
-Setting it up, once (free, about ten minutes):
-
-1. Go to console.cloud.google.com and create a project, e.g. "Bearcana".
-2. **APIs & Services › Library**: find **Google Drive API** and press **Enable**.
-3. **Google Auth Platform** (or **OAuth consent screen**): choose **External**, give the app a name
-   and your email. Under **Data access**, add the scope `.../auth/drive.appdata`. Under
-   **Audience › Test users**, add your own Google address. (While the app is in "Testing", only
-   test users can sign in. To let anyone use it, press **Publish app**.)
-4. **Clients › Create client › Web application**. Under **Authorized JavaScript origins**, add the
-   address Bearcana is opened from, e.g. `https://yourname.github.io`, and `http://localhost:8771`
-   for Run Tarot.bat. No redirect address is needed.
-5. Copy the client ID (it ends in `.apps.googleusercontent.com`) and paste it into the app's setup box.
-   To set it for every device at once, put it in **cloud.js** between the quotes instead.
-
-Google sign-in doesn't work when index.html is opened straight from the folder; use Run Tarot.bat
-or the website.
+The Google side lives in the **Bearcana** project at console.cloud.google.com (Google Auth Platform):
+the app is in **Testing** with you as its only test user. Don't press **Publish app** unless you want
+others to be able to sign in. Its web client allows sign-in from `https://bearborne.github.io`,
+`http://localhost:8771` (Run Tarot.bat) and `http://localhost:8770`. If the app ever moves to
+another address, add it there under **Clients › Bearcana web › Authorized JavaScript origins**.
+The client ID is in **cloud.js**; it isn't a secret.
 
 ## Your own themes
 
@@ -201,7 +192,7 @@ The site updates in a minute or two.
 ## Where things are
 
 - **cards.js**, **spreads.js**, **symbols.js**: the deck, spreads, themes and symbols, for you to edit.
-- **cloud.js**: your Google client ID, for backing up to Google Drive.
+- **cloud.js**: the Google client ID for backing up to Google Drive.
 - **js/**: how the app works, one file per part (home, table, summary, history and so on).
   index.html loads them in order.
 - **labs/**: design mockups and test pages. They aren't part of the app.

@@ -1,8 +1,7 @@
 // Backing up to Google Drive. The backup is one file in Drive's hidden
 // app folder (only Bearcana can see it), and Bearcana can't see anything
-// else in your Drive. It needs a Google client ID: GOOGLE_CLIENT_ID in
-// cloud.js (for everyone using this copy), or one pasted into the setup
-// that opens the first time Google Drive is tapped (kept on this device).
+// else in your Drive. It uses GOOGLE_CLIENT_ID from cloud.js, and only
+// shows on a device switched on with ?drive (see cloud.js).
 //
 // Back up: what's here, plus any readings, notes and themes already in
 // the Drive backup that aren't here (from another phone, say), so a
@@ -15,10 +14,23 @@ const DRIVE_FILE = "bearcana-backup.json";
 const DRIVE_AT = "tarot-drive-at";
 const DRIVE_API = "https://www.googleapis.com";
 
-const CLIENT_KEY = "tarot-google-client";
-const sharedId = () => (typeof GOOGLE_CLIENT_ID === "string" && GOOGLE_CLIENT_ID.trim()) || "";
-const clientId = () => sharedId() || readJSON(CLIENT_KEY, "") || "";
-const driveOn = () => clientId() !== "";
+const DRIVE_ON = "tarot-drive-on";
+const clientId = () => (typeof GOOGLE_CLIENT_ID === "string" && GOOGLE_CLIENT_ID.trim()) || "";
+
+// ?drive switches Google Drive on for this device, ?drive=off off again;
+// the address is then tidied back to the plain one.
+{
+  const q = new URLSearchParams(location.search);
+  if (q.has("drive")) {
+    try {
+      if (q.get("drive") === "off") localStorage.removeItem(DRIVE_ON);
+      else localStorage.setItem(DRIVE_ON, "1");
+    } catch {}
+    q.delete("drive");
+    history.replaceState(null, "", location.pathname + (q.size ? `?${q}` : "") + location.hash);
+  }
+}
+const driveOn = () => clientId() !== "" && readJSON(DRIVE_ON, 0) === 1;
 
 // Google's sign-in script, loaded once, ahead of the first tap (a sign-in
 // window only opens straight from a tap, so it can't wait for a download).
@@ -121,8 +133,7 @@ function driveTrouble(e) {
 
 let driveBusy = false;
 async function driveBackup() {
-  if (!driveOn()) { showDriveSetup(); return; }
-  if (driveBusy) return;
+  if (!driveOn() || driveBusy) return;
   const token = driveToken();   // first, while this still counts as the tap
   driveBusy = true;
   driveStatus("Backing up…");
@@ -143,8 +154,7 @@ async function driveBackup() {
 }
 
 async function driveRestore() {
-  if (!driveOn()) { showDriveSetup(); return; }
-  if (driveBusy) return;
+  if (!driveOn() || driveBusy) return;
   const token = driveToken();
   driveBusy = true;
   driveStatus("Looking in your Drive…");
@@ -180,88 +190,16 @@ function driveStatus(text) {
     const off = el("button", "link small", "Disconnect");
     off.addEventListener("click", driveDisconnect);
     line.append(" · ", off);
-  } else if (driveOn() && !sharedId()) {
-    const change = el("button", "link small", "Setup");
-    change.addEventListener("click", showDriveSetup);
-    line.append(" · ", change);
   }
-}
-
-// ── Setting up Google Drive, in the app ─────────────────
-// Bearcana has no server, so Google needs to know it by a client ID made
-// in your own Google Cloud project: the steps, with this page's address to
-// copy, and a box to paste the ID into. Kept on this device only.
-function showDriveSetup() {
-  const box = $("driveSetup");
-  box.replaceChildren();
-  box.hidden = false;
-  box.append(el("p", "asks-title", "Set up Google Drive"));
-  const close = () => { box.hidden = true; };
-  if (location.protocol === "file:") {
-    box.append(el("p", "drive-help", "Google sign-in doesn't work when the app is opened straight from its folder. Open it with Run Tarot.bat or from its website, and set it up there."));
-    const ok = el("button", "link small gold", "Close");
-    ok.addEventListener("click", close);
-    box.append(ok);
-    return;
-  }
-  box.append(el("p", "drive-help", "Bearcana has no server of its own, so Google needs a free client ID from your own Google account. About ten minutes, once:"));
-  const ol = el("ol", "drive-steps");
-  const step = (...parts) => { const li = el("li"); li.append(...parts); ol.append(li); };
-  const link = Object.assign(el("a", "", "console.cloud.google.com"),
-    { href: "https://console.cloud.google.com/", target: "_blank", rel: "noopener" });
-  step("Open ", link, " and create a project.");
-  step("APIs & Services › Library: enable ", el("b", "", "Google Drive API"), ".");
-  step("Google Auth Platform: choose External. Under Data access add ", el("code", "", "drive.appdata"),
-    "; under Audience add your Google address as a test user.");
-  const origin = el("button", "drive-origin", location.origin);
-  origin.title = "Copy";
-  origin.addEventListener("click", () => copyText(location.origin, "Address copied"));
-  step("Clients › Create client › Web application. Under Authorized JavaScript origins, add this address (tap to copy):", origin);
-  step("Copy the client ID and paste it here:");
-  box.append(ol);
-
-  const input = el("input", "own-input drive-id");
-  Object.assign(input, { type: "text", placeholder: "…apps.googleusercontent.com", spellcheck: false, autocomplete: "off" });
-  input.value = readJSON(CLIENT_KEY, "") || "";
-  input.setAttribute("aria-label", "Google client ID");
-  const note = el("p", "drive-status");
-  const save = el("button", "chip", "Save");
-  const cancel = el("button", "link small", "Cancel");
-  const row = el("div", "backup-row");
-  row.append(save, cancel);
-  if (readJSON(CLIENT_KEY, "")) {
-    const forget = el("button", "link small", "Remove");
-    forget.addEventListener("click", () => {
-      try { localStorage.removeItem(CLIENT_KEY); } catch {}
-      DRIVE.client = DRIVE.gsi = DRIVE.token = null;
-      close();
-      driveStatus();
-    });
-    row.append(forget);
-  }
-  box.append(input, note, row);
-  cancel.addEventListener("click", close);
-  save.addEventListener("click", async () => {
-    const id = input.value.trim();
-    if (!/^[\w-]+\.apps\.googleusercontent\.com$/.test(id)) {
-      note.textContent = "That doesn't look like a client ID. It ends in .apps.googleusercontent.com";
-      return;
-    }
-    if (!writeJSON(CLIENT_KEY, id)) { note.textContent = "Couldn't save it on this device"; return; }
-    DRIVE.client = DRIVE.gsi = DRIVE.token = null;
-    note.textContent = "Connecting to Google…";
-    try { await loadGsi(); } catch { note.textContent = "Saved, but Google couldn't be reached just now"; return; }
-    close();
-    driveStatus("Ready: tap Google Drive to back up");
-  });
-  input.focus();
 }
 
 // Gets Google ready when the history opens, so a tap can sign in at once.
 function setUpDrive() {
+  $("driveBackupBtn").hidden = $("driveRestoreBtn").hidden = !driveOn();
   driveStatus();
   if (driveOn()) loadGsi().catch(() => {});
 }
 $("driveBackupBtn").addEventListener("click", driveBackup);
 $("driveRestoreBtn").addEventListener("click", driveRestore);
 $("historyBtn").addEventListener("click", setUpDrive);   // (the home screen's reminder opens it too)
+setUpDrive();
