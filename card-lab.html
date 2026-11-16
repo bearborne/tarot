@@ -89,47 +89,48 @@
 
 <script>
 const $ = id => document.getElementById(id);
-const STORE = "card-lab-v1";
+const STORE = "card-lab-v2";
 
 // ---------- settings ----------
 // [key, label, min, max, step, default]  (a group title is a plain string)
+// Defaults are the look now in the app (card-back.svg and icon.svg).
 const SPEC = [
   { title: "Paw outline", open: true, rows: [
-    ["pawScale", "Paw size", .2, .5, .005, .355],
-    ["pawY", "Paw up / down", -20, 20, .1, -4.7],
-    ["fill", "Fill strength", 0, .4, .01, .05],
-    ["lineOp", "Line strength", 0, 1, .01, .45],
-    ["lineW", "Line width", .3, 5, .1, 1.1],
-    ["starSize", "Star size", 0, 8, .1, 3.4],
-    ["starGap", "Star spacing", 6, 40, .5, 15],
-    ["starOp", "Star strength", 0, 1, .01, 1],
+    ["pawScale", "Paw size", .2, .5, .005, .37],
+    ["pawY", "Paw up / down", -20, 20, .1, -2.1],
+    ["fill", "Fill strength", 0, .4, .01, .17],
+    ["lineOp", "Line strength", 0, 1, .01, .94],
+    ["lineW", "Line width", .3, 5, .1, 1.9],
+    ["starSize", "Star size", 0, 8, .1, 0],
+    ["starGap", "Star spacing", 6, 40, .5, 6],
+    ["starOp", "Star strength", 0, 1, .01, 0],
     { chk: "innerDots", label: "Faint dotted line inside each shape", def: false },
   ]},
   { title: "Claw constellations", rows: [
-    ["tipSize", "Tip star size", 0, 14, .1, 7.5],
-    ["midSize", "Middle star", 0, 5, .1, 2.1],
-    ["baseSize", "Bottom star", 0, 5, .1, 2.6],
-    ["clawLineOp", "Line strength", 0, 1, .01, .75],
-    ["clawLineW", "Line width", .2, 3, .1, 1.1],
-    ["reach", "Reach past tip", -6, 24, .5, 8],
-    ["bend", "Bend outward", -8, 8, .1, 3.2],
-    ["clawGap", "Gap above toe", -6, 12, .5, 0],
+    ["tipSize", "Tip star size", 0, 16, .1, 14],
+    ["midSize", "Middle star", 0, 5, .1, 2.5],
+    ["baseSize", "Bottom star", 0, 5, .1, 2.1],
+    ["clawLineOp", "Line strength", 0, 1, .01, 1],
+    ["clawLineW", "Line width", .2, 3, .1, .8],
+    ["reach", "Reach past tip", -6, 24, .5, 2.5],
+    ["bend", "Bend outward", -8, 8, .1, 2.9],
+    ["clawGap", "Gap above toe", -6, 12, .5, -6],
   ]},
   { title: "Ring", rows: [
-    ["ringR", "Size", 30, 62, .5, 47],
-    ["ringN", "Dots (×4)", 8, 40, 1, 19],
-    ["ringDot", "Dot size", 0, 3, .05, 1.2],
+    ["ringR", "Size", 30, 62, .5, 48.5],
+    ["ringN", "Dots (×4)", 8, 40, 1, 14],
+    ["ringDot", "Dot size", 0, 3, .05, 1.1],
     ["ringSolid", "Solid ring width", 0, 3, .05, 0],
-    ["glowOp", "Centre glow", 0, .5, .01, .1],
-    ["glowR", "Glow size", 30, 90, 1, 62],
+    ["glowOp", "Centre glow", 0, .5, .01, .07],
+    ["glowR", "Glow size", 30, 90, 1, 69],
   ]},
   { title: "Frame and corners", rows: [
-    ["frameW", "Outer frame", 0, 3, .05, 1.4],
-    ["frame2W", "Inner frame", 0, 2, .05, .7],
-    ["frameGap", "Gap between", 2, 8, .25, 4],
-    ["cornerSize", "Corner size", 0, 2, .05, 1],
-    ["cornerW", "Corner line width", .3, 1.5, .05, .75],
-    ["cornerIn", "Corner inset", 12, 30, .5, 19],
+    ["frameW", "Outer frame", 0, 3, .05, .4],
+    ["frame2W", "Inner frame", 0, 2, .05, .2],
+    ["frameGap", "Gap between", 2, 8, .25, 3.75],
+    ["cornerSize", "Corner size", 0, 2, .05, 1.15],
+    ["cornerW", "Corner line width", .3, 1.5, .05, .65],
+    ["cornerIn", "Corner inset", 12, 30, .5, 18.5],
     { chk: "corners", label: "Show the tarot suits in the corners", def: true },
   ]},
   { title: "App icon", rows: [
@@ -139,9 +140,17 @@ const SPEC = [
     ["iconStar", "Outline star size", 0, 8, .1, 0],
     { chk: "iconSolid", label: "Solid outline on the icon (reads better small)", def: true },
     { chk: "iconRing", label: "Ring round the icon", def: false },
+    ["iconTip", "Claw tip star", 0, 16, .1, 7.5],
+    ["iconMid", "Claw middle star", 0, 5, .1, 2.1],
+    ["iconBase", "Claw bottom star", 0, 5, .1, 2.6],
+    ["iconClawOp", "Claw line strength", 0, 1, .01, .75],
+    ["iconClawW", "Claw line width", .2, 3, .1, 1.1],
+    ["iconReach", "Claw reach", -6, 24, .5, 8],
+    ["iconBend", "Claw bend", -8, 8, .1, 3.2],
+    ["iconClawGap", "Claw gap above toe", -6, 12, .5, 0],
   ]},
-  { title: "Colours", colors: [["bg", "Card", "#2a2436"], ["iconBg", "Icon", "#15131c"], ["gold1", "Gold light", "#f6e4ad"],
-    ["gold2", "Gold", "#d9b56f"], ["gold3", "Gold dark", "#9c7a3e"], ["star", "Stars", "#ecd59f"]] },
+  { title: "Colours", colors: [["bg", "Card", "#19102d"], ["iconBg", "Icon", "#15131c"], ["gold1", "Gold light", "#f6e4ad"],
+    ["gold2", "Gold", "#d9b56f"], ["gold3", "Gold dark", "#ac843e"], ["star", "Stars", "#ecd59f"], ["iconGold3", "Icon gold dark", "#9c7a3e"]] },
 ];
 const DEF = {};
 SPEC.forEach(g => { (g.rows || []).forEach(r => Array.isArray(r) ? DEF[r[0]] = r[5] : DEF[r.chk] = r.def); (g.colors || []).forEach(c => DEF[c[0]] = c[2]); });
@@ -233,7 +242,10 @@ function cardSVG(p, o) {
 </svg>`;
 }
 
-function iconSVG(p, o) {
+function iconSVG(p, card) {
+  // The icon keeps its own claw settings and dark gold.
+  const o = { ...card, tipSize: card.iconTip, midSize: card.iconMid, baseSize: card.iconBase, clawLineOp: card.iconClawOp, clawLineW: card.iconClawW,
+    reach: card.iconReach, bend: card.iconBend, clawGap: card.iconClawGap, gold3: card.iconGold3 };
   const look = o.iconSolid ? { fill: .1, lineOp: 1, lineW: o.iconLineW, starSize: o.iconStar, starGap: o.starGap, starOp: o.starOp, innerDots: true }
                            : { fill: o.fill, lineOp: o.lineOp, lineW: o.iconLineW, starSize: o.iconStar || o.starSize, starGap: o.starGap, starOp: o.starOp, innerDots: o.innerDots };
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
