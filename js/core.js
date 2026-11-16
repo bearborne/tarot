@@ -221,6 +221,18 @@ if (loadHistory().length || Object.keys(loadNotes()).length) keepData();
 
 // ── Helpers ─────────────────────────────────────────────
 
+// Some cards have their own keywords and questions for when they're reversed;
+// the rest use the same ones both ways.
+// (Here in core.js, so the home screen can use them as it first builds.)
+function filled(list) { return (list || []).map((x) => String(x).trim()).filter(Boolean); }
+function hasRevKeywords(card) { return filled(card.reversedKeywords).length > 0; }
+const hasRevQuestions = (card) => filled(card.reversedQuestions).length > 0;
+function keywordsFor(card, reversed) {
+  return reversed && hasRevKeywords(card) ? card.reversedKeywords : card.keywords;
+}
+const questionsFor = (card, reversed) =>
+  reversed && hasRevQuestions(card) ? card.reversedQuestions : card.questions;
+
 function el(tag, cls, text) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;

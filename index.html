@@ -140,6 +140,25 @@
         <button class="link small" id="histSearchClear" aria-label="Clear the search" hidden>×</button>
       </div>
       <div id="historyList"></div>
+      <p class="history-note clear-line"><button class="link small" id="clearHistBtn">Clear history</button></p>
+    </div>
+  </div>
+
+  <!-- 6a. Clearing the history: choose what goes, then confirm -->
+  <div class="overlay" id="clearAsk" hidden role="dialog" aria-modal="true" aria-labelledby="clearTitle">
+    <div class="quick-box clear-box">
+      <h2 id="clearTitle">Clear history</h2>
+      <p class="clear-ask">Choose what to delete</p>
+      <div class="clear-picks" id="clearPicks">
+        <button class="chip" data-kind="readings" aria-pressed="false"></button>
+        <button class="chip" data-kind="cotd" aria-pressed="false"></button>
+      </div>
+      <p class="clear-warn" id="clearWarn"></p>
+      <p class="clear-backup" id="clearBackup"></p>
+      <div class="clear-btns">
+        <button class="pill small" id="clearCancel">Keep</button>
+        <button class="pill small danger" id="clearGo">Delete</button>
+      </div>
     </div>
   </div>
 

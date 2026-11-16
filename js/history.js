@@ -38,6 +38,7 @@ function renderHistory() {
     const seen = new Set();
     readings = readings.filter((r) => { const d = dayName(r.t) + new Date(r.t).getFullYear(); return !seen.has(d) && seen.add(d); });
   }
+  $("clearHistBtn").hidden = !loadHistory().length;
   $("histSearch").placeholder = daily ? "Search by card or date" : "Search by name, card, note or date";
   showBackupNudge();
   if (!readings.length) {
@@ -471,6 +472,86 @@ $("importFile").addEventListener("change", async (e) => {
     alert("That file couldn't be read.");
   }
 });
+
+// ── Clearing the history ────────────────────────────────
+// A window to choose readings, cards of the day or both, with a warning
+// that they're gone for good. Card notes and your own themes stay.
+const CLEAR = { kinds: new Set() };
+const isCotd = (r) => r.spread === COTD_SPREAD;
+const cotdDays = (h) => new Set(h.filter(isCotd).map((r) => new Date(r.t).toDateString())).size;
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+function clearCounts() {
+  const h = loadHistory();
+  return { readings: h.filter((r) => !isCotd(r)).length, cotd: cotdDays(h) };
+}
+
+function showClearAsk() {
+  const n = clearCounts();
+  // Start with the list being looked at; from Patterns, both.
+  CLEAR.kinds = new Set(HIST.mode === "patterns" ? ["readings", "cotd"] : [HIST.mode]);
+  ["readings", "cotd"].forEach((k) => { if (!n[k]) CLEAR.kinds.delete(k); });
+  if (!CLEAR.kinds.size) ["readings", "cotd"].forEach((k) => n[k] && CLEAR.kinds.add(k));
+  updateClearAsk();
+  $("clearAsk").hidden = false;
+  $("clearAsk").animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
+  $("clearCancel").focus();
+}
+
+function updateClearAsk() {
+  const n = clearCounts();
+  const names = { readings: plural(n.readings, "reading", "readings"), cotd: plural(n.cotd, "card of the day", "cards of the day") };
+  document.querySelectorAll("#clearPicks .chip").forEach((c) => {
+    const k = c.dataset.kind, on = CLEAR.kinds.has(k);
+    c.textContent = k === "readings" ? `Readings · ${n.readings}` : `Cards of the day · ${n.cotd}`;
+    c.disabled = !n[k];
+    c.classList.toggle("on", on);
+    c.setAttribute("aria-pressed", on);
+  });
+  const going = ["readings", "cotd"].filter((k) => CLEAR.kinds.has(k));
+  $("clearGo").disabled = !going.length;
+  $("clearWarn").textContent = going.length
+    ? `This deletes ${going.map((k) => names[k]).join(" and ")} from this device for good` +
+      `${CLEAR.kinds.has("readings") ? ", with their notes" : ""}` +
+      `${CLEAR.kinds.has("cotd") && todaysCard() ? ", including today's card" : ""}. It can't be undone.`
+    : "Nothing chosen.";
+  const due = backupDue();
+  $("clearBackup").textContent = due ? `${due} — back up first to keep a copy.` : "Your backups aren't touched.";
+  $("clearBackup").classList.toggle("due", !!due);
+}
+
+async function hideClearAsk() {
+  await $("clearAsk").animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150 }).finished;
+  $("clearAsk").hidden = true;
+}
+
+function clearHistory() {
+  const kinds = CLEAR.kinds;
+  if (!kinds.size) return;
+  const kept = loadHistory().filter((r) => !kinds.has(isCotd(r) ? "cotd" : "readings"));
+  if (!writeJSON(HISTORY_KEY, kept)) { alert("Couldn't clear the history on this device."); return; }
+  if (kinds.has("cotd")) {   // today's card goes too, so the home deck can be drawn again
+    try { localStorage.removeItem("tarot-cotd"); } catch {}
+    buildFloatDeck();
+  }
+  HIST.open.clear();
+  HIST.days.clear();
+  hideClearAsk();
+  renderHistory();
+}
+
+$("clearHistBtn").addEventListener("click", showClearAsk);
+$("clearPicks").addEventListener("click", (e) => {
+  const c = e.target.closest(".chip");
+  if (!c || c.disabled) return;
+  const k = c.dataset.kind;
+  if (CLEAR.kinds.has(k)) CLEAR.kinds.delete(k); else CLEAR.kinds.add(k);
+  updateClearAsk();
+});
+$("clearCancel").addEventListener("click", hideClearAsk);
+$("clearGo").addEventListener("click", clearHistory);
+$("clearAsk").addEventListener("click", (e) => { if (e.target === $("clearAsk")) hideClearAsk(); });
+$("clearAsk").addEventListener("keydown", (e) => { if (e.key === "Escape") hideClearAsk(); });
 
 // Lets the app open without internet once it has been visited.
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {

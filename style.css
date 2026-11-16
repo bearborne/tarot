@@ -2428,3 +2428,21 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .day-more { margin-left: 6px; color: var(--muted); font-size: .75rem; }
 .day-body { padding: 0 0 10px; }
 .day-body .reading:first-child { margin-top: 2px; }
+
+/* Clearing the history: a quiet link under the list, and a window to confirm */
+.history-note.clear-line { margin: 26px 0 8px; }
+.clear-line .link { color: var(--muted); }
+#clearAsk { z-index: 120; }   /* above the history sheet */
+.clear-box { max-width: 320px; padding-bottom: 20px; }
+.clear-box h2 { font-family: "IM Fell English SC", var(--read); }
+.clear-ask { margin: 0 0 12px; color: var(--muted); font-size: .9rem; }
+.clear-picks { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 14px; }
+.clear-picks .chip:disabled { opacity: .35; }
+.clear-warn { margin: 0 0 8px; font-size: .98rem; line-height: 1.45; }
+.clear-backup { margin: 0 0 16px; color: var(--muted); font-size: .85rem; font-style: italic; }
+.clear-backup.due { color: var(--gold); }
+.clear-btns { display: flex; justify-content: center; gap: 10px; width: 100%; }
+.clear-btns .pill { flex: 1; max-width: 9em; }
+.pill.danger { color: #e09a88; border-color: rgba(224, 154, 136, .6); }
+.pill.danger:active { background: rgba(224, 154, 136, .12); }
+.pill:disabled { opacity: .35; }

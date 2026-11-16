@@ -14,18 +14,6 @@ function showPosition(i, labelEl, questionEl) {
 }
 
 
-// Some cards have their own keywords and questions for when they're reversed;
-// the rest use the same ones both ways.
-// (Function declarations, so the home screen can use them as it first builds.)
-function filled(list) { return (list || []).map((x) => String(x).trim()).filter(Boolean); }
-function hasRevKeywords(card) { return filled(card.reversedKeywords).length > 0; }
-const hasRevQuestions = (card) => filled(card.reversedQuestions).length > 0;
-function keywordsFor(card, reversed) {
-  return reversed && hasRevKeywords(card) ? card.reversedKeywords : card.keywords;
-}
-const questionsFor = (card, reversed) =>
-  reversed && hasRevQuestions(card) ? card.reversedQuestions : card.questions;
-
 // Keywords as one line: "trust · beginnings · freedom".
 function fillKeywords(box, words) {
   box.textContent = filled(words).join(" · ");
