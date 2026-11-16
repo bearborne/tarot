@@ -47,7 +47,7 @@
     <canvas class="magic frames" id="frames" aria-hidden="true"></canvas>
     <header class="bar">
       <button class="link" id="backBtn">‹ Spreads</button>
-      <span id="spreadName"></span>
+      <button class="theme-btn" id="themeBtn" aria-haspopup="dialog">✦ Add a theme</button>
       <span class="bar-space"></span>
     </header>
     <div class="slots-wrap"><div class="slots" id="slots"></div></div>
@@ -121,6 +121,20 @@
         <button class="link small" id="histSearchClear" aria-label="Clear the search" hidden>×</button>
       </div>
       <div id="historyList"></div>
+    </div>
+  </div>
+
+  <!-- 6b. Themes: questions laid over the spread's card places -->
+  <div class="sheet" id="themed" hidden>
+    <header class="bar">
+      <button class="link" id="themedBack">‹ Back</button>
+      <span class="bar-title" id="themedTitle">Themes</span>
+      <span class="bar-space"></span>
+    </header>
+    <div class="history-body">
+      <p class="history-note themed-lead" id="topicNote"></p>
+      <button class="pill small theme-none" id="themeNone" hidden>No theme</button>
+      <div id="themedList"></div>
     </div>
   </div>
 

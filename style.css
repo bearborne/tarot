@@ -2006,3 +2006,251 @@ button { font: inherit; color: inherit; cursor: pointer; }
   white-space: nowrap;
 }
 .side-btn[aria-pressed="true"] { color: var(--bg); background: var(--gold); }
+
+/* ── Spreads by theme ─────────────────────── */
+
+.theme-btn {
+  flex: 1;
+  min-width: 0;
+  max-width: 15rem;
+  margin: 0 6px;
+  padding: 5px 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border: 1px solid rgba(201, 169, 110, .35);
+  border-radius: 999px;
+  background: none;
+  color: var(--gold);
+  font: italic .95rem var(--serif);
+}
+.theme-btn.on { font-style: normal; border-color: rgba(201, 169, 110, .7); background: rgba(201, 169, 110, .1); }
+.theme-btn:disabled { border-color: transparent; background: none; }
+.theme-btn:disabled:not(.on) { visibility: hidden; }
+.theme-none { display: block; margin: 0 auto 10px; }
+.themed-item.chosen { border-color: var(--hue, var(--gold)); box-shadow: 0 0 10px color-mix(in srgb, var(--hue, var(--gold)) 35%, transparent); }
+/* Gold motes that burst from the theme button as the window opens. */
+.theme-mote {
+  position: fixed;
+  z-index: 1;
+  width: 5px; height: 5px; margin: -2.5px;
+  border-radius: 50%;
+  background: #fff1c4;
+  box-shadow: 0 0 6px 2px rgba(255, 210, 120, .8);
+  pointer-events: none;
+}
+.slot-card { position: relative; }
+.slot-place {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: rgba(201, 169, 110, .75);
+  font: italic clamp(.6rem, 13cqw, .9rem) / 1.2 var(--serif);
+  text-align: center;
+  pointer-events: none;
+}
+.slot-card:has(.tcard) .slot-place { display: none; }
+/* A topic's heading, in its colour, between two fading lines. */
+.themed-topic {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 7px;
+  color: var(--hue, var(--gold));
+}
+.themed-topic::before, .themed-topic::after { content: ""; flex: 1; height: 1px; }
+.themed-topic::before { background: linear-gradient(90deg, transparent, var(--hue, var(--gold))); opacity: .45; }
+.themed-topic::after { background: linear-gradient(270deg, transparent, var(--hue, var(--gold))); opacity: .45; }
+/* Three tiles to a row; an opened tile takes the whole row (the others
+   close up around it). Tiles carry a tint of their topic's colour. */
+.themed-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: row dense;
+  gap: 6px;
+}
+.themed-item {
+  border: 1px solid color-mix(in srgb, var(--hue, var(--gold)) 30%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--hue, var(--gold)) 8%, var(--panel));
+}
+.themed-item[open] { grid-column: 1 / -1; border-color: color-mix(in srgb, var(--hue, var(--gold)) 70%, transparent); }
+.themed-item summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 70px;
+  padding: 9px 7px 8px;
+  list-style: none;
+  text-align: center;
+  cursor: pointer;
+}
+.themed-item summary::-webkit-details-marker { display: none; }
+.themed-name { color: #f4ecdc; font-size: .9rem; font-weight: 500; line-height: 1.15; overflow-wrap: anywhere; }
+/* Under the title: smaller, in a soft tint of the topic's colour. */
+.themed-brief {
+  color: color-mix(in srgb, var(--hue, var(--gold)) 45%, var(--muted));
+  font: italic .72rem / 1.25 var(--serif);
+  overflow-wrap: anywhere;
+}
+.themed-item[open] .themed-brief { display: none; }
+/* The topic chips each start with a dot of their colour. */
+.chip.topic-chip::before {
+  content: "";
+  display: inline-block;
+  width: 7px; height: 7px;
+  margin: 0 6px 1px 0;
+  border-radius: 50%;
+  background: var(--hue);
+}
+.chip.topic-chip.on { background: var(--hue); border-color: var(--hue); }
+.chip.topic-chip.on::before { background: var(--bg); }
+/* An opened tile: name and one line about it, then each place as a row,
+   label on the left and question on the right, meeting at a centre line. */
+.themed-item[open] summary { min-height: 0; padding: 10px 12px 0; }
+.themed-item[open] .themed-name { color: var(--hue, var(--gold)); font-size: 1rem; }
+.themed-about { margin: 2px 12px 8px; color: var(--muted); font: italic .78rem / 1.3 var(--serif); text-align: center; }
+/* The places as columns, like the cards on the table: a small box each,
+   its label over its question. A short last row sits in the middle. */
+.themed-places {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 10px 10px;
+  padding: 8px 0 0;
+  border-top: 1px solid rgba(201, 169, 110, .15);
+  list-style: none;
+  font-family: var(--read);
+}
+.themed-places li {
+  flex: 0 0 calc((100% - (var(--cols, 3) - 1) * 6px) / var(--cols, 3));
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 7px 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--hue, var(--gold)) 25%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--hue, var(--gold)) 6%, transparent);
+  text-align: center;
+}
+.themed-places strong { color: var(--hue, var(--gold)); font-size: .74rem; font-weight: 500; line-height: 1.2; }
+.themed-places span { color: var(--ink); font-size: .8rem; line-height: 1.3; overflow-wrap: anywhere; }
+.themed-item .pill.small { display: block; margin: 0 auto 10px; padding: 5px 14px; font-size: .85rem; }
+
+/* A theme inscribed on the table: each empty slot in turn (--d is its
+   delay) catches a line of light sweeping down, its edge glows, and the
+   place name settles in out of a blur. */
+.slot-card.inscribed { animation: slot-wake 1.2s var(--d, 0ms) ease-out both; }
+.slot-card.inscribed::before {
+  content: "";
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  top: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #ffe6ad, transparent);
+  box-shadow: 0 0 10px 2px rgba(255, 214, 140, .55);
+  pointer-events: none;
+  animation: slot-sweep .85s var(--d, 0ms) cubic-bezier(.45, 0, .3, 1) both;
+}
+.slot-card.inscribed .slot-place { animation: place-in 1s calc(var(--d, 0ms) + .3s) cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes slot-wake {
+  0%   { border-color: rgba(201, 169, 110, .3); box-shadow: 0 0 0 rgba(201, 169, 110, 0), inset 0 0 0 rgba(201, 169, 110, 0); }
+  35%  { border-color: rgba(255, 224, 160, .95); box-shadow: 0 0 18px rgba(201, 169, 110, .45), inset 0 0 24px rgba(201, 169, 110, .22); }
+  100% { border-color: rgba(201, 169, 110, .3); box-shadow: 0 0 0 rgba(201, 169, 110, 0), inset 0 0 0 rgba(201, 169, 110, 0); }
+}
+@keyframes slot-sweep {
+  0%   { top: 0; opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { top: calc(100% - 2px); opacity: 0; }
+}
+@keyframes place-in {
+  from { opacity: 0; letter-spacing: .3em; filter: blur(4px); transform: translateY(5px); }
+  60%  { color: #ffe6ad; text-shadow: 0 0 10px rgba(255, 214, 140, .7); }
+  to   { opacity: 1; letter-spacing: normal; filter: none; transform: none; }
+}
+.theme-btn.glint { animation: theme-glint 1s ease-out; }
+@keyframes theme-glint {
+  0%   { box-shadow: 0 0 0 rgba(201, 169, 110, 0); }
+  35%  { box-shadow: 0 0 16px rgba(201, 169, 110, .55); }
+  100% { box-shadow: 0 0 0 rgba(201, 169, 110, 0); }
+}
+/* A closed tile's title and brief sit in the middle of the whole box,
+   however tall its row is. */
+.themed-item:not([open]) { display: flex; flex-direction: column; }
+.themed-item:not([open]) summary { flex: 1; }
+
+/* ── Themes: topics first, then one topic's themes ──
+   In the app's own language, like the I–V spread buttons: no fills,
+   hairline gold edges, names in the gold small capitals, a quiet line
+   of muted text under them. */
+.themed-lead { margin: 2px 0 14px; }
+.topic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.topic-tile {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 70px;
+  padding: 10px 6px;
+  border: 1px solid rgba(201, 169, 110, .22);
+  border-radius: 10px;
+  background: transparent;
+  text-align: center;
+  transition: border-color .2s, background .2s;
+}
+.topic-tile:active { border-color: rgba(201, 169, 110, .6); background: rgba(201, 169, 110, .06); }
+.topic-name {
+  font-family: "IM Fell English SC", var(--read);
+  font-size: clamp(.95rem, 15cqw, 1.3rem);
+  line-height: 1;
+  letter-spacing: .04em;
+  color: var(--gold);
+}
+.topic-mark { font-size: .6em; vertical-align: super; }
+.topic-tag { color: var(--muted); font: .7rem / 1.3 var(--read); }
+
+/* One topic's themes, one to a row, in the same quiet style. */
+.themed-rows { display: grid; gap: 8px; }
+.themed-rows .themed-item {
+  border: 1px solid rgba(201, 169, 110, .2);
+  border-radius: 10px;
+  background: transparent;
+  box-shadow: none;
+}
+.themed-rows .themed-item[open] { border-color: rgba(201, 169, 110, .45); background: var(--panel); }
+.themed-rows .themed-item.chosen { border-color: rgba(201, 169, 110, .7); }
+.themed-rows .themed-item summary { min-height: 54px; gap: 3px; }
+/* Theme titles in the gold small capitals, like the topic names, so each
+   row's name stands out from the grey line under it. */
+.themed-rows .themed-name {
+  font-family: "IM Fell English SC", var(--read);
+  color: var(--gold);
+  font-size: 1.15rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: .04em;
+}
+.themed-rows .themed-item summary { gap: 5px; }
+.themed-rows .themed-item[open] .themed-name { font-size: 1.25rem; }
+.themed-rows .themed-brief { color: var(--muted); font: .74rem / 1.3 var(--read); }
+.themed-rows .themed-about { font-style: normal; font-family: var(--read); font-size: .76rem; }
+/* The places: hairline boxes, label in gold small capitals over the question. */
+.themed-rows .themed-places li { border-color: rgba(201, 169, 110, .16); background: transparent; }
+.themed-rows .themed-places strong {
+  font-family: "IM Fell English SC", var(--read);
+  color: var(--gold);
+  font-size: .8rem;
+  letter-spacing: .03em;
+}
