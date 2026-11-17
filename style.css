@@ -230,12 +230,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .fd-card.revealed .fd-flip > .cface {
   box-shadow: 0 0 14px 3px rgba(255, 214, 130, .55);
 }
-/* Hovering the floating deck: the card under the pointer lifts a little and
-   glows; the others draw back, a touch smaller. */
+/* Hovering the floating deck: the card under the pointer rises a little in
+   its place and glows; the others draw back, a touch smaller. */
 .fd-flip > .cback, .fd-flip > .cface { transition: box-shadow .35s ease; }
 @media (hover: hover) {
   .float-deck:has(.fd-card:hover) .fd-card:not(:hover):not(.lift) { transform: rotate(var(--a)) scale(.94); }
-  .fd-card:not(.lift):hover { transform: rotate(var(--a)) translateY(-6px) scale(1.04); z-index: 1; }
+  /* (it keeps its place in the fan: lifted a little, not brought over the others) */
+  .fd-card:not(.lift):hover { transform: rotate(var(--a)) translateY(-8px); }
   .fd-card.lift:hover { transform: translateY(-20px) scale(1.15); }
   .fd-card:hover .fd-flip > .cback { box-shadow: 0 4px 12px rgba(0, 0, 0, .45), 0 0 16px 3px rgba(255, 214, 130, .45); }
   .fd-card.revealed:hover .fd-flip > .cface { box-shadow: 0 0 20px 5px rgba(255, 214, 130, .7); }
