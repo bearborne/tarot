@@ -236,50 +236,49 @@ function renderThemed() {
     list.prepend(add);
     if (!THEMES_LIST.some((th) => th.topic === OWN_TOPIC)) rows.append(el("p", "empty-note", "Your own themes will appear here."));
   }
-  THEMES_LIST.filter((th) => th.topic === themedTopic).forEach((th) => {
-    const item = el("details", "themed-item");
+  // Each theme is a small box: its name and a few words. Resting the pointer
+  // on it (or tapping it) lifts a little window out of it, a soft zoom over
+  // the boxes round it, with what it's for, the names of its places (their
+  // questions wait for the table) and the button to use it.
+  const items = [];
+  const shut = (except) => items.forEach((o) => { if (o !== except) o.classList.remove("open"); });
+  THEMES_LIST.filter((th) => th.topic === themedTopic).forEach((th, i) => {
+    const item = el("div", "themed-item");
+    item.dataset.col = String(i % 3);   // (left, middle or right: where its window opens from)
     if (S && S.theme === th) item.classList.add("chosen");
-    const sum = el("summary");
-    // The title stands out; a few words under it say what the reading explores.
-    sum.append(el("span", "themed-name", th.name), el("span", "themed-brief", th.brief || ""));
-    // With a mouse, a column opens while the pointer rests on it and widens
-    // a little; a click on its title doesn't shut it again.
-    if (canHover) {
-      item.addEventListener("mouseenter", () => { item.dataset.hover = "1"; item.open = true; });
-      item.addEventListener("mouseleave", () => { item.open = false; delete item.dataset.hover; });
-      sum.addEventListener("click", (e) => e.preventDefault());
-    }
-    // One open at a time; it unfolds out of a little light.
-    item.addEventListener("toggle", () => {
-      if (!item.open) return;
-      list.querySelectorAll(".themed-item[open]").forEach((o) => { if (o !== item) o.open = false; });
-      if (item.dataset.hover) return;
-      if (!calm) item.animate([
-        { opacity: .4, filter: "blur(3px)", boxShadow: "0 0 24px rgba(255, 214, 140, .6)" },
-        { opacity: 1, filter: "blur(0)", boxShadow: "0 0 0 rgba(255, 214, 140, 0)" },
-      ], { duration: 450, easing: "ease-out" });
-      item.scrollIntoView({ block: "nearest", behavior: calm ? "auto" : "smooth" });
-    });
-    // The questions this spread would take, in reading order.
-    // Laid out like the cards on the table: the same number of columns.
+    const face = el("button", "themed-face");
+    face.setAttribute("aria-expanded", "false");
+    face.append(el("span", "themed-name", th.name), el("span", "themed-brief", th.brief || ""));
+    const pop = el("div", "themed-pop");
+    pop.append(el("span", "themed-name", th.name));
+    if (th.about) pop.append(el("p", "themed-about", th.about));
     const ol = el("ol", "themed-places");
-    ol.style.setProperty("--cols", slotGrid(n, false).cols);
-    themePlaces(th, n).forEach((p) => {
-      const li = el("li");
-      li.append(el("strong", "", p.label), el("span", "", p.question));
-      ol.append(li);
-    });
+    themePlaces(th, n).forEach((p) => ol.append(el("li", "", p.label)));
     const use = el("button", "pill small", S && S.theme === th ? "In use" : "Use this theme");
-    // Close first, so the places are inscribed in view.
     use.addEventListener("click", () => closeThemed().then(() => applyTheme(th, true)));
-    item.append(sum, el("p", "themed-about", th.about || ""), ol, use);
+    pop.append(ol, use);
     if (th.own) {
       const edit = el("button", "link small gold", "Edit");
       edit.addEventListener("click", () => editOwnTheme(th.own));
-      item.append(edit);
+      pop.append(edit);
     }
+    item.append(face, pop);
+    const open = (on) => {
+      if (on === item.classList.contains("open")) return;
+      if (on) shut(item);
+      item.classList.toggle("open", on);
+      face.setAttribute("aria-expanded", String(on));
+    };
+    if (canHover) {
+      item.addEventListener("mouseenter", () => open(true));
+      item.addEventListener("mouseleave", () => open(false));
+    }
+    face.addEventListener("click", () => open(canHover ? true : !item.classList.contains("open")));
+    items.push(item);
     rows.append(item);
   });
+  // A tap anywhere else puts an open window away.
+  list.onpointerdown = (e) => { if (!e.target.closest(".themed-item")) shut(null); };
   // All start closed; the one in use is marked by its border.
 }
 // Moves between the two steps, with the tiles conjured afresh.

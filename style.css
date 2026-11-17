@@ -2829,3 +2829,87 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pill.danger { color: #e09a88; border-color: rgba(224, 154, 136, .6); }
 .pill.danger:active { background: rgba(224, 154, 136, .12); }
 .pill:disabled { opacity: .35; }
+
+/* A theme's box, and the little window that lifts out of it: resting the
+   pointer on the box (or tapping it) opens a soft zoom over the boxes round
+   it, with what the theme is for, its places' names and the button. The
+   box keeps its place, so nothing else moves. */
+.themed-rows .themed-item { position: relative; display: flex; }
+.themed-face {
+  all: unset;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  height: 96px;
+  padding: 8px;
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+.themed-face:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
+.themed-rows .themed-item.open { border-color: rgba(201, 169, 110, .45); }
+.themed-pop {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 20;
+  width: max(calc(100% + 28px), 236px);
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 14px 14px 12px;
+  border: 1px solid rgba(201, 169, 110, .45);
+  border-radius: 12px;
+  background: #1d1a28;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, .6), 0 0 22px rgba(201, 169, 110, .14);
+  text-align: center;
+  transform-origin: 50% 40px;
+  opacity: 0;
+  scale: .88;
+  filter: blur(3px);
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .2s ease, scale .26s cubic-bezier(.2, .8, .2, 1), filter .2s ease, visibility 0s linear .26s;
+}
+.themed-item.open .themed-pop {
+  opacity: 1;
+  scale: 1;
+  filter: none;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+/* (from the side columns it opens inward, so it stays on the screen) */
+.themed-item[data-col="0"] .themed-pop { left: -8px; translate: 0 0; transform-origin: 25% 40px; }
+.themed-item[data-col="2"] .themed-pop { left: auto; right: -8px; translate: 0 0; transform-origin: 75% 40px; }
+.themed-pop .themed-name { font-size: 1.3rem; }
+.themed-pop .themed-about { margin: 0; font-size: .78rem; line-height: 1.35; color: var(--muted); }
+/* Its places: just their names, a short column of gold small capitals. */
+.themed-pop .themed-places {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  margin: 0;
+  padding: 9px 0 2px;
+  border-top: 1px solid rgba(201, 169, 110, .15);
+}
+.themed-pop .themed-places li {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 400 .92rem / 1.15 "IM Fell English SC", var(--read);
+  letter-spacing: .03em;
+  color: var(--gold);
+}
+.themed-pop .themed-places li + li::before { content: "·"; display: block; margin: -3px 0 2px; color: rgba(201, 169, 110, .45); line-height: .6; }
+.themed-pop .pill.small { margin: 2px auto 0; }
+.themed-pop .link.small { margin: -4px auto 0; }
+@media (prefers-reduced-motion: reduce) { .themed-pop { transition: none; } }
