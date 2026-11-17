@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spread Button Options</title>
+<style>
+  :root { --bg:#15131c; --ink:#e9e2d3; --muted:#a79f8f; --gold:#c9a96e; --line:rgba(201,169,110,.2);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0d0c12; color:var(--ink); font-family:var(--serif); padding:20px 16px 48px; }
+  h1 { margin:0 0 4px; color:var(--gold); font-weight:normal; text-align:center; }
+  .intro { margin:0 auto 20px; color:var(--muted); text-align:center; font-size:.92rem; max-width:680px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 460px), 1fr)); gap:18px; max-width:1100px; margin:0 auto; }
+  .opt { background:#16131f; border:1px solid var(--line); border-radius:12px; padding:12px 12px 14px; }
+  .opt h2 { margin:0; color:var(--gold); font-weight:normal; font-size:1.1rem; }
+  .opt h2 span { color:var(--muted); font-size:.85rem; margin-right:6px; }
+  .opt p.desc { margin:2px 0 10px; color:var(--muted); font-size:.82rem; font-style:italic; min-height:2.4em; }
+  .stage { background:var(--bg); border-radius:8px; padding:18px 10px 14px; }
+  .demo { display:block; margin:10px auto 0; font:inherit; font-size:12.5px; color:var(--ink); background:#241f31;
+    border:1px solid var(--line); border-radius:7px; padding:5px 10px; cursor:pointer; }
+  .demo:hover { border-color:var(--gold); }
+
+  /* The spread buttons, as in the app (style.css, .spread-list and .spread-btn). */
+  .spread-list { display:flex; flex-wrap:wrap; justify-content:center; gap:7px; width:100%; max-width:26rem; margin:0 auto; }
+  .spread-btn { position:relative; width:calc((100% - 4 * 7px) / 5); display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:4px; padding:10px 2px 9px; container-type:inline-size; background:transparent;
+    border:1px solid rgba(201,169,110,.28); border-radius:10px; text-align:center; color:var(--ink); cursor:pointer;
+    font:inherit; transition:border-color .2s, background .2s, opacity .35s, transform .35s, filter .35s;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+  .spread-btn:active { border-color:rgba(201,169,110,.8); background:rgba(201,169,110,.08); }
+  @media (hover: hover) { .spread-btn:hover { border-color:rgba(201,169,110,.75); background:rgba(201,169,110,.05); } }
+  .fan-box { position:relative; width:min(76cqi, 54px); }
+  .spread-fan { display:block; width:100%; height:auto; overflow:visible; transition:opacity .25s, transform .25s; }
+  .spread-fan .lift { transform-box:fill-box; transform-origin:50% 100%; }
+  .spread-num { font-size:clamp(18px, 32cqi, 28px); line-height:1; letter-spacing:.04em; color:var(--gold); }
+  .spread-word { font-size:clamp(8.5px, 12cqi, 11px); letter-spacing:.18em; text-transform:uppercase; color:var(--muted); }
+
+  /* 1: light along the edge */
+  .edge { position:absolute; inset:-1px; width:calc(100% + 2px); height:calc(100% + 2px); pointer-events:none; overflow:visible;
+    filter:drop-shadow(0 0 3px rgba(255,200,110,.8)); transition:opacity .4s; }
+  .edge path { fill:none; stroke:rgba(255,230,180,.95); stroke-width:1; }
+  .edge circle { fill:#fff6e2; filter:drop-shadow(0 0 4px rgba(255,210,130,1)); }
+  /* 2: the spread's shape */
+  .shape { position:absolute; inset:0; display:grid; place-content:center; gap:2px; pointer-events:none; }
+  .shape i { display:block; border:1px dashed rgba(255,220,150,.9); border-radius:2px; opacity:0; transform:scale(.6);
+    box-shadow:0 0 4px rgba(255,200,110,.45); }
+  /* 3: the names line */
+  .names { min-height:1.4em; margin:12px 0 0; text-align:center; font-style:italic; color:var(--muted); font-size:.85rem; }
+  .names b { font-weight:normal; color:var(--gold); font-style:normal; letter-spacing:.06em; }
+  .names span { opacity:0; display:inline-block; }
+  /* 5: the numeral lit by a passing light */
+  .spread-num.shine { background:linear-gradient(100deg, #c9a96e 0 35%, #fff4dc 48%, #ffe2a8 54%, #e3c48a 66%, #e3c48a 100%);
+    background-size:300% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine .7s ease-out forwards; text-shadow:0 0 10px rgba(255,200,110,.25); }
+  @keyframes shine { from { background-position:100% 0; } to { background-position:0 0; } }
+  /* 6: the others step back */
+  .spread-list.chosen .spread-btn:not(.pick) { opacity:.3; transform:translateY(4px) scale(.96); filter:saturate(.5); }
+  .spread-btn.pick { border-color:rgba(255,220,150,.95); box-shadow:0 0 14px rgba(255,200,110,.35), inset 0 0 10px rgba(255,200,110,.12); }
+  .spread-btn.pick .spread-num { color:#ffe9bf; text-shadow:0 0 12px rgba(255,200,110,.9), 0 0 2px #fff; transition:color .2s, text-shadow .2s; }
+  /* 7: your usual */
+  .usual { position:absolute; left:50%; bottom:-1px; width:18px; height:1px; margin-left:-9px; background:rgba(255,220,150,.95);
+    box-shadow:0 0 6px rgba(255,200,110,.9); }
+  .usual::after { content:""; position:absolute; left:50%; top:-2px; width:5px; height:5px; margin-left:-2.5px; transform:rotate(45deg);
+    background:#ffe6b0; box-shadow:0 0 6px rgba(255,200,110,1); }
+  .usual-note { text-align:center; color:var(--muted); font-size:.75rem; font-style:italic; margin-top:8px; }
+
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<h1>Spread buttons: options</h1>
+<p class="intro">The row of spread numbers on the home screen, each idea on its own copy. Hover, tap or press and hold the buttons (on a phone, "Show me" plays it on III). I, the last, combines my picks.</p>
+<div class="grid" id="grid"></div>
+
+<script src="../spreads.js"></script>
+<script>
+const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// The little fan of card backs, as the app draws it (spreadFan in js/home.js),
+// with each card in a group of its own that can lift.
+function spreadFan(n) {
+  const W = 46, H = 30, w = 11, h = 18;
+  const spread = n === 1 ? 0 : Math.min(14, 5 + n * 3);
+  let cards = "";
+  for (let k = 0; k < n; k++) {
+    const a = n === 1 ? 0 : -spread + (2 * spread * k) / (n - 1);
+    const x = W / 2 + (k - (n - 1) / 2) * 3.2, y = H / 2 + 3 + Math.abs(a) * 0.12;
+    cards += `<g transform="translate(${x} ${y}) rotate(${a})"><g class="lift">`
+      + `<rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="1.6" fill="#19102d" stroke="#c9a96e" stroke-width=".9"/>`
+      + `<rect x="${-w / 2 + 1.8}" y="${-h / 2 + 1.8}" width="${w - 3.6}" height="${h - 3.6}" rx=".8" fill="none" stroke="#c9a96e" stroke-opacity=".45" stroke-width=".5"/>`
+      + `<circle r="${w * 0.17}" fill="none" stroke="#c9a96e" stroke-width=".6"/></g></g>`;
+  }
+  return `<svg class="spread-fan" viewBox="0 0 ${W} ${H}" aria-hidden="true">${cards}</svg>`;
+}
+function makeRow() {
+  const list = document.createElement("div");
+  list.className = "spread-list";
+  SPREADS.slice(0, 5).forEach((sp) => {
+    const n = sp.positions.length;
+    const b = document.createElement("button");
+    b.className = "spread-btn";
+    b.dataset.n = n;
+    b.innerHTML = `<span class="fan-box">${spreadFan(n)}</span><span class="spread-num">${ROMAN[n - 1]}</span><span class="spread-word">${n === 1 ? "card" : "cards"}</span>`;
+    list.append(b);
+  });
+  return list;
+}
+
+// ── The behaviours ──────────────────────────────────────
+// 1. Two mirrored lights run round the button's edge from the top to the
+// bottom, one each way; the edge they've passed stays lit.
+function edgeLight(btn) {
+  if (calm) return;
+  btn.querySelector(".edge")?.remove();
+  const w = btn.offsetWidth + 2, h = btn.offsetHeight + 2, r = 10.5;
+  const right = `M ${w / 2} 0.5 H ${w - r} A ${r} ${r} 0 0 1 ${w - 0.5} ${r} V ${h - r} A ${r} ${r} 0 0 1 ${w - r} ${h - 0.5} H ${w / 2}`;
+  const left = `M ${w / 2} 0.5 H ${r} A ${r} ${r} 0 0 0 0.5 ${r} V ${h - r} A ${r} ${r} 0 0 0 ${r} ${h - 0.5} H ${w / 2}`;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "edge");
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  svg.innerHTML = `<path d="${right}"/><path d="${left}"/><circle r="1.6"/><circle r="1.6"/>`;
+  btn.append(svg);
+  const paths = [...svg.querySelectorAll("path")], dots = [...svg.querySelectorAll("circle")];
+  const len = paths[0].getTotalLength();
+  paths.forEach((p) => { p.style.strokeDasharray = len; p.style.strokeDashoffset = len; });
+  const t0 = performance.now(), ms = 620;
+  const step = (now) => {
+    if (!svg.isConnected) return;
+    const u = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - u, 2);
+    paths.forEach((p, i) => {
+      p.style.strokeDashoffset = len * (1 - e);
+      const pt = p.getPointAtLength(len * e);
+      dots[i].setAttribute("cx", pt.x); dots[i].setAttribute("cy", pt.y);
+      dots[i].style.opacity = u < 1 ? 1 : 0;
+      p.style.strokeOpacity = u < 1 ? 1 : 0.6;
+    });
+    if (u < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+function edgeOff(btn) {
+  const svg = btn.querySelector(".edge");
+  if (!svg) return;
+  svg.style.opacity = 0;
+  setTimeout(() => svg.remove(), 400);
+}
+
+// 2. The fan gives way to the spread's places, as tiny dotted outlines laid
+// out the way the table will (slotGrid in js/table.js, on a phone).
+function shapeOn(btn) {
+  const n = +btn.dataset.n, box = btn.querySelector(".fan-box");
+  let shape = box.querySelector(".shape");
+  if (!shape) {
+    const cols = n <= 3 ? n : n === 4 ? 2 : Math.min(5, Math.ceil(n / 2)), rows = Math.ceil(n / cols);
+    shape = document.createElement("div");
+    shape.className = "shape";
+    const cw = Math.min(10, (box.offsetWidth - 4) / cols - 2), ch = Math.min(cw * 1.7, (box.offsetHeight + 6) / rows - 2);
+    shape.style.gridTemplateColumns = `repeat(${cols}, ${cw}px)`;
+    shape.style.gridAutoRows = `${ch}px`;
+    shape.style.justifyItems = "center";
+    for (let k = 0; k < n; k++) {
+      const i = document.createElement("i");
+      i.style.width = `${cw}px`; i.style.height = `${ch}px`;
+      if (n === 5 && k === 3) i.style.gridColumnStart = 1;   // (the table centres its last row; close enough)
+      shape.append(i);
+    }
+    box.append(shape);
+  }
+  box.querySelector(".spread-fan").style.opacity = 0;
+  [...shape.children].forEach((i, k) => i.animate([{ opacity: 0, transform: "scale(.6)" }, { opacity: 1, transform: "none" }],
+    { duration: 260, delay: 60 + k * 55, easing: "cubic-bezier(.2, .9, .3, 1.2)", fill: "forwards" }));
+}
+function shapeOff(btn) {
+  const box = btn.querySelector(".fan-box");
+  box.querySelector(".spread-fan").style.opacity = 1;
+  box.querySelector(".shape")?.remove();
+}
+
+// 3. The spread's name and its places, a word at a time.
+function namesOn(line, btn) {
+  const sp = SPREADS.find((s) => s.positions.length === +btn.dataset.n);
+  line.innerHTML = `<b>${sp.name}</b>` + sp.positions.map((p) => ` <span>· ${p.label}</span>`).join("");
+  [...line.querySelectorAll("span")].forEach((s, k) => s.animate([{ opacity: 0, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+    { duration: 300, delay: 80 + k * 70, easing: "ease-out", fill: "forwards" }));
+}
+
+// 4. Pressing: the fan's cards part and lift one by one towards the finger.
+// Letting go: they leap (a stand-in for the cast).
+function fanReady(btn) {
+  const lifts = [...btn.querySelectorAll(".lift")], n = lifts.length;
+  lifts.forEach((g, k) => g.animate([{ transform: "none" }, { transform: `translateY(${-2.5 - (n === 1 ? 1 : 0)}px) rotate(${(k - (n - 1) / 2) * 4}deg)` }],
+    { duration: 220, delay: k * 45, easing: "cubic-bezier(.2, .9, .3, 1.3)", fill: "forwards" }));
+}
+function fanLeap(btn) {
+  const lifts = [...btn.querySelectorAll(".lift")], n = lifts.length;
+  lifts.forEach((g, k) => {
+    g.getAnimations().forEach((a) => a.cancel());
+    g.animate([{ transform: `translateY(-2.5px) rotate(${(k - (n - 1) / 2) * 4}deg)`, opacity: 1 },
+      { transform: `translate(${(k - (n - 1) / 2) * 10}px, -34px) rotate(${(k - (n - 1) / 2) * 10}deg) scale(1.5)`, opacity: 0 }],
+      { duration: 380, delay: k * 30, easing: "cubic-bezier(.3, .7, .3, 1)" });
+  });
+}
+function fanRest(btn) { btn.querySelectorAll(".lift").forEach((g) => g.getAnimations().forEach((a) => a.cancel())); }
+
+// 5. A light passes through the numeral, leaving it a touch brighter.
+function numeralShine(btn) {
+  const num = btn.querySelector(".spread-num");
+  num.classList.remove("shine"); void num.offsetWidth; num.classList.add("shine");
+}
+function numeralRest(btn) { btn.querySelector(".spread-num").classList.remove("shine"); }
+
+// 6. Chosen: the others dim and sink back, the chosen numeral flares.
+async function choose(list, btn) {
+  list.classList.add("chosen");
+  btn.classList.add("pick");
+  await wait(1500);
+  list.classList.remove("chosen");
+  btn.classList.remove("pick");
+}
+
+// 8. A glint along the row: a faint light passes from I to V.
+function glintRow(list) {
+  if (calm) return;
+  [...list.children].forEach((b, k) => {
+    b.querySelector(".spread-num").animate([{ textShadow: "0 0 0 rgba(255,200,110,0)", color: "#c9a96e" },
+      { textShadow: "0 0 12px rgba(255,200,110,.9)", color: "#fff0d0", offset: 0.35 }, { textShadow: "0 0 0 rgba(255,200,110,0)", color: "#c9a96e" }],
+      { duration: 900, delay: k * 110, easing: "ease-out" });
+    b.querySelector(".spread-fan").animate([{ filter: "brightness(1)" }, { filter: "brightness(1.8) drop-shadow(0 0 3px rgba(255,200,110,.8))", offset: 0.35 }, { filter: "brightness(1)" }],
+      { duration: 900, delay: k * 110 + 40, easing: "ease-out" });
+  });
+}
+
+// ── The options ─────────────────────────────────────────
+// Each wires up its own row: hover (and keyboard focus), press, tap.
+const third = (list) => list.children[2];
+const OPTIONS = [
+  { name: "Light runs round the edge", desc: "On hover or focus, two mirrored lights run round the button's border from the top, meeting at the bottom; the edge stays faintly lit.",
+    wire(list) { hoverEach(list, edgeLight, edgeOff); }, demo(list) { flash(third(list), edgeLight, edgeOff); } },
+  { name: "The spread's shape", desc: "On hover (a long press on a phone), the fan gives way to the spread's places as tiny dotted outlines, laid out as on the table.",
+    wire(list) { hoverEach(list, shapeOn, shapeOff); holdEach(list, shapeOn, shapeOff); }, demo(list) { flash(third(list), shapeOn, shapeOff); } },
+  { name: "The places, named", desc: "A quiet line under the row: the spread and its places. (Until a theme is laid over it on the table, the places are only numbered.)",
+    wire(list, stage) {
+      const line = document.createElement("p"); line.className = "names"; stage.append(line);
+      hoverEach(list, (b) => namesOn(line, b), () => { line.textContent = ""; });
+    }, demo(list, stage) { const line = stage.querySelector(".names"); namesOn(line, third(list)); setTimeout(() => { line.textContent = ""; }, 1800); } },
+  { name: "The fan gets ready", desc: "Press and hold: the little cards part and lift one by one towards your finger. Let go: they leap. The tap and the cast as one movement.",
+    wire(list) {
+      [...list.children].forEach((b) => {
+        b.addEventListener("pointerdown", () => fanReady(b));
+        b.addEventListener("pointerup", () => { fanLeap(b); setTimeout(() => fanRest(b), 700); });
+        b.addEventListener("pointerleave", () => fanRest(b));
+      });
+    }, async demo(list) { const b = third(list); fanReady(b); await wait(600); fanLeap(b); await wait(700); fanRest(b); } },
+  { name: "The numeral lit by a light", desc: "On hover, a light passes through the Roman numeral; the strokes it has passed stay a touch brighter.",
+    wire(list) { hoverEach(list, numeralShine, numeralRest); }, demo(list) { flash(third(list), numeralShine, numeralRest); } },
+  { name: "The others step back", desc: "Tap one: the rest dim and sink a little while the chosen numeral flares, a moment alone before its cards leap.",
+    wire(list) { [...list.children].forEach((b) => b.addEventListener("click", () => choose(list, b))); }, demo(list) { choose(list, third(list)); } },
+  { name: "Your usual spread", desc: "A small gold mark under the spread you use most (from your history), to find your habit at a glance.",
+    wire(list, stage) {
+      const b = third(list), m = document.createElement("span");
+      m.className = "usual"; m.title = "Your usual"; b.append(m);
+      const note = document.createElement("div"); note.className = "usual-note"; note.textContent = "Here, III is the usual one."; stage.append(note);
+    }, demo(list) { third(list).querySelector(".usual").animate([{ opacity: 0.2 }, { opacity: 1 }], { duration: 500, iterations: 2 }); } },
+  { name: "A glint along the row", desc: "Every so often (here every 4s; in the app, 8–10s and only on the home screen), a faint light passes from I to V and each numeral glints.",
+    wire(list) { setInterval(() => glintRow(list), 4000); setTimeout(() => glintRow(list), 600); }, demo(list) { glintRow(list); } },
+  { name: "My picks together: edge light, shape, step back, fan ready", desc: "Hover: the edge lights and the shape shows. Press: the fan readies. Let go: the others step back and the fan leaps.",
+    wire(list) {
+      hoverEach(list, (b) => { edgeLight(b); shapeOn(b); }, (b) => { edgeOff(b); shapeOff(b); });
+      [...list.children].forEach((b) => {
+        b.addEventListener("pointerdown", () => { shapeOff(b); fanReady(b); });
+        b.addEventListener("pointerup", () => { fanLeap(b); choose(list, b); setTimeout(() => fanRest(b), 700); });
+        b.addEventListener("pointerleave", () => fanRest(b));
+      });
+    },
+    async demo(list) { const b = third(list); edgeLight(b); shapeOn(b); await wait(1100); shapeOff(b); fanReady(b); await wait(500); fanLeap(b); choose(list, b); await wait(700); fanRest(b); edgeOff(b); } },
+];
+
+// Hover and keyboard focus (not touch: a phone has no hover).
+function hoverEach(list, on, off) {
+  [...list.children].forEach((b) => {
+    b.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") on(b); });
+    b.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") off(b); });
+    b.addEventListener("focus", () => on(b));
+    b.addEventListener("blur", () => off(b));
+  });
+}
+// A long press on a touch screen.
+function holdEach(list, on, off) {
+  [...list.children].forEach((b) => {
+    let timer = 0;
+    b.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") timer = setTimeout(() => on(b), 350); });
+    const end = () => { clearTimeout(timer); off(b); };
+    b.addEventListener("pointerup", (e) => { if (e.pointerType !== "mouse") end(); });
+    b.addEventListener("pointercancel", end);
+  });
+}
+async function flash(b, on, off) { on(b); await wait(1600); off(b); }
+
+const grid = document.getElementById("grid");
+OPTIONS.forEach((opt, i) => {
+  const d = document.createElement("div");
+  d.className = "opt";
+  d.innerHTML = `<h2><span>${String.fromCharCode(65 + i)}</span>${opt.name}</h2><p class="desc">${opt.desc}</p><div class="stage"></div>`;
+  const stage = d.querySelector(".stage"), list = makeRow();
+  stage.append(list);
+  grid.append(d);
+  opt.wire(list, stage);
+  const demo = document.createElement("button");
+  demo.className = "demo";
+  demo.textContent = "Show me";
+  demo.onclick = () => opt.demo(list, stage);
+  d.append(demo);
+});
+</script>
+</body>
+</html>

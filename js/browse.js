@@ -14,7 +14,12 @@ function suitOf(card) {
 SUITS.forEach((s) => {
   const c = el("button", "chip", s === "Major Arcana" ? "Major" : s);
   c.dataset.suit = s;
-  c.addEventListener("click", () => { B.suit = s; renderBrowse(); });
+  c.addEventListener("click", () => {
+    if (B.suit === s) return;
+    B.suit = s;
+    renderBrowse();
+    riseIn($("grid").children);
+  });
   $("suitChips").append(c);
 });
 
@@ -51,19 +56,23 @@ function browseText(card) {
 $("browseSearch").addEventListener("input", () => {
   $("browseSearchClear").hidden = !$("browseSearch").value;
   renderBrowse();
+  // Typing redraws often: the grid just brightens, rather than each card rising in.
+  if (!calm) $("grid").animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 180, easing: "ease-out" });
 });
 $("browseSearchClear").addEventListener("click", () => {
   $("browseSearch").value = "";
   $("browseSearchClear").hidden = true;
   renderBrowse();
+  riseIn($("grid").children);
   $("browseSearch").focus();
 });
 
-function openBrowse() {
+function openBrowse(from = null) {
   const browse = $("browse");
   renderBrowse();
   if (browse.hidden) {
-    slideIn(browse);
+    if (from) bloomFromButton(browse, from, $("grid").children);
+    else slideIn(browse);
   } else {
     // Already open: close the windows on top of it and show the new list.
     const z = +browse.style.zIndex;
@@ -78,7 +87,7 @@ $("browseBtn").addEventListener("click", () => {
   B.suit = "All";
   $("browseSearch").value = "";
   $("browseSearchClear").hidden = true;
-  openBrowse();
+  openBrowse($("browseBtn"));
 });
 
 // ── Themes ──────────────────────────────────────────────
@@ -345,8 +354,4 @@ $("themeBtn").addEventListener("click", () => {
 });
 $("themeNone").addEventListener("click", () => closeThemed().then(() => applyTheme(null, true)));
 $("themedBack").addEventListener("click", () => (themedTopic ? showTopic(null) : closeThemed()));
-$("browseBack").addEventListener("click", async () => {
-  const browse = $("browse");
-  await slideOut(browse);
-  browse.hidden = true;
-});
+$("browseBack").addEventListener("click", () => closeSheetInto($("browse"), $("browseBtn")));

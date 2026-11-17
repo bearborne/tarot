@@ -361,14 +361,11 @@ $("skyBtn").addEventListener("click", () => {
   SKY.at = null;
   SKY.shown = {};
   renderSky(true);
-  slideIn($("skySheet"));
+  bloomFromButton($("skySheet"), $("skyBtn"));
   fitSkyToWheel();   // now it's showing and can be measured
   skyField.size();
   skyField.start();
 });
-$("skyBack").addEventListener("click", async () => {
-  await slideOut($("skySheet"));
-  $("skySheet").hidden = true;
-});
+$("skyBack").addEventListener("click", () => closeSheetInto($("skySheet"), $("skyBtn")));
 addEventListener("resize", () => { if (skySheetShown()) { skyField.size(); if (calm) skyField.draw(0); } });
 document.addEventListener("visibilitychange", () => skyField.start());

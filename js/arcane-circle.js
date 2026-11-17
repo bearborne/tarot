@@ -194,16 +194,13 @@ const ARC_PARTS = [
 // The elements the picks and turns share out; the final ones come with the last card turned.
 const STEPPED = ARC_PARTS.filter((e) => !e.final);
 
-function buildSigils(R1, dpr) {
-  const R2 = Math.round(R1 * 1.34 + 12), R3 = R2 + 44;   // R3: where the crown runs
-  // Big pictures are drawn at a lower resolution: the light is soft anyway.
-  const scale = Math.min(dpr, 2000 / (2 * (R3 + 60)));
+// The inner sigil's elements, each drawn into its own picture by part(key,
+// R, r) (R: how far the picture must reach; r: where its sparks twinkle):
+// the innermost circle, the small ring of runes round it, the six-pointed
+// star, the main ring's lines and its band of runes, and three satellite
+// circles riding the rim. Part of the great circle (see buildSigils).
+function drawInnerSigil(R1, part) {
   const TAU = Math.PI * 2, top = -Math.PI / 2, Rm = R1 * 0.56;
-  // Each element is its own picture (just big enough for it), with its own
-  // bloom, and `radius` is where sparks twinkle as it materialises.
-  const parts = {}, radius = {};
-  const part = (key, R, r) => { const s = sigilCanvas(R, scale); parts[key] = s; radius[key] = r; return s; };
-
   // The innermost circle.
   lightStroke(part("core", R1 * 0.3 + 4, R1 * 0.3), circlePath(circlePath(new Path2D(), R1 * 0.3), R1 * 0.3 - 5), 0.45, 0.7);
   // The small ring of runes round it.
@@ -241,6 +238,20 @@ function buildSigils(R1, dpr) {
   }
   lightStroke(sats, sat, 0.6, 0.8);
   lightStroke(sats, satRunes, 0.7, 0.8);
+
+}
+
+function buildSigils(R1, dpr) {
+  const R2 = Math.round(R1 * 1.34 + 12), R3 = R2 + 44;   // R3: where the crown runs
+  // Big pictures are drawn at a lower resolution: the light is soft anyway.
+  const scale = Math.min(dpr, 2000 / (2 * (R3 + 60)));
+  const TAU = Math.PI * 2, top = -Math.PI / 2, Rm = R1 * 0.56;
+  // Each element is its own picture (just big enough for it), with its own
+  // bloom, and `radius` is where sparks twinkle as it materialises.
+  const parts = {}, radius = {};
+  const part = (key, R, r) => { const s = sigilCanvas(R, scale); parts[key] = s; radius[key] = r; return s; };
+
+  drawInnerSigil(R1, part);
 
   // The outer ring's lines.
   const oring = part("oring", R2 + 4, R2);

@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Small Ring Options</title>
+<style>
+  :root { --ink:#e9e2d3; --muted:#a79f8f; --gold:#c9a96e; --line:rgba(201,169,110,.2);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0d0c12; color:var(--ink); font-family:var(--serif); padding:20px 16px 48px; }
+  h1 { margin:0 0 4px; color:var(--gold); font-weight:normal; text-align:center; }
+  .intro { margin:0 auto 14px; color:var(--muted); text-align:center; font-size:.92rem; max-width:720px; }
+  .bar { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:0 auto 18px; }
+  button { font:inherit; font-size:13px; color:var(--ink); background:#241f31; border:1px solid var(--line); border-radius:7px; padding:6px 10px; cursor:pointer; }
+  button:hover { border-color:var(--gold); }
+  button.on { background:#4b3670; border-color:var(--gold); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 540px), 1fr)); gap:18px; max-width:1140px; margin:0 auto; }
+  .opt { background:#16131f; border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .opt h2 { margin:0; color:var(--gold); font-weight:normal; font-size:1.1rem; }
+  .opt h2 span { color:var(--muted); font-size:.85rem; margin-right:6px; }
+  .opt p { margin:2px 0 8px; color:var(--muted); font-size:.82rem; font-style:italic; min-height:2.4em; }
+  canvas { width:100%; aspect-ratio:520 / 250; display:block; border-radius:8px; background:#0c0b11; }
+</style>
+</head>
+<body>
+<h1>Small rings: options</h1>
+<p class="intro">The ring that snaps round a tapped card or button. G is the one now in the app. Each option plays on a loop at three sizes: round a button, round a card, and large (the Summary's return). All but A are drawn live at their real size every frame, so their lines stay the same thinness at any size.</p>
+<div class="bar" id="speeds">
+  <button data-s="1" class="on">×1</button><button data-s="0.5">×½</button><button data-s="0.25">×¼</button>
+  <button id="pause">Pause</button>
+</div>
+<div class="grid" id="grid"></div>
+
+<!-- The app's runes and the table's sigil (for A, and the rune shapes for all). -->
+<script>let S = null; const calm = false;</script>
+<script src="../js/table-magic.js"></script>
+<script src="../js/arcane-circle.js"></script>
+<script src="../js/rune-ring.js"></script>
+<script>
+const TAU = Math.PI * 2, TOP = -Math.PI / 2;
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const seg = (v, a, b) => clamp((v - a) / (b - a));
+const ease3 = (p) => 1 - Math.pow(1 - p, 3);
+const LOOP = 2800;   // one play: draw in, flare, rest, fade
+
+// ── Drawing helpers ─────────────────────────────────────
+// A line of light: a thin bright core with one soft glow.
+function light(ctx, path, a, w = 1, blur = 6) {
+  if (a <= 0.01) return;
+  ctx.save();
+  ctx.shadowColor = `rgba(255, 190, 110, ${0.75 * a})`;
+  ctx.shadowBlur = blur;
+  ctx.strokeStyle = `rgba(255, 236, 200, ${a})`;
+  ctx.lineWidth = w;
+  ctx.stroke(path);
+  ctx.restore();
+}
+// An engraved line: no glow, muted gold.
+function engraved(ctx, path, a, w = 0.8) {
+  if (a <= 0.01) return;
+  ctx.save();
+  ctx.strokeStyle = `rgba(214, 182, 122, ${a})`;
+  ctx.lineWidth = w;
+  ctx.stroke(path);
+  ctx.restore();
+}
+// (span may be negative: drawn the other way round)
+const arc = (r, from, span) => { const p = new Path2D(); if (Math.abs(span) > 0.0001) p.arc(0, 0, r, from, from + span, span < 0); return p; };
+const ring = (r) => { const p = new Path2D(); p.arc(0, 0, r, 0, TAU); return p; };
+function runePath(k, x, y, size, ang) { const p = new Path2D(); addRune(p, k % RUNES.length, x, y, size, ang); return p; }
+function spark(ctx, x, y, r, a) {
+  if (a <= 0.01) return;
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, `rgba(255, 249, 232, ${a})`);
+  g.addColorStop(0.3, `rgba(255, 220, 160, ${0.6 * a})`);
+  g.addColorStop(1, "rgba(255, 180, 90, 0)");
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+}
+// A slim ring of runes, traced in from the top, its runes lighting one by
+// one as the trace passes. d: how far the trace has gone (0 to 1).
+// Detail by size: under 56px one line and a few runes; above, a second line.
+function slimRing(ctx, R, d, a, flare, style = light) {
+  const big = R >= 56;
+  const n = clamp(Math.round((TAU * R) / (big ? 22 : 18)), 8, 26);
+  const rr = big ? R - 8.5 : R - 7, size = big ? 9 : 7;
+  const blur = 5 + 9 * flare;
+  style(ctx, arc(R, TOP, TAU * d), a * (0.8 + 0.2 * flare), 1, blur);
+  if (big) style(ctx, arc(R - 17, TOP, -TAU * seg(d, 0.25, 1)), a * 0.45, 0.8, blur * 0.6);
+  for (let k = 0; k < n; k++) {
+    const f = k / n, lit = clamp((d - f) * n * 1.2);
+    const ang = TOP + f * TAU;
+    style(ctx, runePath(k * 7, Math.cos(ang) * rr, Math.sin(ang) * rr, size, ang + Math.PI / 2), a * lit * (0.75 + 0.35 * flare), 0.9, blur * 0.7);
+  }
+  if (d > 0 && d < 1) { const h = TOP + TAU * d; spark(ctx, Math.cos(h) * R, Math.sin(h) * R, 6, a); }
+}
+// A star of two triangles, drawn in along its lines (s: 0 to 1).
+function star(ctx, r, s, a, blur) {
+  if (s <= 0) return;
+  const p = new Path2D();
+  for (let t = 0; t < 2; t++) {
+    for (let k = 0; k <= 3; k++) {
+      const ang = TOP + t * Math.PI + (k / 3) * TAU;
+      k ? p.lineTo(Math.cos(ang) * r, Math.sin(ang) * r) : p.moveTo(Math.cos(ang) * r, Math.sin(ang) * r);
+    }
+  }
+  const len = 6 * Math.sqrt(3) * r;
+  ctx.save();
+  ctx.setLineDash([len * s, len]);
+  light(ctx, p, a, 0.8, blur);
+  ctx.restore();
+}
+
+// ── The options ─────────────────────────────────────────
+// draw(ctx, R, ph, obj): centred on the thing, at radius R; ph has
+// d (trace, 0–1), flare (0–1–0), a (fading out), rot (slow drift).
+const OPTIONS = [
+  { name: "Before: the table's sigil, scaled", desc: "What the app had: the great circle's inner sigil as a picture, scaled to size.",
+    current: true,
+    draw(ctx, R, ph) {
+      const sig = sigilsFor(Math.round(R)).inner, pop = ease3(seg(ph.d, 0, 0.25));
+      ctx.globalAlpha = ph.a * pop;
+      ctx.rotate(ph.rot * 6);
+      ctx.drawImage(sig.bloom, -sig.size / 2, -sig.size / 2, sig.size, sig.size);
+      ctx.drawImage(sig.c, -sig.size / 2, -sig.size / 2, sig.size, sig.size);
+      ctx.globalAlpha = 1;
+    } },
+  { name: "Slim ring that draws itself in", desc: "One thin line of light traces round; runes light one by one behind it. A second line only when there's room.",
+    draw(ctx, R, ph) { ctx.rotate(ph.rot); slimRing(ctx, R, ph.d, ph.a, ph.flare); } },
+  { name: "Slim ring with a star", desc: "As B, and once round, a faint six-pointed star draws itself inside (only on the larger rings).",
+    draw(ctx, R, ph) {
+      ctx.rotate(ph.rot);
+      slimRing(ctx, R, ph.d, ph.a, ph.flare);
+      if (R >= 56) star(ctx, R - 22, seg(ph.d, 0.55, 1), ph.a * 0.4, 4 + 6 * ph.flare);
+    } },
+  { name: "Engraved, with a passing light", desc: "No glow: fine muted lines, as if cut in metal. A single bead of light runs round and the runes brighten as it passes.",
+    draw(ctx, R, ph) {
+      ctx.rotate(ph.rot);
+      const big = R >= 56, n = clamp(Math.round((TAU * R) / (big ? 22 : 18)), 8, 26);
+      const rr = big ? R - 8.5 : R - 7, size = big ? 9 : 7;
+      const show = ease3(seg(ph.d, 0, 0.4)) * ph.a;
+      engraved(ctx, ring(R), 0.6 * show, 0.8);
+      if (big) engraved(ctx, ring(R - 17), 0.35 * show, 0.7);
+      const head = TOP + TAU * ease3(ph.d) + ph.t * 0.0012;   // the light, still drifting on after
+      for (let k = 0; k < n; k++) {
+        const ang = TOP + (k / n) * TAU;
+        let gap = ((head - ang) % TAU + TAU) % TAU;   // how far behind the light this rune is
+        const glow = Math.exp(-gap * 2.2) * (0.6 + 0.4 * ph.flare);
+        const p = runePath(k * 7, Math.cos(ang) * rr, Math.sin(ang) * rr, size, ang + Math.PI / 2);
+        engraved(ctx, p, 0.5 * show, 0.8);
+        light(ctx, p, glow * show, 0.9, 6);
+      }
+      for (let j = 0; j < 10; j++) {   // the bead and its fading tail
+        const b = head - j * 0.05;
+        spark(ctx, Math.cos(b) * R, Math.sin(b) * R, 5 - j * 0.35, show * (1 - j / 10) * 0.9);
+      }
+    } },
+  { name: "Crown of beads", desc: "From the table's outermost ring: no solid line, a string of beads swelling into small rune medallions, appearing round in order.",
+    draw(ctx, R, ph) {
+      ctx.rotate(ph.rot);
+      const M = R < 56 ? 4 : 6, medR = clamp(R * 0.13, 5, 11);
+      for (let k = 0; k < M; k++) {
+        const a0 = TOP + (k / M) * TAU, span = TAU / M;
+        const on = clamp((ph.d - k / M) * M * 1.4) * ph.a;
+        const x = Math.cos(a0) * R, y = Math.sin(a0) * R;
+        const med = new Path2D(); med.arc(x, y, medR, 0, TAU); med.moveTo(x + medR - 3, y); med.arc(x, y, medR - 3, 0, TAU);
+        light(ctx, med, on * 0.85, 0.8, 4 + 8 * ph.flare);
+        light(ctx, runePath([SEAL, 10, 14, 8][k % 4], x, y, medR * 1.15, a0 + Math.PI / 2), on, 0.8, 4 + 8 * ph.flare);
+        const clear = (medR + 4) / R, nb = Math.max(4, Math.round(((span - 2 * clear) * R) / 8));
+        for (let j = 0; j < nb; j++) {
+          const u = (j + 0.5) / nb, b = a0 + clear + u * (span - 2 * clear);
+          const r = 0.6 + 1.3 * Math.abs(u - 0.5) * 2;
+          const bon = clamp((ph.d - (k + u) / M) * M * 2) * ph.a;
+          spark(ctx, Math.cos(b) * R, Math.sin(b) * R, r * 2.4, bon * 0.85);
+        }
+      }
+    } },
+  { name: "Frame the card, then the ring", desc: "Light first traces round the edge of the thing tapped, then a slim ring draws out round it from the top. The ring frames it rather than covering it.",
+    draw(ctx, R, ph, obj) {
+      if (obj) {
+        const { w, h, rad } = obj, d1 = ease3(seg(ph.d, 0, 0.5));
+        const p = new Path2D(); p.roundRect(-w / 2 - 3, -h / 2 - 3, w + 6, h + 6, rad + 3);
+        const len = 2 * (w + h + 12);
+        ctx.save(); ctx.setLineDash([len * d1, len]); ctx.lineDashOffset = -len * 0.25;
+        light(ctx, p, ph.a * (0.9 - 0.5 * seg(ph.d, 0.6, 1)), 1, 6 + 8 * ph.flare);
+        ctx.restore();
+      }
+      ctx.rotate(ph.rot);
+      slimRing(ctx, R, obj ? seg(ph.d, 0.4, 1) : ph.d, ph.a, ph.flare);
+    } },
+  { name: "D, with two mirrored lights (in the app)", desc: "Engraved; two lines of light run round from the top in mirror image, one each way. Every rune passed grows brighter and stays so. Drawn by the app's own js/rune-ring.js.",
+    draw(ctx, R, ph) {
+      const art = (this.arts ||= new Map()).get(R) || this.arts.set(R, ringArt(R)).get(R);
+      ctx.globalAlpha = ph.a;
+      art.draw(ctx, ph.t);
+      ctx.globalAlpha = 1;
+    } },
+];
+
+// ── The scenes: round a button, round a card, and large ──
+const W = 520, H = 250;
+const cardPic = new Image();
+cardPic.src = "../cards/the-magician.jpg";
+const SCENES = [
+  { x: 78, label: "Button", obj: { w: 66, h: 24, rad: 12, kind: "pill" } },
+  { x: 228, label: "Card", obj: { w: 58, h: 100, rad: 5, kind: "card" } },
+  { x: 404, label: "Large", obj: null, R: 100 },
+];
+function drawObj(ctx, o) {
+  if (o.kind === "card") {
+    ctx.save();
+    const p = new Path2D(); p.roundRect(-o.w / 2, -o.h / 2, o.w, o.h, o.rad);
+    ctx.clip(p);
+    if (cardPic.complete && cardPic.naturalWidth) ctx.drawImage(cardPic, -o.w / 2, -o.h / 2, o.w, o.h);
+    else { ctx.fillStyle = "#2a2140"; ctx.fill(p); }
+    ctx.restore();
+  } else {
+    const p = new Path2D(); p.roundRect(-o.w / 2, -o.h / 2, o.w, o.h, o.rad);
+    ctx.strokeStyle = "rgba(201, 169, 110, .5)"; ctx.lineWidth = 1; ctx.stroke(p);
+    ctx.fillStyle = "#e9e2d3"; ctx.font = "11px Georgia, serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("Browse", 0, 1);
+  }
+}
+// The ring's radius for a thing: the current app sits inside it (0.6 of
+// its half-diagonal plus 6); the others frame it, just clear of its corners.
+function radiusFor(scene, opt) {
+  if (!scene.obj) return scene.R;
+  const half = Math.hypot(scene.obj.w, scene.obj.h) / 2;
+  return opt.current ? (half + 6) * 0.6 : half + 9;
+}
+
+const grid = document.getElementById("grid");
+const tiles = OPTIONS.map((opt, i) => {
+  const d = document.createElement("div");
+  d.className = "opt";
+  d.innerHTML = `<h2><span>${String.fromCharCode(65 + i)}</span>${opt.name}</h2><p>${opt.desc}</p><canvas></canvas>`;
+  grid.append(d);
+  const cv = d.querySelector("canvas");
+  return { opt, cv, ctx: cv.getContext("2d") };
+});
+function size() {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  tiles.forEach(({ cv, ctx }) => { cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); });
+}
+size();
+addEventListener("resize", size);
+
+let speed = 1, paused = false, clock = 0, last = performance.now();
+function frame(now) {
+  const dt = now - last; last = now;
+  if (!paused) clock += dt * speed;
+  const t = clock % LOOP;
+  const ph = {
+    t,
+    d: ease3(seg(t, 0, 650)),
+    flare: Math.sin(Math.PI * seg(t, 550, 1050)),
+    a: 1 - seg(t, 2300, 2800),
+    rot: t * 0.00012,
+  };
+  tiles.forEach(({ opt, ctx }) => {
+    ctx.clearRect(0, 0, W, H);
+    SCENES.forEach((sc) => {
+      const R = radiusFor(sc, opt);
+      ctx.save();
+      ctx.translate(sc.x, 118);
+      if (sc.obj) drawObj(ctx, sc.obj);
+      ctx.save(); opt.draw(ctx, R, ph, sc.obj); ctx.restore();
+      ctx.restore();
+      ctx.fillStyle = "#a79f8f"; ctx.font = "10px Georgia, serif"; ctx.textAlign = "center";
+      ctx.fillText(sc.label.toUpperCase(), sc.x, H - 8);
+    });
+  });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+document.getElementById("speeds").onclick = (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.id === "pause") { paused = !paused; b.textContent = paused ? "Play" : "Pause"; b.classList.toggle("on", paused); return; }
+  speed = +b.dataset.s;
+  document.querySelectorAll("#speeds [data-s]").forEach((x) => x.classList.toggle("on", x === b));
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Opening Lab</title>
+<style>
+  :root { --bg:#0c0b11; --panel:#16131f; --ink:#e9e2d3; --muted:#a79f8f; --gold:#c9a96e; --line:rgba(201,169,110,.18);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--serif); font-size:14px; }
+  .app { display:grid; grid-template-columns:1fr 380px; height:100vh; }
+  .stage { position:relative; overflow:hidden; background:radial-gradient(ellipse at 50% 30%, #1a1527 0%, #0c0b11 70%); }
+  .hud { position:absolute; left:12px; top:10px; color:var(--muted); font-size:12px; line-height:1.5; pointer-events:none; z-index:50; }
+  .hud b { color:var(--gold); font-weight:normal; font-size:15px; }
+  .panel { background:var(--panel); border-left:1px solid var(--line); overflow-y:auto; padding:12px 14px 40px; }
+  h1 { margin:0 0 2px; font-weight:normal; color:var(--gold); font-size:20px; }
+  .sub { margin:0 0 10px; color:var(--muted); font-size:12px; font-style:italic; }
+  details { border-top:1px solid var(--line); padding:8px 0; }
+  summary { cursor:pointer; color:var(--gold); font-size:15px; list-style:none; user-select:none; }
+  summary::before { content:"▸ "; color:var(--muted); }
+  details[open] > summary::before { content:"▾ "; }
+  .row { display:grid; grid-template-columns:118px 1fr 52px; gap:8px; align-items:center; margin:7px 0; }
+  .row label { color:var(--muted); font-size:12.5px; }
+  .row output { text-align:right; font-variant-numeric:tabular-nums; font-size:12px; }
+  input[type=range] { width:100%; accent-color:var(--gold); }
+  select { width:100%; font:inherit; font-size:12.5px; color:var(--ink); background:#241f31; border:1px solid var(--line); border-radius:7px; padding:4px 6px; }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
+  button { font:inherit; font-size:13px; color:var(--ink); background:#241f31; border:1px solid var(--line); border-radius:7px; padding:6px 10px; cursor:pointer; }
+  button:hover { border-color:var(--gold); }
+  button.main { background:#3a2a56; border-color:#7d5bbf; }
+  button.on { background:#4b3670; border-color:var(--gold); }
+  .chk { display:flex; gap:6px; align-items:center; color:var(--muted); font-size:12.5px; margin:6px 0; }
+  textarea { width:100%; height:180px; background:#0f0d16; color:var(--ink); border:1px solid var(--line); border-radius:6px; font:11.5px/1.4 Consolas, monospace; padding:8px; }
+
+  /* The scene the page opens from: a card and a home-screen button. */
+  .scene { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px; }
+  .card { width:120px; aspect-ratio:4 / 7; border-radius:7px; background:#19102d url("../cards/the-magician.jpg") center / cover; box-shadow:0 3px 10px rgba(0,0,0,.45); cursor:pointer; }
+  .pill { font:inherit; font-size:15px; color:var(--ink); background:transparent; border:1px solid rgba(201,169,110,.45); border-radius:999px; padding:10px 20px; cursor:pointer; }
+  .hint { color:var(--muted); font-size:12px; font-style:italic; }
+
+  /* The page that opens: a mock card page. */
+  .page { position:absolute; inset:0; z-index:10; background:#110f18; overflow:hidden; padding:14px 18px; }
+  .page[hidden] { display:none; }
+  .bar { display:flex; justify-content:space-between; align-items:center; color:var(--gold); border-bottom:1px solid var(--line); padding-bottom:10px; }
+  .bar button { background:none; border:0; color:var(--gold); padding:0; font-size:15px; }
+  .page .body { display:flex; gap:22px; padding-top:18px; flex-wrap:wrap; justify-content:center; }
+  .page .big { width:160px; aspect-ratio:4 / 7; border-radius:8px; background:#19102d url("../cards/the-magician.jpg") center / cover; box-shadow:0 4px 14px rgba(0,0,0,.5); }
+  .page .txt { flex:1 1 220px; max-width:360px; }
+  .page h2 { margin:0 0 8px; color:var(--gold); font-weight:normal; }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .chips span { border:1px solid var(--line); border-radius:999px; padding:3px 10px; font-size:12px; color:var(--muted); }
+  .line { height:9px; border-radius:5px; background:rgba(233,226,211,.09); margin:9px 0; }
+
+  /* The ring of runes, as in the app: drawn live by the app's own js/rune-ring.js. */
+  .rune-ring { position:absolute; pointer-events:none; z-index:20; will-change:transform, opacity; }
+  .rune-ring canvas { position:absolute; inset:0; width:100%; height:100%; }
+  .rune-edge { position:absolute; z-index:20; box-sizing:border-box; border-radius:50%; border:1px solid rgba(255,222,160,.9);
+    box-shadow:0 0 12px 2px rgba(255,200,110,.45), inset 0 0 12px 2px rgba(255,200,110,.22); transform:translate(-50%,-50%); pointer-events:none; }
+  .rune-edge::after { content:""; position:absolute; inset:5px; border-radius:50%; border:1px dashed rgba(255,214,140,.35); }
+  .mote { position:absolute; z-index:21; width:5px; height:5px; margin:-2.5px; border-radius:50%; background:#fff1c4;
+    box-shadow:0 0 6px 2px rgba(255,210,120,.8); pointer-events:none; }
+
+  @media (max-width: 800px) {
+    .app { grid-template-columns:1fr; grid-template-rows:60vh auto; height:auto; }
+    .stage { height:60vh; position:sticky; top:0; z-index:1; }
+    .panel { border-left:0; border-top:1px solid var(--line); padding:12px 16px 40px; }
+    .row { grid-template-columns:100px 1fr 48px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage" id="stage">
+    <div class="hud"><b id="hudSpeed">×1</b> speed<br><span id="hudState">Tap the card or the button</span></div>
+    <div class="scene">
+      <div class="card" id="fromCard" role="button" aria-label="Open from the card"></div>
+      <button class="pill" id="fromPill">Browse the cards</button>
+      <div class="hint">Tap either to open · Back to close</div>
+    </div>
+    <div class="page" id="page" hidden>
+      <div class="bar"><button id="back">‹ Back</button><span>The Magician</span><span></span></div>
+      <div class="body" id="pageBody">
+        <div class="big"></div>
+        <div class="txt">
+          <h2>The Magician</h2>
+          <div class="chips"><span>will</span><span>skill</span><span>focus</span><span>action</span></div>
+          <div class="line" style="width:94%"></div><div class="line" style="width:88%"></div>
+          <div class="line" style="width:97%"></div><div class="line" style="width:62%"></div>
+          <div class="line" style="width:90%"></div><div class="line" style="width:75%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h1>Opening Lab</h1>
+    <p class="sub">The small opening: a tap, a ring of runes snapping round what was tapped, the page blooming out of it behind a widening line of light while the ring stays its own size, and the iris back. Same steps as the app (cardTap, bloomSheet, irisInto in js/core.js).</p>
+    <div class="btns">
+      <button class="main" id="playCard">Open from card</button>
+      <button class="main" id="playPill">Open from button</button>
+      <button id="playClose">Close</button>
+    </div>
+    <div class="btns" id="speeds">
+      <button data-s="1" class="on">×1</button><button data-s="0.5">×½</button><button data-s="0.25">×¼</button><button data-s="0.1">×⅒</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="loop"> Loop: open, rest, close, again</label>
+    <div id="controls"></div>
+    <details open>
+      <summary>Settings to copy</summary>
+      <div class="btns"><button id="copyBtn">Copy</button><button id="resetBtn">Reset all</button></div>
+      <textarea id="out" readonly></textarea>
+    </details>
+  </div>
+</div>
+
+<!-- The app's own drawing of the ring of runes (js/rune-ring.js), and the rune shapes it uses. -->
+<script>let S = null; const calm = false;</script>
+<script src="../js/table-magic.js"></script>
+<script src="../js/arcane-circle.js"></script>
+<script src="../js/rune-ring.js"></script>
+<script>
+// ── Settings ───────────────────────────────────────────
+// Every value the opening uses, with the app's own as the default.
+const GROUPS = [
+  ["Tap", [
+    ["dip", "Dip to", 1, 0.8, 1, 0.01],
+    ["dipMs", "Dip time", 100, 100, 800, 10, "ms"],
+  ]],
+  ["Ring snap", [
+    ["ringSize", "Ring size", 0.6, 0.6, 1.8, 0.05, "×"],
+    ["snapFrom", "Snaps in from", 1, 1, 3, 0.05, "×"],
+    ["snapTurn", "Snap turn", -180, -180, 180, 5, "°"],
+    ["snapMs", "Snap time", 60, 60, 600, 10, "ms"],
+    ["rest", "Rest before bloom", 0, 0, 600, 10, "ms"],
+  ]],
+  ["Bloom", [
+    ["bloomMs", "Bloom time", 1070, 250, 1500, 10, "ms"],
+    ["bloomEase", "Easing", "cubic-bezier(.4, .05, .2, 1)", ["cubic-bezier(.4, .05, .2, 1)", "cubic-bezier(.35, .1, .2, 1)", "cubic-bezier(.2, .8, .2, 1)", "cubic-bezier(.6, 0, .2, 1)", "ease-in-out", "linear"]],
+    ["swell", "Swell at start", 1.28, 1, 1.4, 0.01, "×"],
+    ["flare", "Flare brightness", 2.75, 1, 3, 0.05],
+    ["edge", "Page edge lag", 1, 0.2, 1, 0.05, "×"],
+    ["bloomTurn", "Ring turn", 270, 0, 270, 5, "°"],
+  ]],
+  ["Light", [
+    ["lightMs", "Light half-turn", 520, 150, 2000, 10, "ms"],
+    ["tail", "Light tail", 0.14, 0.02, 0.4, 0.01],
+  ]],
+  ["Motes and parts", [
+    ["motes", "Motes", 0, 0, 40, 1],
+    ["moteFar", "Mote reach", 235, 40, 300, 5, "px"],
+    ["riseAfter", "Parts rise after", 470, 0, 600, 10, "ms"],
+    ["riseStep", "Parts stagger", 100, 0, 120, 5, "ms"],
+  ]],
+  ["Close (iris)", [
+    ["inMs", "Ring closes in", 400, 150, 1000, 10, "ms"],
+    ["goneMs", "Page gone at", 410, 150, 1100, 10, "ms"],
+    ["endMs", "Ring fades by", 680, 300, 1500, 10, "ms"],
+    ["closeTurn", "Ring turn", 55, 0, 270, 5, "°"],
+  ]],
+];
+const DEFAULTS = {};
+GROUPS.forEach(([, list]) => list.forEach((p) => { DEFAULTS[p[0]] = p[2]; }));
+let P = { ...DEFAULTS };
+try { Object.assign(P, JSON.parse(localStorage.getItem("open-lab") || "{}")); } catch {}
+let speed = 1;
+const $ = (id) => document.getElementById(id);
+const T = (ms) => ms / speed;   // a time at the chosen speed
+
+function buildControls() {
+  const box = $("controls");
+  box.innerHTML = "";
+  GROUPS.forEach(([name, list], gi) => {
+    const d = document.createElement("details");
+    if (gi < 3) d.open = true;
+    d.innerHTML = `<summary>${name}</summary>`;
+    list.forEach(([key, label, def, a, b, step, unit = ""]) => {
+      const row = document.createElement("div");
+      row.className = "row";
+      if (Array.isArray(a)) {
+        row.innerHTML = `<label>${label}</label><select>${a.map((o) => `<option${o === P[key] ? " selected" : ""}>${o}</option>`).join("")}</select><output></output>`;
+        row.querySelector("select").oninput = (e) => { P[key] = e.target.value; changed(); };
+      } else {
+        row.innerHTML = `<label>${label}</label><input type="range" min="${a}" max="${b}" step="${step}" value="${P[key]}"><output>${P[key]}${unit}</output>`;
+        const out = row.querySelector("output");
+        row.querySelector("input").oninput = (e) => { P[key] = +e.target.value; out.textContent = P[key] + unit; changed(); };
+      }
+      d.append(row);
+    });
+    box.append(d);
+  });
+}
+function changed() {
+  RING_FX.lightMs = P.lightMs;   // the app's own ring reads these (js/rune-ring.js)
+  RING_FX.tail = P.tail;
+  $("out").value = JSON.stringify(P, null, 2);
+  try { localStorage.setItem("open-lab", JSON.stringify(P)); } catch {}
+}
+
+// ── The pieces, as in the app ───────────────────────────
+const stage = $("stage"), page = $("page");
+// The ring is drawn by the app's own code (js/rune-ring.js, loaded above).
+function runeRing(C, R) {
+  const ring = ringElement(R);
+  Object.assign(ring.style, { left: `${C.x}px`, top: `${C.y}px` });
+  stage.append(ring);
+  return ring;
+}
+// The window's round edge: a hairline that changes its real size (edgeLine in the app).
+function edgeLine(C) {
+  const line = document.createElement("div");
+  line.className = "rune-edge";
+  Object.assign(line.style, { left: `${C.x}px`, top: `${C.y}px` });
+  stage.append(line);
+  return line;
+}
+const across = (r) => `${Math.max(0, 2 * r)}px`;
+// Positions are within the stage (the app uses the whole screen).
+function around(node) {
+  const s = stage.getBoundingClientRect(), b = node.getBoundingClientRect();
+  return { x: b.left - s.left + b.width / 2, y: b.top - s.top + b.height / 2, r: (Math.hypot(b.width, b.height) / 2 + 6) * P.ringSize };
+}
+const reach = (C) => Math.hypot(Math.max(C.x, stage.clientWidth - C.x), Math.max(C.y, stage.clientHeight - C.y)) + 20;
+function flare(node) {
+  node.animate([{ boxShadow: "0 0 0 1px rgba(255, 214, 140, .85), 0 0 20px 5px rgba(255, 200, 110, .6)", offset: 0.3 }],
+    { duration: T(560), easing: "ease-out" });
+}
+function motes(C) {
+  for (let k = 0; k < P.motes; k++) {
+    const m = document.createElement("span");
+    m.className = "mote";
+    Object.assign(m.style, { left: `${C.x}px`, top: `${C.y}px` });
+    stage.append(m);
+    const a = (k / P.motes) * Math.PI * 2 + Math.random();
+    const d = P.moteFar * (0.4 + Math.random() * 0.6);
+    m.animate([{ transform: "translate(0, 0) scale(1)", opacity: 1 },
+      { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d + 30}px) scale(.3)`, opacity: 0 }],
+      { duration: T(700 + Math.random() * 400), easing: "cubic-bezier(.1, .7, .3, 1)", fill: "forwards" });
+    setTimeout(() => m.remove(), T(1150));
+  }
+}
+
+// ── Open and close ──────────────────────────────────────
+let from = null, busy = false;
+function open(node) {
+  if (busy || !page.hidden) return;
+  busy = true;
+  from = node;
+  $("hudState").textContent = "Opening";
+  node.animate([{ transform: `scale(${P.dip})`, offset: 0.35 }], { duration: T(P.dipMs), easing: "cubic-bezier(.2, .8, .2, 1)" });
+  flare(node);
+  const at = around(node), far = reach(at), delay = T(P.rest), ms = T(P.bloomMs);
+  const ring = runeRing(at, at.r);
+  ring.animate([
+    { transform: `${ring.at(at.r * P.snapFrom)} rotate(${P.snapTurn}deg)`, opacity: 0 },
+    { transform: `${ring.at(at.r)} rotate(0deg)`, opacity: 1 },
+  ], { duration: T(P.snapMs), easing: "cubic-bezier(.2, .8, .2, 1)", fill: "forwards" });
+  page.hidden = false;
+  page.animate([
+    { clipPath: `circle(0px at ${at.x}px ${at.y}px)` },
+    { clipPath: `circle(${at.r * P.edge}px at ${at.x}px ${at.y}px)`, offset: 0.12 },
+    { clipPath: `circle(${far * 0.6}px at ${at.x}px ${at.y}px)`, offset: 0.6 },
+    { clipPath: `circle(${far * 1.05}px at ${at.x}px ${at.y}px)` },
+  ], { duration: ms, delay, easing: P.bloomEase, fill: "backwards" });
+  const r0 = at.r * P.edge, line = edgeLine(at);
+  line.animate([
+    { width: "0px", height: "0px", opacity: 0 },
+    { width: across(r0), height: across(r0), opacity: 1, offset: 0.12 },
+    { width: across(far * 0.6), height: across(far * 0.6), opacity: 0.9, offset: 0.6 },
+    { width: across(far * 1.05), height: across(far * 1.05), opacity: 0 },
+  ], { duration: ms, delay, easing: P.bloomEase, fill: "both" });
+  setTimeout(() => line.remove(), delay + ms + 50);
+  ring.animate([
+    { transform: `${ring.at(at.r)} rotate(0deg)`, opacity: 1, filter: "brightness(1)" },
+    { transform: `${ring.at(at.r * P.swell)} rotate(${P.bloomTurn * 0.3}deg)`, opacity: 1, filter: `brightness(${P.flare})`, offset: 0.12 },
+    { transform: `${ring.at(at.r * P.swell * 1.06)} rotate(${P.bloomTurn * 0.75}deg)`, opacity: 0, filter: "brightness(1.2)", offset: 0.45 },
+    { transform: `${ring.at(at.r * P.swell * 1.06)} rotate(${P.bloomTurn}deg)`, opacity: 0, filter: "brightness(1)" },
+  ], { duration: ms, delay, easing: P.bloomEase, fill: "forwards" });
+  setTimeout(() => ring.remove(), delay + ms + 50);
+  setTimeout(() => motes(at), delay);
+  [...$("pageBody").querySelectorAll(".big, h2, .chips, .line")].forEach((n, i) => n.animate(
+    [{ opacity: 0, transform: "translateY(6px)", filter: "blur(2px)" }, { opacity: 1, transform: "none", filter: "none" }],
+    { duration: T(380), delay: delay + T(P.riseAfter + i * P.riseStep), easing: "ease-out", fill: "backwards" }));
+  setTimeout(() => { busy = false; $("hudState").textContent = "Open"; }, delay + ms);
+}
+function close() {
+  if (busy || page.hidden) return;
+  busy = true;
+  $("hudState").textContent = "Closing";
+  const at = from ? around(from) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2, r: 60 };
+  const far = reach(at), IN = T(P.inMs), GONE = T(Math.max(P.goneMs, P.inMs + 10)), END = T(Math.max(P.endMs, P.goneMs + 100));
+  const ring = runeRing(at, at.r);
+  page.animate([
+    { clipPath: `circle(${far}px at ${at.x}px ${at.y}px)` },
+    { clipPath: `circle(${at.r * 0.8}px at ${at.x}px ${at.y}px)`, offset: IN / GONE },
+    { clipPath: `circle(0px at ${at.x}px ${at.y}px)` },
+  ], { duration: GONE, easing: "cubic-bezier(.55, 0, .3, 1)", fill: "forwards" });
+  const line = edgeLine(at);
+  line.animate([
+    { width: across(far), height: across(far), opacity: 0 },
+    { opacity: 1, offset: 0.12 },
+    { width: across(at.r * 0.8), height: across(at.r * 0.8), opacity: 1, offset: IN / GONE },
+    { width: "0px", height: "0px", opacity: 0 },
+  ], { duration: GONE, easing: "cubic-bezier(.55, 0, .3, 1)", fill: "forwards" });
+  setTimeout(() => line.remove(), GONE + 30);
+  const appear = Math.max(0.01, (IN - T(180)) / END);
+  ring.animate([
+    { transform: `${ring.at(at.r * 1.35)} rotate(${-P.closeTurn}deg)`, opacity: 0 },
+    { transform: `${ring.at(at.r * 1.35)} rotate(${-P.closeTurn}deg)`, opacity: 0, offset: appear },
+    { transform: `${ring.at(at.r)} rotate(0deg)`, opacity: 1, filter: "brightness(1)", offset: IN / END, easing: "ease-out" },
+    { transform: `${ring.at(at.r * 1.04)} rotate(8deg)`, opacity: 1, filter: "brightness(1.8)", offset: Math.min(0.95, (IN + T(90)) / END) },
+    { transform: `${ring.at(at.r * 1.18)} rotate(16deg)`, opacity: 0, filter: "brightness(1)" },
+  ], { duration: END, easing: "cubic-bezier(.55, 0, .3, 1)", fill: "forwards" });
+  setTimeout(() => { if (from) flare(from); }, IN + T(40));
+  setTimeout(() => {
+    page.hidden = true;
+    page.getAnimations().forEach((a) => a.cancel());
+  }, GONE);
+  setTimeout(() => { ring.remove(); busy = false; $("hudState").textContent = "Tap the card or the button"; }, END + 50);
+}
+
+// ── Wiring ──────────────────────────────────────────────
+$("fromCard").onclick = () => open($("fromCard"));
+$("fromPill").onclick = () => open($("fromPill"));
+$("playCard").onclick = () => open($("fromCard"));
+$("playPill").onclick = () => open($("fromPill"));
+$("back").onclick = close;
+$("playClose").onclick = close;
+$("speeds").onclick = (e) => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  speed = +b.dataset.s;
+  [...$("speeds").children].forEach((x) => x.classList.toggle("on", x === b));
+  $("hudSpeed").textContent = b.textContent;
+};
+let loopN = 0;
+setInterval(() => {
+  if (!$("loop").checked || busy) return;
+  loopN++;
+  if (page.hidden) open(loopN % 4 < 2 ? $("fromCard") : $("fromPill"));
+  else close();
+}, 1200);
+$("copyBtn").onclick = () => { $("out").select(); navigator.clipboard?.writeText($("out").value).catch(() => document.execCommand("copy")); };
+$("resetBtn").onclick = () => { P = { ...DEFAULTS }; buildControls(); changed(); };
+buildControls();
+changed();
+</script>
+</body>
+</html>

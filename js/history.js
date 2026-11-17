@@ -38,7 +38,7 @@ function renderHistory() {
     const seen = new Set();
     readings = readings.filter((r) => { const d = dayName(r.t) + new Date(r.t).getFullYear(); return !seen.has(d) && seen.add(d); });
   }
-  $("clearHistBtn").hidden = !loadHistory().length;
+  $("clearRow").hidden = !loadHistory().length;   // (under Back up: nothing to clear, no row)
   $("histSearch").placeholder = daily ? "Search by card or date" : "Search by name, card, note or date";
   showBackupNudge();
   if (!readings.length) {
@@ -109,14 +109,18 @@ function renderHistory() {
       });
       days.forEach(({ d, list }) => body.append(dayRow(d, list, searching)));
     };
-    const set = (open) => {
+    const set = (open, moving = false) => {
       sec.classList.toggle("open", open);
       head.setAttribute("aria-expanded", open);
-      body.hidden = !open;
-      if (open) fill();
+      if (open) {
+        body.hidden = false;
+        fill();
+        if (moving) unfoldIn(body);
+      } else if (moving) foldAway(body);
+      else body.hidden = true;
       if (!searching) open ? HIST.open.add(m.key) : HIST.open.delete(m.key);
     };
-    head.addEventListener("click", () => set(body.hidden));
+    head.addEventListener("click", () => set(!sec.classList.contains("open"), true));
     sec.append(head, body);
     box.append(sec);
     set(isOpen(m.key));
@@ -143,7 +147,7 @@ let searchTimer = 0;
 $("histSearch").addEventListener("input", () => {
   $("histSearchClear").hidden = !$("histSearch").value;
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => { $("history").scrollTop = 0; renderHistory(); }, 120);
+  searchTimer = setTimeout(() => { $("history").scrollTop = 0; renderHistory(); riseInHistory(); }, 120);
 });
 $("histSearchClear").addEventListener("click", () => {
   $("histSearch").value = "";
@@ -253,7 +257,14 @@ document.querySelectorAll("#histTabs .chip").forEach((c) => c.addEventListener("
   HIST.mode = c.dataset.mode;
   HIST.open.clear();
   renderHistory();
+  riseInHistory();
 }));
+
+// After a tab, a search or a span is chosen, the new list rises in
+// (the strips of chips at the top stay put).
+function riseInHistory() {
+  riseIn($("historyList").querySelectorAll(":scope > :not(.month-strip):not(.pat-spans)"));
+}
 
 // Opens a month and brings its heading to the top, under the strip.
 function openMonth(key) {
@@ -328,7 +339,7 @@ function readingItem(r) {
       summonSummary((magic) => openSummary(entries, readingTitle(r), magic, {
         id: r.id,
         onRename: (title) => { r.title = title; showName(); },
-      }));
+      }), r.id);
     });
     actions.append(sum);
   }
@@ -360,12 +371,9 @@ $("historyBtn").addEventListener("click", () => {
   $("histSearch").value = "";
   $("histSearchClear").hidden = true;
   renderHistory();
-  slideIn($("history"));
+  bloomFromButton($("history"), $("historyBtn"), $("historyList").querySelectorAll(":scope > :not(.month-strip)"));
 });
-$("historyBack").addEventListener("click", async () => {
-  await slideOut($("history"));
-  $("history").hidden = true;
-});
+$("historyBack").addEventListener("click", () => closeSheetInto($("history"), $("historyBtn")));
 
 // ── Backups ─────────────────────────────────────────────
 
@@ -493,6 +501,7 @@ function showClearAsk() {
   ["readings", "cotd"].forEach((k) => { if (!n[k]) CLEAR.kinds.delete(k); });
   if (!CLEAR.kinds.size) ["readings", "cotd"].forEach((k) => n[k] && CLEAR.kinds.add(k));
   updateClearAsk();
+  $("clearAsk").style.zIndex = ++Z;   // above the history, however high its page now sits
   $("clearAsk").hidden = false;
   $("clearAsk").animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 });
   $("clearCancel").focus();

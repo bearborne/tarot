@@ -1209,7 +1209,8 @@ function openSummary(entries, title, magic = false, named = null) {
   if (magic && !calm) appearWithMagic(sheet, body);
   else slideIn(sheet);
   back.addEventListener("click", async () => {
-    await slideOut(sheet);
+    // Opened through the circle, it goes back into the light the same way.
+    await (magic && !calm ? vanishWithMagic(sheet) : slideOut(sheet));
     sheet.remove();
   });
   return sheet;
@@ -1277,23 +1278,66 @@ function appearWithMagic(sheet, body) {
   sheet.scrollTop = 0;
   sheet.animate(
     [{ filter: "brightness(1.7)" }, { filter: "brightness(1)" }],
-    { duration: 900, easing: "cubic-bezier(.2,.8,.2,1)" }
+    { duration: 900 / portalPace, easing: "cubic-bezier(.2,.8,.2,1)" }
   );
   // (The cards fly in on their own, out of the portal: see emergeCards.)
   [...body.querySelectorAll(".col-side > :not(.summary-cards), .sum-col > *, .sum-asks > *")].forEach((part, i) => part.animate(
     [{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }],
-    { duration: 520, delay: 200 + Math.min(i, 10) * 55, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" }
+    { duration: 520 / portalPace, delay: (200 + Math.min(i, 10) * 55) / portalPace, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" }
   ));
+}
+
+// Back to the table, quickly (about half a second), the portal in reverse:
+// a ring of gold runes closes in from the edges of the screen, turning, and
+// the summary shrinks inside it like a closing iris. The ring settles on
+// the great circle behind the spread as the page vanishes, then flares and
+// breaks into motes that fly back to the cards, which light up as they land.
+// Resolves once the page is gone; the light finishes on its own after.
+// (Timers, not the animations' ends, so a paused page never waits.)
+function vanishWithMagic(sheet) {
+  const G = MG.great;
+  const C = G ? { x: G.cx, y: G.cy } : { x: innerWidth / 2, y: innerHeight * 0.46 };
+  const R = G ? G.R1 : Math.round(Math.min(innerWidth, innerHeight) * 0.25);
+  const cards = S && !$("table").hidden ? S.slots.map((s) => s.tcard).filter((c) => c?.isConnected) : [];
+  // As the ring flares, motes break from it and fly back to the cards.
+  return irisInto(sheet, C, R, () => {
+    const goals = cards.length ? cards.map((c) => ({ ...ringAround(c), card: c }))
+      : Array.from({ length: 8 }, (_, k) => ({   // no cards: they just scatter outward
+        x: C.x + Math.cos(k * Math.PI / 4) * R * 1.8, y: C.y + Math.sin(k * Math.PI / 4) * R * 1.8 }));
+    goals.forEach((g, i) => {
+      const a = Math.atan2(g.y - C.y, g.x - C.x);
+      for (let m = 0; m < 3; m++) {
+        const mote = el("span", "theme-mote");
+        const sx = C.x + Math.cos(a + (m - 1) * 0.25) * R, sy = C.y + Math.sin(a + (m - 1) * 0.25) * R;
+        Object.assign(mote.style, { left: `${sx}px`, top: `${sy}px`, zIndex: Z + 1 });
+        document.body.append(mote);
+        const ms = 240 + m * 40, wait = Math.min(i, 9) * 18;
+        mote.animate([
+          { transform: "translate(0, 0) scale(1.4)", opacity: 1 },
+          { transform: `translate(${g.x - sx}px, ${g.y - sy}px) scale(.5)`, opacity: 0.2 },
+        ], { duration: ms, delay: wait, easing: "cubic-bezier(.5, 0, .2, 1)", fill: "backwards" });
+        setTimeout(() => mote.remove(), ms + wait + 20);
+      }
+      cardFlare(g.card?.querySelector(".cface"), 200 + Math.min(i, 9) * 18);
+    });
+  });
 }
 
 // Before the summary opens: the cards' light converges in the middle of
 // the screen, the arcane circle spins up there, and the summary appears
 // through it (arcanePortal, below).
-let summoning = false;
-function summonSummary(open) {
+// The first time a reading's summary opens, the portal plays in full; after
+// that, for that same reading, it plays three times as fast. `key` names the
+// reading (its id in the history, or the reading itself before it's saved).
+// portalPace is read by arcanePortal, emergeCards and appearWithMagic.
+let summoning = false, portalPace = 1;
+const portalSeen = new Set();
+function summonSummary(open, key = null) {
   if (calm) { open(false); return; }
   if (summoning) return;   // already on its way
   summoning = true;
+  portalPace = key != null && portalSeen.has(key) ? 3 : 1;
+  if (key != null) portalSeen.add(key);
   // The turned cards on the table; from the History there are none on screen.
   const onTable = S && !$("table").hidden;
   const points = onTable ? S.slots.map((s, i) => {

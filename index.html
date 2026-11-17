@@ -126,6 +126,10 @@
           <button class="chip" id="importBtn">A file</button>
           <button class="chip" id="driveRestoreBtn">Google Drive</button>
         </div>
+        <div class="backup-row" id="clearRow">
+          <span class="backup-ask">Start over</span>
+          <button class="chip danger" id="clearHistBtn">Clear history</button>
+        </div>
         <input type="file" id="importFile" accept=".json,application/json" hidden>
         <p class="drive-status" id="driveStatus" hidden></p>
       </div>
@@ -140,7 +144,6 @@
         <button class="link small" id="histSearchClear" aria-label="Clear the search" hidden>×</button>
       </div>
       <div id="historyList"></div>
-      <p class="history-note clear-line"><button class="link small" id="clearHistBtn">Clear history</button></p>
     </div>
   </div>
 
@@ -209,6 +212,7 @@
   <script src="js/table.js"></script>
   <script src="js/table-magic.js"></script>
   <script src="js/arcane-circle.js"></script>
+  <script src="js/rune-ring.js"></script>
   <script src="js/summary.js"></script>
   <script src="js/portal.js"></script>
   <script src="js/card-pages.js"></script>

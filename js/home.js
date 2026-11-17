@@ -6,7 +6,8 @@
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 
 // A little fan of card backs, drawn like the real deck: dark, with a thin
-// gold outline, an inner line and a small circle.
+// gold outline, an inner line and a small circle. Each card sits in a
+// group of its own (.lift) that can lift as the button is pressed.
 function spreadFan(n) {
   const W = 46, H = 30, w = 11, h = 18;
   const spread = n === 1 ? 0 : Math.min(14, 5 + n * 3);
@@ -14,10 +15,10 @@ function spreadFan(n) {
   for (let k = 0; k < n; k++) {
     const a = n === 1 ? 0 : -spread + (2 * spread * k) / (n - 1);
     const x = W / 2 + (k - (n - 1) / 2) * 3.2, y = H / 2 + 3 + Math.abs(a) * 0.12;
-    cards += `<g transform="translate(${x} ${y}) rotate(${a})">`
+    cards += `<g transform="translate(${x} ${y}) rotate(${a})"><g class="lift">`
       + `<rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="1.6" fill="#19102d" stroke="#c9a96e" stroke-width=".9"/>`
       + `<rect x="${-w / 2 + 1.8}" y="${-h / 2 + 1.8}" width="${w - 3.6}" height="${h - 3.6}" rx=".8" fill="none" stroke="#c9a96e" stroke-opacity=".45" stroke-width=".5"/>`
-      + `<circle r="${w * 0.17}" fill="none" stroke="#c9a96e" stroke-width=".6"/></g>`;
+      + `<circle r="${w * 0.17}" fill="none" stroke="#c9a96e" stroke-width=".6"/></g></g>`;
   }
   return `<svg class="spread-fan" viewBox="0 0 ${W} ${H}" aria-hidden="true">${cards}</svg>`;
 }
@@ -28,15 +29,118 @@ SPREADS.forEach((spread) => {
   b.setAttribute("aria-label", spread.name);
   b.innerHTML = spreadFan(n);
   b.append(el("span", "spread-num", ROMAN[n - 1] || String(n)), el("span", "spread-word", n === 1 ? "card" : "cards"));
-  b.addEventListener("click", () => startReading(spread));
+  b.addEventListener("click", () => startReading(spread, b));
+  wireSpreadButton(b);
   $("spreadList").append(b);
 });
 
-// The on/off switches under the spreads.
+// ── The spread buttons come alive ───────────────────────
+// Hover or focus: two lines of light run round the button's edge from the
+// top, one each way, meeting at the bottom, and the edge stays faintly lit.
+// Press: the little cards part and lift one by one towards the finger (let
+// go and they leap: see castSpread). Tap: the other buttons step back while
+// the chosen numeral flares. And when the page opens, then every 5 seconds
+// while none is being chosen, a faint light passes along the row from I to V.
+let spreadHover = 0;   // how many spread buttons are hovered or focused
+function wireSpreadButton(b) {
+  const on = () => { spreadHover++; edgeLight(b); };
+  const off = () => { spreadHover = Math.max(0, spreadHover - 1); edgeOff(b); };
+  b.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") on(); });
+  b.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") off(); fanRest(b); });
+  b.addEventListener("focus", on);
+  b.addEventListener("blur", off);
+  b.addEventListener("pointerdown", () => fanReady(b));
+  b.addEventListener("pointercancel", () => fanRest(b));
+}
+
+function edgeLight(b) {
+  if (calm) return;
+  b.querySelector(".spread-edge")?.remove();
+  const w = b.offsetWidth + 2, h = b.offsetHeight + 2, r = 10.5;
+  // Half the border each: from the top's middle round to the bottom's, right way and left way.
+  const right = `M ${w / 2} .5 H ${w - r} A ${r} ${r} 0 0 1 ${w - 0.5} ${r} V ${h - r} A ${r} ${r} 0 0 1 ${w - r} ${h - 0.5} H ${w / 2}`;
+  const left = `M ${w / 2} .5 H ${r} A ${r} ${r} 0 0 0 .5 ${r} V ${h - r} A ${r} ${r} 0 0 0 ${r} ${h - 0.5} H ${w / 2}`;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "spread-edge");
+  svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  svg.setAttribute("aria-hidden", "true");
+  svg.innerHTML = `<path d="${right}"/><path d="${left}"/><circle r="1.6"/><circle r="1.6"/>`;
+  b.append(svg);
+  const paths = [...svg.querySelectorAll("path")], dots = [...svg.querySelectorAll("circle")];
+  const len = paths[0].getTotalLength(), t0 = performance.now(), ms = 620;
+  paths.forEach((p) => { p.style.strokeDasharray = len; p.style.strokeDashoffset = len; });
+  const step = (now) => {
+    if (!svg.isConnected) return;
+    const u = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - u, 2);
+    paths.forEach((p, i) => {
+      p.style.strokeDashoffset = len * (1 - e);
+      p.style.strokeOpacity = u < 1 ? 1 : 0.6;
+      const pt = p.getPointAtLength(len * e);
+      dots[i].setAttribute("cx", pt.x);
+      dots[i].setAttribute("cy", pt.y);
+      dots[i].style.opacity = u < 1 ? 1 : 0;
+    });
+    if (u < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+function edgeOff(b) {
+  const svg = b.querySelector(".spread-edge");
+  if (!svg) return;
+  svg.classList.add("gone");
+  setTimeout(() => svg.remove(), 400);
+}
+
+// The fan's cards part and lift as the button is pressed.
+function fanReady(b) {
+  if (calm) return;
+  const lifts = [...b.querySelectorAll(".spread-fan .lift")], n = lifts.length;
+  lifts.forEach((g, k) => g.animate([{ transform: "none" },
+    { transform: `translateY(${n === 1 ? -3.5 : -2.5}px) rotate(${(k - (n - 1) / 2) * 4}deg)` }],
+    { duration: 220, delay: k * 45, easing: "cubic-bezier(.2, .9, .3, 1.3)", fill: "forwards" }));
+}
+function fanRest(b) { b.querySelectorAll(".spread-fan .lift").forEach((g) => g.getAnimations().forEach((a) => a.cancel())); }
+
+// A faint light passes along the row from I to V, each numeral and fan glinting.
+function glintSpreads() {
+  [...$("spreadList").children].forEach((b, k) => {
+    b.querySelector(".spread-num")?.animate([
+      { textShadow: "0 0 0 rgba(255, 200, 110, 0)", color: "#c9a96e" },
+      { textShadow: "0 0 12px rgba(255, 200, 110, .9)", color: "#fff0d0", offset: 0.35 },
+      { textShadow: "0 0 0 rgba(255, 200, 110, 0)", color: "#c9a96e" },
+    ], { duration: 900, delay: k * 110, easing: "ease-out" });
+    b.querySelector(".spread-fan")?.animate([
+      { filter: "brightness(1)" },
+      { filter: "brightness(1.8) drop-shadow(0 0 3px rgba(255, 200, 110, .8))", offset: 0.35 },
+      { filter: "brightness(1)" },
+    ], { duration: 900, delay: k * 110 + 40, easing: "ease-out" });
+  });
+}
+// Once as the page opens, then every 5 seconds, but only while home is
+// showing and no spread is being hovered, focused or chosen.
+function glintIfIdle() {
+  if (!calm && !$("home").hidden && !document.hidden && !spreadHover && !swapping
+    && !$("spreadList").classList.contains("chosen")) glintSpreads();
+}
+setTimeout(() => { glintIfIdle(); setInterval(glintIfIdle, 5000); }, 700);
+
+// The on/off switches under the spreads: two small pills, each with a
+// little drawing of what it does, its name and a short line, and a small
+// sliding switch that lights gold when on. (Each is still a checkbox
+// inside, for keys and screen readers.)
+const OPTION_ICONS = {
+  // a crown
+  court: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 15.5h14M3.6 13.5 2.5 6.5l4.3 3.3L10 4.2l3.2 5.6 4.3-3.3-1.1 7z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><circle cx="10" cy="3.4" r=".9" fill="currentColor"/></svg>',
+  // a card standing upside down, with a turning arrow
+  reversals: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="3" width="8" height="13" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M10 12.8 8.3 10h3.4z" fill="currentColor"/><path d="M3.2 8.5a7 7 0 0 1 2-4.3M2.4 5.8l.8 2.8 2.7-.9" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+};
 OPTIONS.forEach((o) => {
   const row = el("label", "option");
+  row.title = o.note;
+  const icon = el("span", "option-icon");
+  icon.innerHTML = OPTION_ICONS[o.id] || "";
   const text = el("span", "option-text");
-  text.append(el("span", "option-name", o.name), el("span", "option-note", o.note));
+  text.append(el("span", "option-name", o.name), el("span", "option-note", o.short));
   const box = el("input");
   box.type = "checkbox";
   box.className = "switch";
@@ -44,12 +148,22 @@ OPTIONS.forEach((o) => {
   box.autocomplete = "off";   // stop the browser putting back old switch states
   box.dataset.opt = o.id;
   box.checked = SET[o.id];
+  box.setAttribute("aria-description", o.note);
+  row.classList.toggle("on", box.checked);
   box.addEventListener("change", () => {
+    const before = todaysCard();
     SET[o.id] = box.checked;
+    row.classList.toggle("on", box.checked);
     saveOptions();
-    if (o.id === "court") buildFloatDeck();
+    // The floating deck is only drawn again if today's card has stopped
+    // (or started) counting: a court card with court cards turned off, say.
+    // Otherwise it carries on floating as it was.
+    const after = todaysCard();
+    if (!!before !== !!after || before?.card !== after?.card || before?.reversed !== after?.reversed) buildFloatDeck();
   });
-  row.append(text, box);
+  const knob = el("span", "option-switch");
+  knob.setAttribute("aria-hidden", "true");
+  row.append(box, icon, text, knob);
   $("options").append(row);
 });
 
@@ -57,19 +171,23 @@ OPTIONS.forEach((o) => {
 // switches match what is saved, so what you see is what is used.
 function syncOptions() {
   loadOptions();
-  document.querySelectorAll("#options .switch").forEach((b) => { b.checked = SET[b.dataset.opt]; });
+  document.querySelectorAll("#options .switch").forEach((b) => {
+    b.checked = SET[b.dataset.opt];
+    b.closest(".option").classList.toggle("on", b.checked);
+  });
   buildFloatDeck();
 }
 addEventListener("pageshow", syncOptions);
 
 function showHome() {
+  if (swapping) return;
   S = null;
   resetMagic();
-  $("table").hidden = true;
-  $("home").hidden = false;
-  placeCotdWords();   // measured again now the home screen is showing
-  window.scrollTo(0, 0);
-  startSky();
+  swapScreen($("table"), $("home"), () => {
+    placeCotdWords();   // measured again now the home screen is showing
+    window.scrollTo(0, 0);
+    startSky();
+  });
 }
 
 // ── The home screen's night sky and floating deck ───────
@@ -279,47 +397,85 @@ function buildFloatDeck() {
   }
 }
 
-// A burst of sunlight: a bright glow, turning rays and flying sparks.
-function sunburst() {
-  const sun = el("div", "sun");
-  const glow = el("div", "sun-glow");
-  const rays = el("div", "sun-rays");
-  sun.append(rays, glow);
-  $("floatDeck").append(sun);
-  glow.animate(
-    [{ transform: "scale(0)", opacity: 1 }, { transform: "scale(5)", opacity: 1, offset: 0.35 }, { transform: "scale(9)", opacity: 0 }],
-    { duration: 750, easing: "ease-out", fill: "forwards" }
-  );
-  rays.animate(
-    (() => {
-      // the rays turn either way, by a different amount each time
-      const dir = Math.random() < 0.5 ? -1 : 1, start = wobble(20), turn = vary(70, 0.3) * dir;
-      return [{ transform: `scale(.2) rotate(${start}deg)`, opacity: 0 },
-        { transform: `scale(${vary(1, 0.1)}) rotate(${start + turn * 0.36}deg)`, opacity: 1, offset: 0.3 },
-        { transform: `scale(${vary(1.5, 0.12)}) rotate(${start + turn}deg)`, opacity: 0 }];
-    })(),
-    { duration: 950, easing: "ease-out", fill: "forwards" }
-  );
-  for (let i = 0; i < 22; i++) {
-    const s = el("div", "sun-spark");
-    sun.append(s);
-    const a = (i / 22) * Math.PI * 2 + Math.random() * 0.3;
-    const r = 70 + Math.random() * 90;
-    s.animate(
-      [{ transform: "translate(0,0) scale(1)", opacity: .75 },
-       { transform: `translate(${Math.cos(a) * r}px, ${Math.sin(a) * r}px) scale(.3)`, opacity: 0 }],
-      { duration: 500 + Math.random() * 350, delay: 60, easing: "cubic-bezier(.1,.8,.3,1)", fill: "both" }
-    );
+// The arcane reveal of the card of the day, around the middle card as it
+// lifts: the other cards dim, a great ring of runes snaps in round it and
+// turns, and gold motes spiral in from the ring to its heart. Resolves at
+// the peak, when the card should turn; then the ring flashes outward and
+// fades, and sparks scatter from the card.
+function arcaneReveal(mid) {
+  const b = mid.getBoundingClientRect();
+  // Where the card will be once lifted (.fd-card.lift: up 16px, 1.12 times
+  // as big, from a point half its height below it).
+  const C = { x: b.left + b.width / 2, y: b.top + b.height / 2 - 0.12 * b.height - 16 };
+  const R = (Math.hypot(b.width, b.height) / 2) * 1.12 * 1.3;
+  const PEAK = 620;
+  // The rest of the fan dims while the card is revealed.
+  [...$("floatDeck").children].forEach((c) => {
+    if (c === mid || !c.classList.contains("fd-card")) return;
+    c.querySelector(".fd-flip")?.animate([{ opacity: 1 }, { opacity: 0.45, offset: 0.25 }, { opacity: 0.45, offset: 0.7 }, { opacity: 1 }],
+      { duration: 1500, easing: "ease-in-out" });
+  });
+  // The ring snaps in, turning, and keeps turning; at the peak it flashes
+  // outward and fades.
+  const ring = runeRing(C, R);
+  ring.animate([
+    { transform: `${ring.at(R * 1.7)} rotate(-90deg)`, opacity: 0, filter: "brightness(1)" },
+    { transform: `${ring.at(R)} rotate(0deg)`, opacity: 1, filter: "brightness(1)", offset: 0.3 },
+    { transform: `${ring.at(R * 0.97)} rotate(25deg)`, opacity: 1, filter: "brightness(1.3)", offset: 0.55 },
+    { transform: `${ring.at(R * 1.05)} rotate(35deg)`, opacity: 1, filter: "brightness(2)", offset: 0.62 },
+    { transform: `${ring.at(R * 1.7)} rotate(60deg)`, opacity: 0, filter: "brightness(1)" },
+  ], { duration: 1000, delay: 100, easing: "cubic-bezier(.3, .6, .3, 1)", fill: "both" });
+  setTimeout(() => ring.remove(), 1150);
+  // Motes spiral in from the ring to the card's heart.
+  const mote = (from, to, ms, delay, size = 1) => {
+    const m = el("span", "theme-mote");
+    Object.assign(m.style, { left: `${C.x}px`, top: `${C.y}px`, zIndex: Z + 1 });
+    document.body.append(m);
+    m.animate([
+      { transform: `translate(${from[0]}px, ${from[1]}px) scale(${size})`, opacity: 0 },
+      { opacity: 1, offset: 0.25 },
+      { transform: `translate(${to[0]}px, ${to[1]}px) scale(${size * 0.35})`, opacity: 0 },
+    ], { duration: ms, delay, easing: "cubic-bezier(.5, 0, .5, 1)", fill: "both" });
+    setTimeout(() => m.remove(), ms + delay + 20);
+  };
+  const polar = (r, t) => [Math.cos(t) * r, Math.sin(t) * r];
+  for (let i = 0; i < 16; i++) {
+    const t = (i / 16) * Math.PI * 2;
+    const m = el("span", "theme-mote");
+    Object.assign(m.style, { left: `${C.x}px`, top: `${C.y}px`, zIndex: Z + 1 });
+    document.body.append(m);
+    const pts = [polar(R, t), polar(R * 0.7, t + 0.6), polar(R * 0.35, t + 1.2), [0, 0]];
+    const delay = 200 + (i % 4) * 45;
+    m.animate([
+      { transform: `translate(${pts[0][0]}px, ${pts[0][1]}px) scale(1.2)`, opacity: 0 },
+      { transform: `translate(${pts[1][0]}px, ${pts[1][1]}px) scale(1)`, opacity: 1 },
+      { transform: `translate(${pts[2][0]}px, ${pts[2][1]}px) scale(.7)`, opacity: 1 },
+      { transform: "translate(0, 0) scale(.3)", opacity: 0 },
+    ], { duration: PEAK - delay, delay, easing: "cubic-bezier(.4, 0, .6, 1)", fill: "both" });
+    setTimeout(() => m.remove(), PEAK + 20);
   }
-  setTimeout(() => sun.remove(), 1200);   // room for the slowest variation
+  // At the peak, sparks scatter from the card as it turns.
+  setTimeout(() => {
+    for (let i = 0; i < 14; i++) {
+      const t = (i / 14) * Math.PI * 2 + Math.random() * 0.3;
+      mote([0, 0], polar(R * (0.9 + Math.random() * 0.6), t), 520 + Math.random() * 260, 0, 1.3);
+    }
+  }, PEAK);
+  return wait(PEAK);
 }
 
-// First tap: the card rises, bursts in sunlight and turns over.
+// First tap: the card rises inside a ring of runes and turns over.
 // After that, a tap opens the card's page.
 async function revealCardOfTheDay() {
   if (fdBusy) return;
   const today = todaysCard();
-  if (today) { openDetails([detailsItem(today.card, today.reversed, "Card of the day")]); return; }
+  if (today) {
+    // Its page opens out of the card, through a ring of runes, and goes back into it.
+    const flip = $("floatDeck").children[2]?.querySelector(".fd-flip");
+    ringTap(flip, flip?.querySelector(".cface"));
+    openDetails([detailsItem(today.card, today.reversed, "Card of the day")]);
+    return;
+  }
   fdBusy = true;
   const pick = drawCardOfTheDay();
   setFdFace(pick);
@@ -327,8 +483,9 @@ async function revealCardOfTheDay() {
   const label = $("cotd");
   label.classList.add("fade");
   mid.classList.add("lift");
-  if (!calm) { await wait(350); sunburst(); await wait(250); }
+  if (!calm) await arcaneReveal(mid);
   mid.classList.add("turned", "revealed");
+  if (!calm) cardFlare(mid.querySelector(".fd-flip > .cface"), 250);
   revealTitle(pick.card.name, pick.reversed ? "Card of the day · Reversed" : "Card of the day",
     mid.getBoundingClientRect().top - 4, document.querySelector(".home-head h1").getBoundingClientRect().bottom);
   showCotdLabel(pick);
@@ -355,7 +512,7 @@ $("summaryBtn").addEventListener("click", () => {
   summonSummary((magic) => openSummary(entries, title, magic, reading.readingId && {
     id: reading.readingId,
     onRename: (name) => { reading.title = name; if (S === reading) showReadingTitle(); },
-  }));
+  }), reading.readingId || reading);
 });
 
 // The reading's name, above the buttons once every card is turned.

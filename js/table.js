@@ -3,7 +3,8 @@
 
 // ── 2. The table ────────────────────────────────────────
 
-function startReading(spread) {
+function startReading(spread, from) {
+  if (swapping) return;
   const n = spread.positions.length;
   const deck = activeDeck();
   if (deck.length < n) {
@@ -15,8 +16,10 @@ function startReading(spread) {
   S = { spread, base: spread, theme: null, n, deck, slots: [], picked: 0, revealed: 0, phase: "shuffle" };
   resetMagic();
 
-  $("home").hidden = true;
-  $("table").hidden = false;
+  // The spread's cards leap out of the button you tapped and fly to their
+  // places on the table as it appears (see castSpread).
+  if (from && !calm) castSpread(from, n);
+  else swapScreen($("home"), $("table"));
   $("endActions").hidden = true;
   $("themeBtn").disabled = false;
 
@@ -50,6 +53,155 @@ function startReading(spread) {
   $("fan").innerHTML = "";
   $("hint").textContent = "Tap the deck to spread the cards";
   $("hint").classList.remove("dim");
+}
+
+// ── Casting the spread ──────────────────────────────────
+// Tapping a spread on the home screen: the other buttons step back while
+// the chosen one flares, and the little card backs drawn on it come alive:
+// they leap up out of the fan, fanning wider and glowing, while home
+// fades. As the table appears, each card flies in an arc to its own place,
+// one after another, growing to its full size and straightening from its
+// tilt on the way, then drops level onto its dotted place for the last
+// stretch and settles exactly on it. There it melts into the place: its
+// gold lines fade, leaving its glowing dotted outline on the place's own,
+// which lights up gold for a moment. The places are then ready for the
+// cards you'll pick. (The cards are drawn in gold lines only, with no fill,
+// so nothing is left to fade to emptiness.)
+// (Each card changes its real width and height rather than being scaled,
+// so it stays sharp at every size: a scaled-up picture blurs.)
+function castSpread(btn, n) {
+  swapping = true;   // (no second tap meanwhile; swapScreen carries it on)
+  const list = $("spreadList");
+  list.classList.add("chosen");
+  btn.classList.add("pick");
+  const fan = btn.querySelector(".spread-fan");
+  const fr = fan.getBoundingClientRect(), u = fr.width / 46;   // the fan's drawing is 46 wide (see spreadFan)
+  const w = 11 * u, h = 18 * u, big = 1.8;
+  const tilt = n === 1 ? 0 : Math.min(14, 5 + n * 3);
+  const glow = (g) => `0 0 ${4 + 5 * g}px rgba(255, 200, 110, ${0.22 + 0.22 * g})`;   // a soft glow, not a halo
+  const cards = [];
+  for (let k = 0; k < n; k++) {
+    // Where spreadFan drew this card, on screen.
+    const a = n === 1 ? 0 : -tilt + (2 * tilt * k) / (n - 1);
+    const x = fr.left + (23 + (k - (n - 1) / 2) * 3.2) * u, y = fr.top + (18 + Math.abs(a) * 0.12) * u;
+    const f = el("div", "cast-card");
+    const back = el("div", "cast-back");
+    const frame = el("span", "cast-frame"), orb = el("span", "cast-orb");
+    back.append(frame, orb);
+    f.append(back);
+    Object.assign(f.style, { left: `${x}px`, top: `${y}px`, zIndex: 9500 });
+    document.body.append(f);
+    // The leap: up and out of the button, fanning wider, growing, glowing.
+    const jx = (k - (n - 1) / 2) * w * big * Math.min(1.15, 6 / n), jy = -h * 1.7 - Math.cos((a * Math.PI) / 60) * h * 0.4;
+    const jump = { transform: `translate(${jx}px, ${jy}px) translate(-50%, -50%) rotate(${a * 2}deg)`,
+      width: `${w * big}px`, height: `${h * big}px`, boxShadow: glow(1), opacity: 1 };
+    f.animate([
+      { transform: `translate(0, -2px) translate(-50%, -50%) rotate(${a}deg)`, width: `${w}px`, height: `${h}px`, boxShadow: glow(0), opacity: 1 },
+      jump,
+    ], { duration: 320, delay: k * 30, easing: "cubic-bezier(.2, .9, .3, 1.15)", fill: "both", id: "exact" });   // (held there until it flies)
+    cards.push({ f, back, frame, orb, x, y, jump, a });
+  }
+  // The drawn fan empties as its cards leave it.
+  fanRest(btn);
+  fan.style.opacity = 0;
+
+  // A moment for the choice (and the leap) to show, then home fades.
+  setTimeout(() => swapScreen($("home"), $("table"), () => {
+    fan.style.opacity = "";   // (home is hidden now: all back as it was, for next time)
+    list.classList.remove("chosen");
+    btn.classList.remove("pick");
+    const reading = S;
+    cards.forEach((c, k) => {
+      const slot = reading?.slots[k];
+      if (!slot) { c.f.remove(); return; }
+      const t = slot.box.getBoundingClientRect();
+      const dx = t.left + t.width / 2 - c.x, dy = t.top + t.height / 2 - c.y;
+      const ms = 560, wait = 40 + k * 55, lift = Math.min(70, Math.abs(dy) * 0.4 + 30);
+      const sway = c.a === 0 ? (k % 2 ? 3 : -3) : -c.a * 0.4;   // a slight lean the other way, mid-arc
+      // An arc up and over, straightening as it goes; then a short, level
+      // drop onto its place, already upright and at its full size.
+      c.f.animate([
+        c.jump,
+        { transform: `translate(${dx * 0.5}px, ${Math.min(dy * 0.5, dy) - lift}px) translate(-50%, -50%) rotate(${sway}deg)`,
+          width: `${(w * big + t.width) / 2}px`, height: `${(h * big + t.height) / 2}px`, boxShadow: glow(1.4), opacity: 1, offset: 0.45 },
+        { transform: `translate(${dx}px, ${dy - 14}px) translate(-50%, -50%) rotate(0deg)`,
+          width: `${t.width}px`, height: `${t.height}px`, boxShadow: glow(1.2), opacity: 1, offset: 0.8 },
+        { transform: `translate(${dx}px, ${dy}px) translate(-50%, -50%) rotate(0deg)`,
+          width: `${t.width}px`, height: `${t.height}px`, boxShadow: glow(1), opacity: 1 },
+      ], { duration: ms, delay: wait, easing: "cubic-bezier(.4, .05, .3, 1)", fill: "forwards", id: "exact" });
+      // The landing: the card's inner frame grows out until it lies exactly
+      // on the place's dotted line, and becomes it (the card's own outline
+      // fading as it comes); the place lights up gold and settles back to
+      // rest. Its circle gathers into a mote of light and flies down into
+      // the deck, which glows as it arrives: the place now waits for a card
+      // from the deck.
+      setTimeout(() => {
+        if (S !== reading || !slot.box.isConnected) { c.f.remove(); return; }
+        // If the place has moved meanwhile (the phone's address bar resizing
+        // the screen, say), glide the last few pixels onto where it is now.
+        const n = slot.box.getBoundingClientRect();
+        const nx = n.left + n.width / 2 - c.x, ny = n.top + n.height / 2 - c.y;
+        const off = Math.abs(nx - dx) + Math.abs(ny - dy) + Math.abs(n.width - t.width);
+        if (off > 1) {
+          c.f.animate([{ transform: `translate(${nx}px, ${ny}px) translate(-50%, -50%)`, width: `${n.width}px`, height: `${n.height}px` }],
+            { duration: 140, easing: "ease-out", fill: "forwards" });
+        }
+        const lag = off > 1 ? 120 : 0;
+        // The frame grows out onto the place's line, as the card's outline gives way to it.
+        c.frame.animate([
+          { top: "10%", bottom: "10%", left: "16%", right: "16%", borderRadius: "2px", borderColor: "rgba(201, 169, 110, .5)", opacity: 1 },
+          { top: "-1px", bottom: "-1px", left: "-1px", right: "-1px", borderRadius: "7px", borderColor: "rgba(255, 225, 160, .95)", opacity: 1, offset: 0.7 },
+          { top: "-1px", bottom: "-1px", left: "-1px", right: "-1px", borderRadius: "7px", borderColor: "rgba(255, 225, 160, .95)", opacity: 0 },
+        ], { duration: 560, delay: lag, easing: "cubic-bezier(.3, .7, .3, 1)", fill: "forwards" });
+        c.back.animate([{ borderColor: "rgba(214, 182, 122, .95)" }, { borderColor: "rgba(214, 182, 122, 0)" }],
+          { duration: 300, delay: lag + 60, easing: "ease-out", fill: "forwards" });
+        slot.box.animate([
+          { borderColor: "rgba(201, 169, 110, .3)", boxShadow: "0 0 0 0 rgba(255, 200, 110, 0)" },
+          { borderColor: "rgba(255, 225, 160, .95)", boxShadow: "0 0 10px rgba(255, 200, 110, .35)", offset: 0.3 },
+          { borderColor: "rgba(201, 169, 110, .3)", boxShadow: "0 0 0 0 rgba(255, 200, 110, 0)" },
+        ], { duration: 1100, delay: lag + 300, easing: "ease-out" });
+        // The circle gathers into a mote and goes down into the deck.
+        c.orb.animate([
+          { transform: "translate(-50%, -50%) scale(1)", boxShadow: "0 0 0 rgba(255, 220, 150, 0)" },
+          { transform: "translate(-50%, -50%) scale(.18)", boxShadow: "0 0 10px 3px rgba(255, 220, 150, .9)" },
+        ], { duration: 260, delay: lag, easing: "ease-in", fill: "forwards" });
+        setTimeout(() => {
+          c.orb.style.visibility = "hidden";
+          if (S === reading) moteToDeck(c.orb, k);
+        }, lag + 260);
+        setTimeout(() => c.f.remove(), lag + 620);
+      }, wait + ms);
+    });
+  }), calm ? 0 : 200);
+}
+
+// A mote of light from a landed card's circle, flying in an arc down into
+// the deck, which glows as it arrives (one after another, as the cards land).
+function moteToDeck(from, k) {
+  const pile = $("deck");
+  if (!pile || pile.hidden) return;
+  const a = from.getBoundingClientRect(), b = pile.getBoundingClientRect();
+  const sx = a.left + a.width / 2, sy = a.top + a.height / 2;
+  const ex = b.left + b.width / 2, ey = b.top + b.height * 0.45;
+  const m = el("span", "deck-mote");
+  Object.assign(m.style, { left: `${sx}px`, top: `${sy}px`, zIndex: 9600 });
+  document.body.append(m);
+  const dx = ex - sx, dy = ey - sy, bend = (k % 2 ? 1 : -1) * Math.min(60, Math.abs(dx) * 0.35 + 20);
+  const ms = 520;
+  m.animate([
+    { transform: "translate(-50%, -50%) scale(1)", opacity: 1 },
+    { transform: `translate(calc(-50% + ${dx * 0.5 + bend}px), calc(-50% + ${dy * 0.45}px)) scale(.9)`, opacity: 1, offset: 0.5 },
+    { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.4)`, opacity: 0.2 },
+  ], { duration: ms, easing: "cubic-bezier(.5, 0, .4, 1)", fill: "forwards" });
+  setTimeout(() => {
+    m.remove();
+    const top = pile.lastElementChild;
+    top?.animate([
+      { boxShadow: "0 4px 12px rgba(0, 0, 0, .45), 0 0 0 rgba(255, 210, 130, 0)" },
+      { boxShadow: "0 4px 12px rgba(0, 0, 0, .45), 0 0 16px 4px rgba(255, 210, 130, .55)", offset: 0.3 },
+      { boxShadow: "0 4px 12px rgba(0, 0, 0, .45), 0 0 0 rgba(255, 210, 130, 0)" },
+    ], { duration: 700, easing: "ease-out" });
+  }, ms);
 }
 
 // How many cards go in each row. Every spread, of any size, fits on one
@@ -300,5 +452,11 @@ async function turn(slot) {
     }
     return;   // turning a card only shows it; tap it again to read it
   }
+  // A turned card answers the tap, and collapses into a black hole as its
+  // page opens (see collapseInto). A second tap meanwhile does nothing.
+  if (slot.opening) return;
+  slot.opening = true;
+  setTimeout(() => { slot.opening = false; }, 600);
+  cardTap(slot.box, slot.tcard.querySelector(".cface"));
   openReadingCard(slot.i);
 }

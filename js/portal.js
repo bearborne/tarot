@@ -34,6 +34,7 @@ function flyingCopy(src, z, look = src) {
 // tiny and spinning, to its own place in the summary's row of cards,
 // and flares softly as it lands.
 function emergeCards(sheet, C) {
+  const k = portalPace;
   [...sheet.querySelectorAll(".summary-cards .related-pic")].forEach((pic, i) => {
     const { c, x, y } = flyingCopy(pic, 9002);
     pic.style.visibility = "hidden";
@@ -42,18 +43,18 @@ function emergeCards(sheet, C) {
       { transform: `translate(${C.x - x}px, ${C.y - y}px) rotate(${turn}deg) scale(.05)`, opacity: 0, filter: "brightness(3)" },
       { opacity: 1, offset: 0.2 },
       { transform: "none", opacity: 1, filter: "brightness(1)" },
-    ], { duration: 1100, delay: 220 + i * 110, easing: "cubic-bezier(.16,.84,.24,1)", fill: "backwards" });
+    ], { duration: 1100 / k, delay: (220 + i * 110) / k, easing: "cubic-bezier(.16,.84,.24,1)", fill: "backwards" });
     let landed = false;
     const land = () => {
       if (landed) return;
       landed = true;
       c.remove();
       pic.style.visibility = "";
-      pic.animate([{ filter: "brightness(1.3) drop-shadow(0 0 10px rgba(214, 178, 112, .6))" }, { filter: "none" }], { duration: 650, easing: "ease-out" });
+      pic.animate([{ filter: "brightness(1.3) drop-shadow(0 0 10px rgba(214, 178, 112, .6))" }, { filter: "none" }], { duration: 650 / k, easing: "ease-out" });
     };
     a.onfinish = land;
     // If the page's animations stall (the tab hidden mid-flight), land the card anyway.
-    setTimeout(land, 220 + i * 110 + 1100 + 800);
+    setTimeout(land, (220 + i * 110 + 1100) / k + 800);
   });
 }
 
@@ -163,13 +164,13 @@ function arcanePortal(points, open) {
   });
   // The elemental frames around the cards fade as the cards leave them.
   const frames = src.some((p) => p.fly) && $("frames");
-  const framesFade = frames && frames.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700, delay: 300, fill: "forwards" });
+  const framesFade = frames && frames.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700 / portalPace, delay: 300 / portalPace, fill: "forwards" });
   // When each card starts falling in, and when it's gone (seconds).
   // (The window opens just as the first card is swallowed: no waiting.)
   const fall = (i) => [0.2 + i * 0.05, OPEN - 0.05 + i * 0.04];
 
   // When the window opens, how wide it is, and when it's all over (seconds).
-  const OPEN = 1.15, SHOW = 1.55, END = 2.2, SLOW = 1.4;
+  const OPEN = 1.15, SHOW = 1.55, END = 2.2, SLOW = 1.4 / portalPace;   // (faster on a repeat: see summonSummary)
   const easeInOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(2 - 2 * p, 3) / 2);
   // As it spins up, the whole circle swells to this much bigger.
   const SWELL = 1.3;

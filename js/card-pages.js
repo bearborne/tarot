@@ -47,6 +47,7 @@ function openQuick(i) {
   fillText($("quickText"), useReversed ? card.reversed : card.short, "Add a short description for this card in cards.js.");
   fillQuestions($("quickAsks"), questionsFor(card, reversed));
 
+  $("quick").style.zIndex = ++Z;   // above whatever has opened before
   $("quick").hidden = false;
   $("quick").animate([{ opacity: 0 }, { opacity: 1 }], { duration: 250 });
   $("quickBox").animate(
@@ -474,12 +475,29 @@ function openDetails(items, index = 0) {
   update();
   sheet.append(bar, body);
   document.body.append(sheet);
-  slideIn(sheet);
+  // Opened by tapping a card: the page blooms out of it, and goes back into it.
+  const tap = takeTap();
+  if (tap) bloomFrom(sheet, body, tap);
+  else slideIn(sheet);
   back.addEventListener("click", async () => {
     document.activeElement?.blur();
-    await slideOut(sheet);
+    await (tap && !calm ? closeInto(sheet, tap) : slideOut(sheet));
     sheet.remove();
   });
+}
+
+// A card's page opening out of the card that was tapped: the card falls in
+// on itself, its centre becoming a black hole (collapseInto, in
+// js/rune-ring.js), and the page opens out of the hole (holeOpen). Back:
+// the page closes into a hole there, and the card re-forms out of it (holeClose).
+function bloomFrom(sheet, body, tap) {
+  tap.ring.remove();   // (the hole does it all: no ring of runes)
+  tap.look = tap.glow?.classList?.contains("cface") ? tap.glow : tap.card;
+  const { ms, at, hole } = collapseInto(tap.card, tap.look);
+  holeOpen(sheet, at, body.children, ms, hole);
+}
+function closeInto(sheet, tap) {
+  return holeClose(sheet, tap.card, tap.look, tap.glow);
 }
 
 // The arrow keys move through the cards on the page in front.

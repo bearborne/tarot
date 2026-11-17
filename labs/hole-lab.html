@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hole Lab</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+  /* (the app's styles give the card faces, rings, hole and collapse; the lab's own layout below) */
+  body { background:#15131c; padding:20px 16px 48px; overflow:auto; }
+  .lab { max-width:1000px; margin:0 auto; }
+  h1 { margin:0 0 4px; color:var(--gold); font-weight:normal; text-align:center; }
+  .intro { margin:0 auto 16px; color:var(--muted); text-align:center; font-size:.92rem; max-width:680px; }
+  .panel { background:#1b1726; border:1px solid rgba(201,169,110,.2); border-radius:12px; padding:12px; margin-bottom:16px; }
+  .panel h2 { margin:0 0 8px; color:var(--gold); font-weight:normal; font-size:1.1rem; }
+  .row { display:grid; grid-template-columns:120px 1fr 56px; gap:8px; align-items:center; margin:6px 0; color:var(--muted); font-size:13px; }
+  .row output { text-align:right; color:var(--ink); }
+  input[type=range] { width:100%; accent-color:var(--gold); }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0; }
+  .btns button { font:inherit; font-size:13px; color:var(--ink); background:#241f31; border:1px solid rgba(201,169,110,.2); border-radius:7px; padding:6px 10px; cursor:pointer; }
+  canvas.view { display:block; width:100%; max-width:900px; margin:0 auto; border-radius:8px; background:#15131c; }
+  .scene { display:flex; gap:40px; align-items:center; justify-content:center; flex-wrap:wrap; min-height:260px; }
+  .scene .card { width:110px; aspect-ratio:4 / 7; border-radius:7px; overflow:hidden; box-shadow:0 3px 10px rgba(0,0,0,.45); }
+  .scene .card img { width:100%; height:100%; object-fit:cover; display:block; }
+</style>
+</head>
+<body>
+<div class="lab">
+  <h1>Hole Lab</h1>
+  <p class="intro">The small black hole and the collapse into it, from js/rune-ring.js (the app's own code). Above: the hole, drawn large and at its real sizes, at any moment. Below: a card and a button collapsing, by hand or played.</p>
+
+  <div class="panel">
+    <h2>The hole</h2>
+    <div class="row"><label>Moment (swirl)</label><input id="ms" type="range" min="0" max="3000" value="700"><output id="msO"></output></div>
+    <div class="row"><label>Holds (h)</label><input id="h" type="range" min="0" max="1" step=".01" value="1"><output id="hO"></output></div>
+    <div class="row"><label>Opened (grow)</label><input id="grow" type="range" min="0" max="1" step=".01" value="1"><output id="growO"></output></div>
+    <div class="btns"><button id="spin">Swirl</button></div>
+    <canvas class="view" id="view"></canvas>
+  </div>
+
+  <div class="panel">
+    <h2>The collapse</h2>
+    <div class="row"><label>Collapse (p)</label><input id="p" type="range" min="0" max="1" step=".01" value="0"><output id="pO"></output></div>
+    <div class="btns"><button id="play">Play both</button></div>
+    <div class="scene" id="scene">
+      <div class="card" id="card"><img src="../cards/the-magician.jpg" alt=""></div>
+      <button class="pill" id="pill">Browse the cards</button>
+    </div>
+  </div>
+</div>
+
+<script>let S = null; const calm = false; let Z = 100; const OPEN_FX = { bloomMs: 1070 };</script>
+<script src="../js/table-magic.js"></script>
+<script src="../js/arcane-circle.js"></script>
+<script src="../js/rune-ring.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+// ── The hole, large and at its real sizes ──
+const view = $("view"), W = 900, H = 420, k = Math.min(devicePixelRatio || 1, 2);
+view.width = W * k; view.height = H * k;
+const arts = { big: holeArt(22), s: holeArt(12), m: holeArt(20), l: holeArt(28) };
+function drawView() {
+  const ms = +$("ms").value, h = +$("h").value, grow = +$("grow").value;
+  $("msO").textContent = ms; $("hO").textContent = h; $("growO").textContent = grow;
+  const x = view.getContext("2d");
+  x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, view.width, view.height);
+  // a scrap of page behind, to see it over something
+  x.setTransform(k, 0, 0, k, 0, 0);
+  x.fillStyle = "#15131c"; x.fillRect(0, 0, W, H);
+  x.fillStyle = "#1f1b29"; x.fillRect(20, 20, 520, 380);
+  x.fillStyle = "rgba(233,226,211,.08)"; for (let i = 0; i < 12; i++) x.fillRect(40, 40 + i * 28, 300 + (i * 37) % 160, 8);
+  // large: four times
+  x.save(); x.translate(280, 210); x.scale(4, 4); arts.big.draw(x, ms, h, grow); x.restore();
+  // real sizes
+  [["s", 640], ["m", 730], ["l", 830]].forEach(([key, cx]) => { x.save(); x.translate(cx, 210); arts[key].draw(x, ms, h, grow); x.restore(); });
+  x.fillStyle = "#a79f8f"; x.font = "11px Georgia"; x.textAlign = "center";
+  x.fillText("×4", 280, 405); x.fillText("12px", 640, 300); x.fillText("20px", 730, 300); x.fillText("28px", 830, 300);
+}
+["ms", "h", "grow"].forEach((id) => $(id).addEventListener("input", drawView));
+let spinning = false;
+$("spin").onclick = () => {
+  spinning = !spinning;
+  const t0 = performance.now() - +$("ms").value;
+  const go = (now) => { if (!spinning) return; $("ms").value = Math.round(now - t0) % 3000; drawView(); requestAnimationFrame(go); };
+  requestAnimationFrame(go);
+};
+drawView();
+
+// ── The collapse, by hand ──
+let hand = null;
+function byHand(p) {
+  $("pO").textContent = p;
+  if (!hand) {
+    hand = ["card", "pill"].map((id) => {
+      const node = $(id), b = node.getBoundingClientRect();
+      const fall = collapseCopy(node, node);
+      node.style.visibility = "hidden";
+      const C = { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+      const hr = Math.min(30, Math.max(10, Math.min(b.width, b.height) * 0.24));
+      const art = holeArt(hr), cv = document.createElement("canvas"), kk = k * 1.5;
+      cv.className = "mini-hole"; cv.width = cv.height = Math.ceil(art.box * kk);
+      Object.assign(cv.style, { left: `${C.x}px`, top: `${C.y}px`, width: `${art.box}px`, height: `${art.box}px`, zIndex: ++Z });
+      document.body.append(cv);
+      return { node, fall, cv, art, kk };
+    });
+  }
+  hand.forEach(({ fall, cv, art, kk }) => {
+    fall.set(p, 700);
+    const x = cv.getContext("2d");
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height);
+    x.setTransform(kk, 0, 0, kk, (art.box / 2) * kk, (art.box / 2) * kk);
+    art.draw(x, 700, Math.min(1, p * 4), 1 - Math.pow(1 - Math.min(1, p * 1.25), 3));
+  });
+}
+function clearHand() {
+  if (!hand) return;
+  hand.forEach(({ node, fall, cv }) => { fall.remove(); cv.remove(); node.style.visibility = ""; });
+  hand = null;
+}
+$("p").addEventListener("input", (e) => { if (+e.target.value === 0) { clearHand(); $("pO").textContent = 0; } else byHand(+e.target.value); });
+$("play").onclick = () => {
+  clearHand(); $("p").value = 0; $("pO").textContent = 0;
+  ["card", "pill"].forEach((id) => {
+    const b = $(id).getBoundingClientRect();
+    const at = { x: b.left + b.width / 2, y: b.top + b.height / 2 };
+    collapseInto($(id), $(id), at);
+  });
+};
+</script>
+</body>
+</html>

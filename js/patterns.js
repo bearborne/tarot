@@ -15,7 +15,7 @@ function renderPatterns(body) {
   PAT_SPANS.forEach((sp) => {
     const c = el("button", `chip${PAT.span === sp.id ? " on" : ""}`, sp.name);
     c.setAttribute("aria-pressed", PAT.span === sp.id);
-    c.addEventListener("click", () => { PAT.span = sp.id; renderHistory(); });
+    c.addEventListener("click", () => { PAT.span = sp.id; renderHistory(); riseInHistory(); });
     chips.append(c);
   });
   body.append(chips);
