@@ -208,7 +208,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .title-star i:last-child { transform: scaleX(-1); }
 .title-star svg { width: 12px; height: 12px; fill: color-mix(in srgb, #e7cf9a calc(100% - var(--day, 0) * 100%), var(--title-ink)); }
 @media (prefers-reduced-motion: reduce) { .bear-stars circle { animation: none; } }
-.home-sub { margin: 0 0 14px; text-align: center; color: var(--muted); font-style: italic; }
+.home-sub { margin: 4px 0 10px; text-align: center; color: var(--muted); font-style: italic; }
 
 /* The night sky behind the home screen */
 .sky {
@@ -219,26 +219,30 @@ button { font: inherit; color: inherit; cursor: pointer; }
   pointer-events: none;
 }
 #home > :not(.sky) { position: relative; }
+/* Everything on the home screen sits together as one group, in the middle
+   of the screen's height, rather than spread out to fill it. */
+#home { justify-content: center; }
 
 /* The floating deck above the spreads. It grows to take up the spare
    height, so the switches at the bottom of the home screen sit on the
    bottom edge of the screen; the cards float in the middle of it. */
 .float-deck {
+  /* The cards' height (from the screen's), and just room enough round them:
+     above for the lifted card, below a little for the fan. */
+  --ch: clamp(104px, 27vh, 270px);
   position: relative;
-  flex: 1 0 128px;
+  flex: 0 0 auto;
+  height: calc(var(--ch) * 1.18 + 14px);
   width: 100%;
   margin: 0 auto;
   cursor: pointer;
-  /* the cards are sized from this box's height (cqh) */
-  container-type: size;
+  container-type: size;   /* (the keywords are sized from its height) */
 }
 .fd-card {
-  /* card height: about half the box, never smaller than before */
-  --ch: clamp(92px, 52cqh, 300px);
   --cw: calc(var(--ch) * 54 / 92);
   position: absolute;
   left: 50%;
-  top: calc(50% - var(--ch) / 2 + 4px);
+  top: calc(100% - var(--ch) - 8px);   /* (standing at the box's foot) */
   width: var(--cw);
   height: var(--ch);
   margin-left: calc(var(--cw) / -2);
@@ -246,7 +250,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   transform: rotate(var(--a));
   transition: transform .6s cubic-bezier(.3,.7,.3,1);
 }
-.fd-card.lift { transform: translateY(-16px) scale(1.12); z-index: 2; }
+.fd-card.lift { transform: translateY(-6px) scale(1.12); transform-origin: 50% 100%; z-index: 2; }
 .fd-bob { width: 100%; height: 100%; animation: fd-bob 3.2s ease-in-out infinite; }
 @keyframes fd-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(var(--bob, -6px)); } }
 .fd-flip {
@@ -270,7 +274,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
   box-shadow: 0 0 14px 3px rgba(255, 214, 130, .55);
 }
 /* TEMPORARY, for testing: the reset under the card of the day's label */
-.cotd-reset { display: block; margin: 2px auto 0; color: var(--muted); font-size: .72rem; opacity: .7; }
 /* While the card of the day turns night to day: the home screen's words and
    lines shift from gold towards a deep ink blue where the day reaches them
    (and back as night returns), with a soft pale halo, so they stay readable
@@ -287,7 +290,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #cotd[style*="--day"], .fd-word[style*="--day"] {
   color: var(--ink-day) !important;
   text-shadow: var(--halo-day) !important;
-}#cotdReset[style*="--day"], .home-sub[style*="--day"] { color: var(--muted-day) !important; text-shadow: var(--halo-day); }
+}
+.home-sub[style*="--day"] { color: var(--muted-day) !important; text-shadow: var(--halo-day); }
 #homeNudge[style*="--day"] { color: var(--ink-day) !important; }
 .spread-btn[style*="--day"], #home .home-links .pill[style*="--day"], .option[style*="--day"] {
   border-color: var(--line-day) !important;
@@ -329,7 +333,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .float-deck:not(:has(.revealed)):has(.fd-card:hover) .fd-card:not(:hover):not(.lift) { transform: rotate(var(--a)) scale(.94); }
   /* (it keeps its place in the fan: lifted a little, not brought over the others) */
   .fd-card:not(.lift):hover { transform: rotate(var(--a)) translateY(-8px); }
-  .fd-card.lift:hover { transform: translateY(-20px) scale(1.15); }
+  .fd-card.lift:hover { transform: translateY(-10px) scale(1.15); }
   .fd-card:hover .fd-flip > .cback { box-shadow: 0 4px 12px rgba(0, 0, 0, .45), 0 0 16px 3px rgba(255, 214, 130, .45); }
   .fd-card.revealed:hover .fd-flip > .cface { box-shadow: 0 0 20px 5px rgba(255, 214, 130, .7); }
 }
@@ -360,7 +364,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 .cotd {
   display: block;
-  margin: 0 auto 4px;
+  margin: 2px auto 0;
   padding: 4px 12px;
   background: none;
   border: 0;
@@ -371,6 +375,36 @@ button { font: inherit; color: inherit; cursor: pointer; }
   transition: opacity .3s;
 }
 .cotd.fade { opacity: 0; }
+/* (before the reveal, clear of the fan's outer cards, whose corners reach
+   below the box; once revealed they're gone, and the title sits up close) */
+.cotd:not(.named) { margin-top: 24px; }
+/* Once revealed: the card's name as its title, "Card of the day" beneath,
+   and a small ornament. Its gold turns towards ink while the reveal's day
+   is behind it (--day, see dawnReveal), so it reads on the bright sky. */
+.cotd.named { display: grid; justify-items: center; gap: 1px; font-style: normal; letter-spacing: 0; padding: 2px 12px 4px; }
+.cotd-name {
+  font-size: clamp(1.05rem, 4.6vw, 1.3rem);
+  line-height: 1.15;
+  letter-spacing: .05em;
+  color: color-mix(in srgb, #f3dfae calc(100% - var(--day, 0) * 100%), #14244a);
+  text-shadow:
+    0 0 5px rgba(255, 214, 140, calc(.45 * (1 - var(--day, 0)))),
+    0 0 14px rgba(201, 169, 110, calc(.35 * (1 - var(--day, 0)))),
+    0 1px 2px rgba(0, 0, 0, calc(.9 * (1 - var(--day, 0)))),
+    0 0 calc(var(--day, 0) * 7px) rgba(255, 255, 255, calc(var(--day, 0) * .7));
+}
+.cotd-sub {
+  font-size: .6rem;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--gold) calc(100% - var(--day, 0) * 100%), #2a3d66);
+  text-shadow: 0 0 calc(var(--day, 0) * 6px) rgba(255, 255, 255, calc(var(--day, 0) * .6));
+  opacity: .85;
+}
+.cotd-line { display: flex; align-items: center; justify-content: center; gap: 6px; width: 9rem; margin-top: 3px; }
+.cotd-line i { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, color-mix(in srgb, rgba(201, 169, 110, .8) calc(100% - var(--day, 0) * 100%), rgba(20, 36, 74, .7))); }
+.cotd-line i:last-child { transform: scaleX(-1); }
+.cotd-line b { width: 4px; height: 4px; transform: rotate(45deg); background: color-mix(in srgb, var(--gold) calc(100% - var(--day, 0) * 100%), #14244a); }
 #home { overflow-x: clip; }
 
 /* The table's magic: rune rings, light and lines drawn behind the cards */
@@ -1017,7 +1051,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   flex-wrap: wrap;
   justify-content: center;
   gap: 10px;
-  margin: 26px auto 0;
+  margin: 16px auto 0;
 }
 .home-links .pill { padding: 11px 20px; }
 /* On a phone the three buttons share one line */
@@ -1422,7 +1456,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   justify-content: center;
   gap: 6px;
   width: 100%;
-  margin: 18px auto 0;
+  margin: 14px auto 0;
 }
 .option {
   flex: none;

@@ -305,8 +305,9 @@ function setFdFace(pick) {
 function showCotdWords(pick, fadeIn) {
   const box = $("floatDeck");
   box.querySelector(".fd-words")?.remove();
-  const words = cotdWords(pick);
+  const words = filled(keywordsFor(pick.card, pick.reversed)).slice(0, 6);
   if (!words.length) return;
+  const first = Math.random() < 0.5 ? 1 : -1;   // which side starts (and, with an odd number, gets the extra one)
   const ring = el("div", "fd-words");
   ring.setAttribute("aria-hidden", "true");
   const spans = words.map((w, i) => {
@@ -316,7 +317,7 @@ function showCotdWords(pick, fadeIn) {
     word.style.animationDuration = `${vary(0.9).toFixed(2)}s, ${vary(4.2, 0.25).toFixed(2)}s`;
     word.style.animationDelay = `${fadeIn ? (0.15 + i * 0.12).toFixed(2) : 0}s, ${(-Math.random() * 4).toFixed(2)}s`;
     if (!fadeIn) word.style.animationName = "none, fd-drift";
-    word.dataset.side = i % 2 ? "1" : "-1";   // alternate sides, so the order reads across
+    word.dataset.side = String(i % 2 ? -first : first);   // alternate sides, so the order reads across
     word.dataset.jx = Math.random().toFixed(3);
     word.dataset.jy = wobble(1).toFixed(3);
     ring.append(word);
@@ -324,23 +325,6 @@ function showCotdWords(pick, fadeIn) {
   });
   box.append(ring);
   placeCotdWords();
-}
-
-// Six words for the card of the day, three each side: its keywords (five for
-// every card), and to make six, one of its tags (the shortest), or else its
-// element.
-function cotdWords(pick) {
-  const words = filled(keywordsFor(pick.card, pick.reversed)).slice(0, 6);
-  const have = new Set(words.map((w) => w.toLowerCase()));
-  const extra = [
-    ...(pick.card.tags || []).map((id) => String(id).replace(/-/g, " ")).sort((a, b) => a.length - b.length),   // (a tag's id is its name, hyphenated)
-    pick.card.correspondences?.element,
-  ].filter(Boolean).map((w) => String(w).toLowerCase());
-  for (const w of extra) {
-    if (words.length >= 6) break;
-    if (!have.has(w)) { words.push(w); have.add(w); }
-  }
-  return words;
 }
 
 function placeCotdWords() {
@@ -351,7 +335,9 @@ function placeCotdWords() {
   const ch = mid.offsetHeight * 1.12;              // the lifted card's size
   const half = (mid.offsetWidth * 1.12) / 2;
   const room = box.clientWidth / 2 - 8;            // from the centre to the screen's edge
-  const cy = -12;                                  // the lifted card sits a little above centre
+  // (the lifted card's middle, from the box's: the cards stand at its foot,
+  // and lifting raises it 6px and grows it from its bottom edge)
+  const cy = (box.clientHeight / 2 - 8 - mid.offsetHeight / 2) - (0.06 * mid.offsetHeight + 6);
   [-1, 1].forEach((side) => {
     const list = words.filter((w) => +w.dataset.side === side);
     list.forEach((w, k) => {
@@ -377,9 +363,34 @@ function placeCotdWords() {
   });
 }
 
-function showCotdLabel(pick) {
-  $("cotd").textContent = `Card of the day · ${cotdName(pick)}`;
+// Under the card once it's revealed: its name as a title, "Card of the day"
+// beneath it, and a small ornament. On the reveal (`appear`) the name's
+// letters come out of a soft blur one by one and the ornament draws out.
+function showCotdLabel(pick, appear = false) {
+  const label = $("cotd");
+  const name = el("span", "cotd-name");
+  pick.card.name.split(" ").forEach((w, wi) => {   // (grouped by word, so a long name wraps between words)
+    if (wi) name.append(" ");
+    const group = el("span", "rpg-word");
+    [...w].forEach((ch) => group.append(el("span", "rpg-letter", ch)));
+    name.append(group);
+  });
+  const sub = el("span", "cotd-sub", pick.reversed ? "Card of the day · Reversed" : "Card of the day");
+  const line = el("span", "cotd-line");
+  line.append(el("i"), el("b"), el("i"));
+  label.replaceChildren(name, sub, line);
+  label.classList.add("named");
+  label.setAttribute("aria-label", `Card of the day: ${cotdName(pick)}`);
   $("floatDeck").setAttribute("aria-label", `Card of the day: ${cotdName(pick)}`);
+  if (!appear || calm) return;
+  const letters = name.querySelectorAll(".rpg-letter");
+  letters.forEach((s, i) => s.animate(
+    [{ opacity: 0, filter: "blur(4px)", transform: "translateY(5px) scale(1.25)" }, { opacity: 1, filter: "blur(0)", transform: "none" }],
+    { duration: 420, delay: 100 + i * 28 + wobble(14), easing: "ease-out", fill: "both" }));
+  sub.animate([{ opacity: 0, letterSpacing: ".45em" }, { opacity: 1, letterSpacing: ".25em" }],
+    { duration: 600, delay: 200 + letters.length * 28, easing: "ease-out", fill: "both" });
+  line.animate([{ transform: "scaleX(0)", opacity: 0 }, { transform: "scaleX(1)", opacity: 1 }],
+    { duration: 600, delay: 300 + letters.length * 28, easing: "cubic-bezier(.2,.8,.2,1)", fill: "both" });
 }
 
 function buildFloatDeck() {
@@ -412,6 +423,8 @@ function buildFloatDeck() {
   } else {
     box.setAttribute("aria-label", "Reveal card of the day");
     $("cotd").textContent = "Reveal card of the day";
+    $("cotd").classList.remove("named");
+    $("cotd").removeAttribute("aria-label");
   }
 }
 
@@ -754,10 +767,10 @@ function dawnMotes(h) {
 // peak, when the card should turn; the light carries on and fades by itself.
 function dawnReveal(mid) {
   const deck = $("floatDeck"), d = deck.getBoundingClientRect(), b = mid.getBoundingClientRect();
-  // Where the card will be once lifted (.fd-card.lift: up 16px, 1.12 times
-  // as big, from a point half its height below it), within the deck's box.
+  // Where the card will be once lifted (.fd-card.lift: up 6px, 1.12 times
+  // as big, from its bottom edge), within the deck's box.
   const h = b.height * 1.12;
-  const cx = b.left + b.width / 2 - d.left, cy = b.top + b.height / 2 - 0.12 * b.height - 16 - d.top;
+  const cx = b.left + b.width / 2 - d.left, cy = b.top + b.height / 2 - 0.06 * b.height - 6 - d.top;
   // The light round the card: room for its glow, never more than about 1400
   // pixels across (it's soft, and a phone has to keep up).
   const S = Math.ceil(h * 4.4), k = Math.min(devicePixelRatio || 1, 1.5, 1400 / S);
@@ -805,7 +818,7 @@ function dawnReveal(mid) {
   // The home screen's words and lines darken towards ink where the day
   // reaches them (and back as the night comes), so they stay readable on the
   // bright sky: each gets --day, how much day is behind it (see style.css).
-  const ui = "#home .home-head, #cotd, #cotdReset, #home .home-sub, .spread-btn, #home .home-links .pill, #homeNudge, .option, .fd-word";
+  const ui = "#home .home-head, #cotd, #home .home-sub, .spread-btn, #home .home-links .pill, #homeNudge, .option, .fd-word";
   const shadeForDay = (t) => document.querySelectorAll(ui).forEach((el) => {
     const r = el.getBoundingClientRect();
     if (!r.width) return;
@@ -1035,8 +1048,15 @@ function dustToWords(mid, pick, t0) {
     if (!words && mid.isConnected) gather(0);
     words?.forEach(show);
   }
+  // Where each word is this frame (they drift; measured once a frame).
+  let rects = new Map();
+  const rectOf = (w) => {
+    if (!rects.has(w)) rects.set(w, w.el.getBoundingClientRect());
+    return rects.get(w);
+  };
   const frame = (now) => {
     if (ended) return;
+    rects = new Map();
     if (!mid.isConnected) { ended = true; under.remove(); over.remove(); return; }
     const t = now - t0, dt = Math.min(50, last == null ? 16 : now - last) / 1000;
     last = now;
@@ -1095,7 +1115,9 @@ function dustToWords(mid, pick, t0) {
       if (q.fly) {
         // On its way to its word, along a curve.
         const f = clamp((t - q.fly.at) / q.fly.ms), e = f < 0.5 ? 2 * f * f : 1 - Math.pow(2 - 2 * f, 2) / 2;
-        const { a, c, b } = q.fly, u = 1 - e;
+        // (its end follows the word as it drifts, so it lands on the letters)
+        const { a, c, spot, w } = q.fly, wr = rectOf(w), u = 1 - e;
+        const b = { x: wr.left + wr.width * spot.u, y: wr.top + wr.height * spot.v };
         q.x = u * u * a.x + 2 * u * e * c.x + e * e * b.x;
         q.y = u * u * a.y + 2 * u * e * c.y + e * e * b.y;
         if (f >= 1 && !q.came) {
@@ -1123,11 +1145,11 @@ function dustToWords(mid, pick, t0) {
         if (q.word >= 0 && wk > 0.4) {
           const w = words[q.word], start = Math.max(q.wakeAt + 280, w.start) + (q.delay ??= r(0, 700));
           if (t >= start) {
-            const b = w.el.getBoundingClientRect();
-            const to = { x: r(b.left + b.width * 0.08, b.right - b.width * 0.08), y: r(b.top + b.height * 0.3, b.bottom - b.height * 0.3) };
+            const b = rectOf(w), spot = { u: r(0.08, 0.92), v: r(0.3, 0.7) };
+            const to = { x: b.left + b.width * spot.u, y: b.top + b.height * spot.v };
             const mx = (q.x + to.x) / 2, my = (q.y + to.y) / 2, dx = to.x - q.x, dy = to.y - q.y, l = Math.hypot(dx, dy) || 1;
             const bend = r(30, 80 + l * 0.15) * (Math.random() < 0.5 ? -1 : 1);
-            q.fly = { at: t, ms: r(700, 950) + Math.min(320, l * 0.5), a: { x: q.x, y: q.y }, b: to, c: { x: mx - (dy / l) * bend, y: my + (dx / l) * bend - 30 } };
+            q.fly = { at: t, ms: r(700, 950) + Math.min(320, l * 0.5), a: { x: q.x, y: q.y }, b: to, spot, w, c: { x: mx - (dy / l) * bend, y: my + (dx / l) * bend - 30 } };
           }
         }
       }
@@ -1226,9 +1248,7 @@ async function revealCardOfTheDay() {
   }
   mid.classList.add("turned", "revealed");
   if (!calm) cardFlare(mid.querySelector(".fd-flip > .cface"), 250);
-  revealTitle(pick.card.name, pick.reversed ? "Card of the day · Reversed" : "Card of the day",
-    mid.getBoundingClientRect().top - 4, document.querySelector(".home-head h1").getBoundingClientRect().bottom);
-  showCotdLabel(pick);
+  showCotdLabel(pick, true);   // (its name comes up under it, as its title)
   if (calm) {
     [...$("floatDeck").children].forEach((c) => c !== mid && c.classList.add("gone"));
     showCotdWords(pick, true);
@@ -1240,18 +1260,6 @@ async function revealCardOfTheDay() {
 
 $("floatDeck").addEventListener("click", revealCardOfTheDay);
 
-// TEMPORARY, for testing the reveal: forgets today's card (and its entry in
-// the history), so it can be revealed again. Remove with its button in index.html.
-function resetCardOfTheDay() {
-  if (fdBusy) return;
-  try { localStorage.removeItem("tarot-cotd"); } catch {}
-  const today = new Date().toDateString();
-  loadHistory().filter((r) => r.spread === COTD_SPREAD && new Date(r.t).toDateString() === today)
-    .forEach((r) => removeReading(r.id));
-  buildFloatDeck();
-  placeCotdWords();
-}
-$("cotdReset").addEventListener("click", resetCardOfTheDay);
 $("cotd").addEventListener("click", revealCardOfTheDay);
 
 addEventListener("resize", () => { sizeSky(); if (calm) drawSky(0); placeCotdWords(); });
