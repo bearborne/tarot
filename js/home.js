@@ -305,7 +305,7 @@ function setFdFace(pick) {
 function showCotdWords(pick, fadeIn) {
   const box = $("floatDeck");
   box.querySelector(".fd-words")?.remove();
-  const words = filled(keywordsFor(pick.card, pick.reversed)).slice(0, 6);
+  const words = cotdWords(pick);
   if (!words.length) return;
   const ring = el("div", "fd-words");
   ring.setAttribute("aria-hidden", "true");
@@ -324,6 +324,23 @@ function showCotdWords(pick, fadeIn) {
   });
   box.append(ring);
   placeCotdWords();
+}
+
+// Six words for the card of the day, three each side: its keywords (five for
+// every card), and to make six, one of its tags (the shortest), or else its
+// element.
+function cotdWords(pick) {
+  const words = filled(keywordsFor(pick.card, pick.reversed)).slice(0, 6);
+  const have = new Set(words.map((w) => w.toLowerCase()));
+  const extra = [
+    ...(pick.card.tags || []).map((id) => String(id).replace(/-/g, " ")).sort((a, b) => a.length - b.length),   // (a tag's id is its name, hyphenated)
+    pick.card.correspondences?.element,
+  ].filter(Boolean).map((w) => String(w).toLowerCase());
+  for (const w of extra) {
+    if (words.length >= 6) break;
+    if (!have.has(w)) { words.push(w); have.add(w); }
+  }
+  return words;
 }
 
 function placeCotdWords() {
@@ -389,6 +406,7 @@ function buildFloatDeck() {
   if (pick) {
     setFdFace(pick);
     box.children[2].classList.add("lift", "turned", "revealed");
+    [...box.children].forEach((c, i) => i !== 2 && c.classList.add("gone"));   // (the rest went to dust)
     showCotdLabel(pick);
     showCotdWords(pick, false);
   } else {
@@ -414,29 +432,25 @@ function buildFloatDeck() {
 const DAWN_PEAK = 650, DAWN_END = 4250;
 // When things happen after the card turns (ms): the halo leaves the screen,
 // golden hour, and the night falling.
-const DUSK = { haloGone: 1280, gold: [1250, 2000], night: [1650, 3500] };
+const DUSK = { haloGone: 1280, gold: [1150, 2350], night: [1450, 3550] };
 
 // Where the halo, the day and the night are, `t` ms in, for a halo released
 // at C (on screen) from a card `h` tall: the halo's radius R and strength a;
-// how far into golden hour the day is (gold, 0 to 1); and the night: where
-// the middle of its front is (f) and how wide the front is (FW). Night is
-// complete within f - FW/2, day still untouched beyond f + FW/2.
+// how far into golden hour the day is (gold, 0 to 1); and how far the
+// night has come back (night, 0 to 1), the same everywhere at once.
 function haloState(t, C, W, H, h) {
   const burst = t - DAWN_PEAK;
   const far = Math.hypot(Math.max(C.x, W - C.x), Math.max(C.y, H - C.y)) + 80;
-  const FW = Math.max(280, far * 0.6);
-  if (burst < 0) return { R: 0, a: 0, far, FW, f: -FW, gold: 0, burst };
+  if (burst < 0) return { R: 0, a: 0, far, gold: 0, night: 0, burst };
   const clamp = (v) => Math.min(1, Math.max(0, v));
   const seg = (v, a, b) => clamp((v - a) / (b - a));
   const r0 = h * 0.55, u = seg(burst, 0, 1250);
   const R = r0 + (far + 140 - r0) * (1 - Math.pow(1 - u, 2.1));                   // quick at first, easing as it goes
   const a = Math.min(1, burst / 120) * (1 - seg(burst, 1000, DUSK.haloGone));       // fading as it leaves the screen
   const g = seg(burst, ...DUSK.gold), gold = g * g * (3 - 2 * g);
-  // The night's front travels from just short of the card (so it begins as a
-  // gentle dimming there, not an edge) to past the corners, easing in and out.
-  const n = seg(burst, ...DUSK.night), nE = n * n * (3 - 2 * n);
-  const f = -FW * 0.5 + (far + FW) * nE;
-  return { R, a, far, FW, f, gold, burst };
+  // The night: the whole sky slowly crosses back to it, easing in and out.
+  const n = seg(burst, ...DUSK.night), night = (1 - Math.cos(Math.PI * n)) / 2;   // (never pausing: under way at once, eased only gently)
+  return { R, a, far, gold, night, burst };
 }
 
 // How much day is behind a point (x, y) on the screen, `t` ms in (0 at
@@ -446,7 +460,7 @@ function dayAmount(t, C, W, H, h, x, y) {
   if (s.R <= 0) return 0;
   const smooth = (v) => { v = Math.min(1, Math.max(0, v)); return v * v * v * (v * (6 * v - 15) + 10); };
   const r = Math.hypot(x - C.x, y - C.y), ew = Math.max(40, s.R * 0.07);
-  return smooth((r - (s.f - s.FW / 2)) / s.FW) * (1 - smooth((r - (s.R - ew)) / ew));
+  return (1 - s.night) * (1 - smooth((r - (s.R - ew)) / ew));
 }
 
 // One moment of the light round the card, `t` ms in, for a card `h` tall,
@@ -549,7 +563,7 @@ function dawnFrame(t, h, motes) {
 // each with a small glint, as it passes them.
 function daySky(ctx, t, W, H, C, h, keep = {}) {
   const s = haloState(t, C, W, H, h);
-  if (s.R <= 0 || s.f - s.FW / 2 >= s.far) return;
+  if (s.R <= 0 || s.night >= 1) return;
   const TAU = Math.PI * 2;
   const mix = (p, q, k) => p.map((v, i) => v + (q[i] - v) * k);
   const rgba = (c, a = c[3]) => `rgba(${Math.round(c[0])}, ${Math.round(c[1])}, ${Math.round(c[2])}, ${Math.max(0, a).toFixed(3)})`;
@@ -573,12 +587,11 @@ function daySky(ctx, t, W, H, C, h, keep = {}) {
   ctx.fillStyle = sun;
   ctx.fillRect(0, 0, W, H);
   ctx.restore();
-  // Where the day still is: none within the night, all of it beyond its
-  // front, a smooth curve across the front (and while the halo is still on
-  // the screen, only within it).
+  // Where the day is: within the halo while it's still on the screen, and
+  // fading everywhere alike as the night comes back.
   const ew = Math.max(40, s.R * 0.07);
-  const Rg = Math.max(s.far + s.FW, s.R + ew), N = 28;
-  const dayAt = (r) => smooth((r - (s.f - s.FW / 2)) / s.FW) * (1 - smooth((r - (s.R - ew)) / ew));
+  const Rg = Math.max(s.far, s.R + ew), N = 28;
+  const dayAt = (r) => (1 - s.night) * (1 - smooth((r - (s.R - ew)) / ew));
   const m = ctx.createRadialGradient(C.x, C.y, 0, C.x, C.y, Rg);
   for (let i = 0; i <= N; i++) m.addColorStop(i / N, `rgba(0, 0, 0, ${dayAt((Rg * i) / N).toFixed(4)})`);
   ctx.save();
@@ -586,51 +599,30 @@ function daySky(ctx, t, W, H, C, h, keep = {}) {
   ctx.fillStyle = m;
   ctx.fillRect(0, 0, W, H);
   ctx.restore();
-  // The dusk along the front: swelling and fading across it, deep indigo on
-  // the night's side, through violet and rose, to a little amber on the day's.
-  if (s.f + s.FW / 2 > 0) {
-    const cols = [[30, 22, 70], [78, 48, 128], [160, 72, 124], [226, 128, 82]];
-    const tint = ctx.createRadialGradient(C.x, C.y, 0, C.x, C.y, Rg);
-    for (let i = 0; i <= N; i++) {
-      const x = ((Rg * i) / N - (s.f - s.FW / 2)) / s.FW;        // across the front, 0 (night) to 1 (day)
-      const bell = x <= 0 || x >= 1 ? 0 : Math.pow(Math.sin(Math.PI * x), 1.5);
-      const c = x <= 0 ? cols[0] : x >= 1 ? cols[3] : (() => { const p = x * 3, k = Math.min(2, Math.floor(p)); return mix(cols[k], cols[k + 1], p - k); })();
-      tint.addColorStop(i / N, rgba(c, 0.42 * bell));
-    }
-    ctx.fillStyle = tint;
+  // Dusk, over the whole sky as it darkens: a little amber, then rose,
+  // violet and deep indigo, swelling and fading as the night comes.
+  if (s.night > 0) {
+    const cols = [[226, 128, 82], [160, 72, 124], [78, 48, 128], [30, 22, 70]];
+    const p = s.night * 3, k = Math.min(2, Math.floor(p)), c = mix(cols[k], cols[k + 1], p - k);
+    ctx.fillStyle = rgba(c, 0.42 * Math.pow(Math.sin(Math.PI * s.night), 1.5));
     ctx.fillRect(0, 0, W, H);
   }
-  // Stardust shimmering along the front, and the stars waking as it passes.
-  if (!keep.dust) {
+  // The stars waking here and there as it darkens, each with a glint.
+  if (!keep.stars) {
     const r = (a, b) => a + Math.random() * (b - a);
-    keep.dust = Array.from({ length: 220 }, () => ({ q: r(0, TAU), d: (Math.random() + Math.random() - 1) * 0.5, s: r(0.5, 1.4), ph: r(0, 6), tw: r(110, 300) }));
-    keep.stars = Array.from({ length: 120 }, () => ({ x: r(0, W), y: r(0, H), s: r(0.6, 1.5), lag: r(0, 0.25) }));
-    const dot = (inner, mid) => {
-      const c = document.createElement("canvas"); c.width = c.height = 48;
-      const x = c.getContext("2d"), g = x.createRadialGradient(24, 24, 0, 24, 24, 24);
-      g.addColorStop(0, inner); g.addColorStop(0.25, mid); g.addColorStop(1, "rgba(200, 190, 255, 0)");
-      x.fillStyle = g; x.fillRect(0, 0, 48, 48);
-      return c;
-    };
-    keep.sparkle = dot("rgba(250, 248, 255, 1)", "rgba(210, 200, 255, .45)");
+    keep.stars = Array.from({ length: 140 }, () => ({ x: r(0, W), y: r(0, H), s: r(0.6, 1.5), at: r(0.1, 0.85) }));
+    const c = document.createElement("canvas"); c.width = c.height = 48;
+    const x = c.getContext("2d"), g = x.createRadialGradient(24, 24, 0, 24, 24, 24);
+    g.addColorStop(0, "rgba(250, 248, 255, 1)"); g.addColorStop(0.25, "rgba(210, 200, 255, .45)"); g.addColorStop(1, "rgba(200, 190, 255, 0)");
+    x.fillStyle = g; x.fillRect(0, 0, 48, 48);
+    keep.sparkle = c;
   }
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
-  keep.dust.forEach((d) => {
-    const rr = s.f + d.d * s.FW * 0.6, x = C.x + Math.cos(d.q) * rr, y = C.y + Math.sin(d.q) * rr;
-    if (rr <= 0 || x < -10 || y < -10 || x > W + 10 || y > H + 10) return;
-    const across = 1 - Math.abs(d.d) * 2;
-    const al = across * (0.35 + 0.65 * Math.pow(0.5 + 0.5 * Math.sin(t / d.tw + d.ph), 3)) * 0.8;
-    if (al < 0.03) return;
-    const sz = d.s * 4;
-    ctx.globalAlpha = al;
-    ctx.drawImage(keep.sparkle, x - sz, y - sz, sz * 2, sz * 2);
-  });
   keep.stars.forEach((st) => {
-    const dist = Math.hypot(st.x - C.x, st.y - C.y);
-    const since = (s.f - dist) / s.FW - st.lag;   // how far behind the front's middle it now is
-    if (since <= 0 || since > 0.9) return;
-    const glint = Math.exp(-Math.pow((since - 0.12) / 0.1, 2)), rest = smooth(since / 0.3) * (1 - smooth((since - 0.5) / 0.4));
+    const since = (s.night - st.at) / 0.25;   // since it woke (in quarters of the dusk)
+    if (since <= 0 || since > 1) return;
+    const glint = Math.exp(-Math.pow((since - 0.25) / 0.2, 2)), rest = smooth(since / 0.4) * (1 - smooth((since - 0.6) / 0.4));
     const al = 0.7 * glint + 0.25 * rest;
     if (al < 0.03) return;
     const sz = st.s * (2 + 3 * glint);
@@ -803,21 +795,8 @@ function dawnReveal(mid) {
   // again behind it (the day still covers them beyond it).
   const at = (ms) => Math.min(1, ms / DAWN_END);
   $("sky").animate([{ opacity: 1 }, { opacity: 1, offset: at(DAWN_PEAK) }, { opacity: 0.12, offset: at(DAWN_PEAK + 500) },
-    { opacity: 0.12, offset: at(DAWN_PEAK + DUSK.night[0]) }, { opacity: 1, offset: at(DAWN_PEAK + DUSK.night[0] + 700) }, { opacity: 1 }],
+    { opacity: 0.12, offset: at(DAWN_PEAK + DUSK.night[0]) }, { opacity: 1, offset: at(DAWN_PEAK + DUSK.night[1] - 250) }, { opacity: 1 }],
     { duration: DAWN_END, easing: "ease-in-out" });
-  // The rest of the fan dims a little while the card is revealed, and as
-  // the halo is released its edges catch the warm light, then lose it.
-  [...deck.children].forEach((c, i) => {
-    if (c === mid || !c.classList.contains("fd-card")) return;
-    c.querySelector(".fd-flip")?.animate([{ opacity: 1 }, { opacity: 0.55, offset: 0.25 }, { opacity: 0.55, offset: 0.6 }, { opacity: 1 }],
-      { duration: 1800, easing: "ease-in-out" });
-    const base = "0 4px 12px rgba(0, 0, 0, .45)";
-    c.querySelector(".fd-flip > .cback")?.animate([
-      { boxShadow: `${base}, 0 0 0 rgba(255, 170, 80, 0), inset 0 0 0 rgba(255, 190, 110, 0)` },
-      { boxShadow: `${base}, 0 0 18px 2px rgba(255, 170, 80, .5), inset 0 0 16px rgba(255, 190, 110, .3)`, offset: 0.25 },
-      { boxShadow: `${base}, 0 0 0 rgba(255, 170, 80, 0), inset 0 0 0 rgba(255, 190, 110, 0)` },
-    ], { duration: 1700, delay: DAWN_PEAK + 60 + Math.abs(i - 2) * 40, easing: "ease-out" });
-  });
   setTimeout(() => {
     mid.querySelector(".fd-flip > .cface")?.animate([{ boxShadow: "0 0 14px 3px rgba(255, 214, 130, .55)" },
       { boxShadow: "0 0 22px 6px rgba(255, 210, 130, .7)", offset: 0.4 }, { boxShadow: "0 0 14px 3px rgba(255, 214, 130, .55)" }],
@@ -826,7 +805,7 @@ function dawnReveal(mid) {
   // The home screen's words and lines darken towards ink where the day
   // reaches them (and back as the night comes), so they stay readable on the
   // bright sky: each gets --day, how much day is behind it (see style.css).
-  const ui = "#home .home-head h1, #cotd, #cotdReset, #home .home-sub, .spread-btn, #home .home-links .pill, #homeNudge, .option, .fd-word";
+  const ui = "#home .home-head, #cotd, #cotdReset, #home .home-sub, .spread-btn, #home .home-links .pill, #homeNudge, .option, .fd-word";
   const shadeForDay = (t) => document.querySelectorAll(ui).forEach((el) => {
     const r = el.getBoundingClientRect();
     if (!r.width) return;
@@ -868,6 +847,360 @@ function dawnReveal(mid) {
   return wait(DAWN_PEAK);
 }
 
+// ── The rest of the fan turns to dust, and the dust to the card's words ──
+// As the halo is released, the four other cards crumble away: each from its
+// edge nearest the card of the day outward, a ragged, glowing front eating
+// across it, its pieces lifting off as fine dust in the colours of the card
+// back, blown out by the light, then slowing and hanging in the air, faint.
+// As evening comes, the dust wakes: a ripple from the card outward kindles
+// every grain into a warm mote of light, and they wander and blink like
+// fireflies. Through the dusk they gather, each mote flying in a curve to
+// one of the card's keywords, and as they arrive the word appears out of
+// their light; by full night every word is there.
+// (When it's done, only the card of the day is left, with its words.)
+// Times are from the start of the reveal (ms), as in dawnReveal.
+// (the dust kindles as golden hour begins and starts gathering soon after, so
+// that every word is whole by the time the night is)
+const DUST = { start: DAWN_PEAK + 70, stagger: 150, crumble: 1150, wake: DAWN_PEAK + DUSK.gold[0], gather: DAWN_PEAK + DUSK.gold[0] + 550 };
+
+// The card back as a picture, and its colours sampled small (for the dust).
+let backArt = null;
+function cardBackArt() {
+  if (!backArt) backArt = new Promise((done) => {
+    const img = new Image();
+    img.onload = () => {
+      const GW = 28, GH = 49;
+      let px = null;
+      try {
+        const c = document.createElement("canvas");
+        c.width = GW; c.height = GH;
+        const x = c.getContext("2d");
+        x.fillStyle = "#19102d";
+        x.fillRect(0, 0, GW, GH);
+        x.drawImage(img, 0, 0, GW, GH);
+        px = x.getImageData(0, 0, GW, GH).data;
+      } catch {}
+      done({ img, px, GW, GH });
+    };
+    img.onerror = () => done({ img: null, px: null, GW: 1, GH: 1 });
+    img.src = "card-back.svg";
+  });
+  return backArt;
+}
+
+function dustToWords(mid, pick, t0) {
+  const deck = $("floatDeck"), TAU = Math.PI * 2;
+  const clamp = (v) => Math.min(1, Math.max(0, v));
+  const smooth = (v) => { v = clamp(v); return v * v * (3 - 2 * v); };
+  const r = (a, b) => a + Math.random() * (b - a);
+  // Two canvases over the whole screen, inside the deck: the crumbling cards
+  // (under the card of the day, as the cards were), and the dust (above).
+  const W = innerWidth, Hs = innerHeight, k = Math.min(devicePixelRatio || 1, 1.5);
+  const d = deck.getBoundingClientRect();
+  const layer = (z) => {
+    const c = document.createElement("canvas");
+    c.className = "dust-fx";
+    c.width = Math.ceil(W * k); c.height = Math.ceil(Hs * k);
+    Object.assign(c.style, { left: `${-d.left}px`, top: `${-d.top}px`, width: `${W}px`, height: `${Hs}px`, zIndex: z });
+    deck.append(c);
+    return c;
+  };
+  const under = layer(1), over = layer(4);
+  const ux = under.getContext("2d"), ox = over.getContext("2d");
+  const mr = mid.getBoundingClientRect(), C0 = { x: mr.left + mr.width / 2, y: mr.top + mr.height / 2 };
+
+  // A soft round spot of light, for the motes.
+  const spot = document.createElement("canvas");
+  spot.width = spot.height = 32;
+  {
+    const x = spot.getContext("2d"), g = x.createRadialGradient(16, 16, 0, 16, 16, 16);
+    g.addColorStop(0, "rgba(255, 246, 220, 1)");
+    g.addColorStop(0.25, "rgba(255, 214, 140, .55)");
+    g.addColorStop(1, "rgba(255, 170, 80, 0)");
+    x.fillStyle = g;
+    x.fillRect(0, 0, 32, 32);
+  }
+
+  const cards = [...deck.children].filter((c) => c.classList.contains("fd-card") && c !== mid).map((el) => {
+    const i = [...deck.children].indexOf(el);
+    return { el, i, start: DUST.start + (Math.abs(i - 2) - 1) * DUST.stagger, g: null, p: 0 };
+  });
+  const dust = [];
+  let art = null, words = null, ended = false;
+  cardBackArt().then((a) => { art = a; });
+
+  // Takes a card's place: where it is, how big and turned, and its picture.
+  function capture(cd) {
+    const flip = cd.el.querySelector(".fd-flip");
+    const b = flip.getBoundingClientRect(), w = flip.offsetWidth, h = flip.offsetHeight;
+    const ang = (FD_ANGLES[cd.i] * Math.PI) / 180, c = Math.cos(ang), s = Math.sin(ang);
+    const sc = b.width / (w * Math.abs(c) + h * Math.abs(s)) || 1;
+    const g = { cx: b.left + b.width / 2, cy: b.top + b.height / 2, W: w * sc, H: h * sc, c, s,
+      dir: Math.sign(b.left + b.width / 2 - C0.x) || 1, ph: [r(0, TAU), r(0, TAU), r(0, TAU)] };
+    const pic = document.createElement("canvas");
+    pic.width = Math.ceil(g.W * k); pic.height = Math.ceil(g.H * k);
+    const x = pic.getContext("2d");
+    x.scale(k, k);
+    x.beginPath();
+    x.roundRect ? x.roundRect(0, 0, g.W, g.H, 5 * sc) : x.rect(0, 0, g.W, g.H);
+    x.clip();
+    x.fillStyle = "#19102d";
+    x.fillRect(0, 0, g.W, g.H);
+    if (art?.img) x.drawImage(art.img, 0, 0, g.W, g.H);
+    g.pic = pic;
+    g.count = Math.round(Math.min(380, Math.max(160, (g.W * g.H) / 22)));
+    cd.g = g;
+    cd.el.classList.add("gone");   // (the picture takes its place)
+  }
+  // Card-local point to the screen.
+  const toScreen = (g, lx, ly) => ({ x: g.cx + g.c * lx - g.s * ly, y: g.cy + g.s * lx + g.c * ly });
+  // How far the crumbling has eaten in at height ly (local x of the front).
+  const front = (g, p, ly) => {
+    const rag = 0.075 * g.W * (Math.sin(ly * 0.09 + g.ph[0]) + 0.6 * Math.sin(ly * 0.23 + g.ph[1]) + 0.35 * Math.sin(ly * 0.53 + g.ph[2])) / 1.95;
+    return -g.dir * g.W / 2 + g.dir * (p * g.W * 1.3 - 0.15 * g.W + rag + 0.08 * g.W * (ly / g.H));
+  };
+  const colourAt = (g, lx, ly) => {
+    if (!art?.px) return [40, 30, 70];
+    const fx = clamp(lx / g.W + 0.5), fy = clamp(ly / g.H + 0.5);
+    const i = (Math.min(art.GH - 1, Math.floor(fy * art.GH)) * art.GW + Math.min(art.GW - 1, Math.floor(fx * art.GW))) * 4;
+    return [art.px[i], art.px[i + 1], art.px[i + 2]];
+  };
+
+  // Its pieces lift off, where the front has just passed.
+  function shed(g, p0, p1) {
+    const n = Math.round(g.count * (p1 - p0) * 1.3);
+    for (let j = 0; j < n; j++) {
+      const ly = r(-g.H / 2, g.H / 2), a = front(g, p0, ly), b = front(g, p1, ly);
+      const lx = a + Math.random() * (b - a);
+      if (Math.abs(lx) > g.W / 2) continue;
+      const at = toScreen(g, lx, ly);
+      const ox0 = at.x - C0.x, oy0 = at.y - C0.y, ol = Math.hypot(ox0, oy0) || 1;
+      const sp = r(120, 680) * (0.5 + 0.5 * Math.random());   // (some carried far, across the screen)
+      dust.push({ x: at.x, y: at.y, vx: (ox0 / ol) * sp + r(-25, 25), vy: (oy0 / ol) * sp * 0.85 - r(10, 60),
+        born: -1, size: r(0.7, 2), col: colourAt(g, lx, ly), seed: r(0, TAU), word: -1, trail: [] });   // (born: stamped on its first frame)
+    }
+  }
+
+  // The words appear where they'll stay, still unseen, and each takes a
+  // flock of the nearest grains (on its own side) to bring it to light.
+  function gather(t) {
+    showCotdWords(pick, false);
+    words = [...deck.querySelectorAll(".fd-word")].map((el, n) => {
+      el.classList.add("asleep");
+      return { el, n, start: DUST.gather + n * 80, want: 0, came: 0, shown: false };
+    });
+    // Every grain goes to a word: the nearest one with room left, so each
+    // gets its share and they fly in from all round.
+    const at = words.map((w) => { const b = w.el.getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 }; });
+    const room = Math.ceil(dust.length / Math.max(1, words.length));
+    dust.slice().sort(() => Math.random() - 0.5).forEach((q) => {
+      let best = -1, bd = Infinity;
+      words.forEach((w, n) => {
+        if (w.want >= room) return;
+        const dd = Math.hypot(q.x - at[n].x, q.y - at[n].y);
+        if (dd < bd) { bd = dd; best = n; }
+      });
+      if (best < 0) return;
+      q.word = best;
+      words[best].want++;
+      q.trailOn = Math.random() < 0.35;   // (some leave a trail, not all: there are many)
+    });
+    dust.forEach((q) => { q.wakeAt = DUST.wake + Math.min(380, Math.hypot(q.x - C0.x, q.y - C0.y) * 0.6) + r(0, 160); });
+  }
+  // A word comes into being as its motes arrive: the more of them have
+  // landed, the clearer it is (and when all have, it's simply there).
+  function grow(w) {
+    if (w.shown) return;
+    const o = smooth(w.came / Math.max(1, w.want * 0.9));
+    w.el.classList.remove("asleep");
+    w.el.style.opacity = (0.92 * o).toFixed(3);
+    w.el.style.filter = o < 0.99 ? `blur(${((1 - o) * 3).toFixed(2)}px)` : "";
+    if (o >= 0.99) show(w);
+  }
+  function show(w) {
+    if (w.shown) return;
+    w.shown = true;
+    w.el.classList.remove("asleep");
+    w.el.style.opacity = "";
+    w.el.style.filter = "";
+  }
+
+  const ASH = [150, 140, 196], GOLD = [255, 222, 160];
+  const mix = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  let last = null;
+  function finish() {
+    if (ended) return;
+    ended = true;
+    under.remove(); over.remove();
+    if (!words && mid.isConnected) gather(0);
+    words?.forEach(show);
+  }
+  const frame = (now) => {
+    if (ended) return;
+    if (!mid.isConnected) { ended = true; under.remove(); over.remove(); return; }
+    const t = now - t0, dt = Math.min(50, last == null ? 16 : now - last) / 1000;
+    last = now;
+    [[ux, under], [ox, over]].forEach(([x, c]) => {
+      x.setTransform(1, 0, 0, 1, 0, 0);
+      x.clearRect(0, 0, c.width, c.height);
+    });
+
+    // The cards crumbling.
+    cards.forEach((cd) => {
+      if (t < cd.start || cd.p >= 1) return;
+      if (!cd.g) { if (!art) return; capture(cd); }
+      const g = cd.g, p = smooth((t - cd.start) / DUST.crumble) * 0.6 + 0.4 * clamp((t - cd.start) / DUST.crumble);
+      shed(g, cd.p, p);
+      cd.p = p;
+      if (p >= 1) return;
+      const steps = 26, ys = Array.from({ length: steps + 1 }, (_, j) => -g.H / 2 - 2 + ((g.H + 4) * j) / steps);
+      ux.setTransform(k * g.c, k * g.s, -k * g.s, k * g.c, k * g.cx, k * g.cy);
+      ux.save();
+      ux.beginPath();
+      ys.forEach((ly, j) => (j ? ux.lineTo(front(g, p, ly), ly) : ux.moveTo(front(g, p, ly), ly)));
+      ux.lineTo(g.dir * (g.W / 2 + 6), g.H / 2 + 2);
+      ux.lineTo(g.dir * (g.W / 2 + 6), -g.H / 2 - 2);
+      ux.closePath();
+      ux.clip();
+      ux.drawImage(g.pic, -g.W / 2, -g.H / 2, g.W, g.H);
+      ux.restore();
+      // The front glows as it eats in: a ragged line of embers.
+      ux.save();
+      ux.beginPath();
+      ux.rect(-g.W / 2, -g.H / 2, g.W, g.H);
+      ux.clip();
+      ux.globalCompositeOperation = "lighter";
+      ux.lineCap = ux.lineJoin = "round";
+      const glow = Math.sin(Math.PI * Math.min(1, p * 1.15));
+      [[7, 0.35], [2.4, 0.7], [0.9, 1]].forEach(([lw, a]) => {
+        ux.strokeStyle = `rgba(255, ${lw > 2 ? 170 : 226}, ${lw > 2 ? 90 : 170}, ${(a * glow).toFixed(3)})`;
+        ux.lineWidth = lw;
+        ux.beginPath();
+        ys.forEach((ly, j) => (j ? ux.lineTo(front(g, p, ly), ly) : ux.moveTo(front(g, p, ly), ly)));
+        ux.stroke();
+      });
+      ux.restore();
+    });
+
+    // The dust.
+    if (!words && t >= DUST.wake - 40) gather(t);
+    ox.setTransform(k, 0, 0, k, 0, 0);
+    let alive = 0;
+    for (const q of dust) {
+      if (q.gone) continue;
+      if (q.born < 0) q.born = t;
+      const age = t - q.born;
+      const wk = q.wakeAt == null ? 0 : smooth((t - q.wakeAt) / 450);
+      alive++;
+      if (q.fly) {
+        // On its way to its word, along a curve.
+        const f = clamp((t - q.fly.at) / q.fly.ms), e = f < 0.5 ? 2 * f * f : 1 - Math.pow(2 - 2 * f, 2) / 2;
+        const { a, c, b } = q.fly, u = 1 - e;
+        q.x = u * u * a.x + 2 * u * e * c.x + e * e * b.x;
+        q.y = u * u * a.y + 2 * u * e * c.y + e * e * b.y;
+        if (f >= 1 && !q.came) {
+          q.came = t;
+          const w = words[q.word];
+          w.came++;
+          grow(w);
+        }
+      } else {
+        // Blown out by the light, slowing, then wandering on the air; once
+        // woken, a firefly: off on its own meandering way, turning as it goes.
+        const drag = Math.exp(-dt * 1.3);
+        q.vx = q.vx * drag + 18 * Math.sin(q.y * 0.021 + t * 0.0013 + q.seed) * dt;
+        q.vy = q.vy * drag + (18 * Math.cos(q.x * 0.019 + t * 0.0011 + q.seed) - 5 - 40 * wk * (q.word < 0 ? 1 : 0)) * dt;
+        if (wk > 0) {
+          q.h ??= Math.atan2(q.vy, q.vx) + r(-1, 1);
+          q.fs ??= r(22, 55);
+          q.h += (2.6 * Math.sin(t * 0.0021 + q.seed * 3) + 1.4 * Math.sin(t * 0.0057 + q.seed * 7)) * dt;
+          const k2 = Math.min(1, dt * 3) * wk;
+          q.vx += (Math.cos(q.h) * q.fs - q.vx) * k2;
+          q.vy += (Math.sin(q.h) * q.fs - q.vy) * k2;
+        }
+        q.x += q.vx * dt;
+        q.y += q.vy * dt;
+        if (q.word >= 0 && wk > 0.4) {
+          const w = words[q.word], start = Math.max(q.wakeAt + 280, w.start) + (q.delay ??= r(0, 700));
+          if (t >= start) {
+            const b = w.el.getBoundingClientRect();
+            const to = { x: r(b.left + b.width * 0.08, b.right - b.width * 0.08), y: r(b.top + b.height * 0.3, b.bottom - b.height * 0.3) };
+            const mx = (q.x + to.x) / 2, my = (q.y + to.y) / 2, dx = to.x - q.x, dy = to.y - q.y, l = Math.hypot(dx, dy) || 1;
+            const bend = r(30, 80 + l * 0.15) * (Math.random() < 0.5 ? -1 : 1);
+            q.fly = { at: t, ms: r(700, 950) + Math.min(320, l * 0.5), a: { x: q.x, y: q.y }, b: to, c: { x: mx - (dy / l) * bend, y: my + (dx / l) * bend - 30 } };
+          }
+        }
+      }
+      // How it looks: hot from the card, then ash; woken, a mote of light.
+      const heat = Math.exp(-age / 260);
+      let col = mix(mix(q.col, ASH, smooth(age / 1400) * 0.45), [255, 214, 150], heat * 0.85);
+      let a = 0.3 + 0.65 * Math.exp(-age / 700), glow = heat * 0.2, size = q.size;
+      if (wk > 0) {
+        col = mix(col, GOLD, wk);
+        const lit = q.word < 0 ? 0.6 : 0.85;
+        a += (lit - a) * wk;
+        glow = Math.max(glow, wk * (q.word < 0 ? 0.22 : 0.38));
+        size *= 1 + 0.3 * wk;
+        if (q.word < 0) {
+          const out = smooth((t - q.wakeAt - 350) / 900);
+          a *= 1 - out;
+          glow *= 1 - out;
+          if (out >= 1) { q.gone = true; continue; }
+        }
+      }
+      if (wk > 0 && !q.fly) {
+        // Blinking softly while it waits, each to its own beat.
+        q.bp ??= r(260, 520);
+        const blink = 0.45 + 0.55 * Math.pow(0.5 + 0.5 * Math.sin(t / q.bp + q.seed * 5), 2);
+        a *= 1 - wk * (1 - blink);
+        glow *= 1 - wk * (1 - blink) * 0.8;
+      }
+      if (q.fly) {
+        // Dimming as it nears its word, down to the word's own soft light,
+        // so it melts into the letters rather than piling up on them.
+        const f = clamp((t - q.fly.at) / q.fly.ms), land = smooth((f - 0.45) / 0.55);
+        a *= 1 - 0.7 * land;
+        glow *= 1 - 0.85 * land;
+        size *= 1 - 0.35 * land;
+      }
+      if (q.came) {
+        // Arrived: it fades into the word.
+        const f = clamp((t - q.came) / 220);
+        a *= 1 - f;
+        glow *= 1 - f;
+        if (f >= 1) { q.gone = true; continue; }
+      }
+      if (q.fly && !q.came && q.trailOn) {
+        q.trail.push(q.x, q.y);
+        if (q.trail.length > 10) q.trail.splice(0, 2);
+        ox.globalCompositeOperation = "lighter";
+        ox.strokeStyle = `rgba(255, 210, 140, ${0.35 * a})`;
+        ox.lineWidth = size * 0.8;
+        ox.beginPath();
+        for (let j = 0; j < q.trail.length; j += 2) (j ? ox.lineTo(q.trail[j], q.trail[j + 1]) : ox.moveTo(q.trail[j], q.trail[j + 1]));
+        ox.stroke();
+      }
+      if (a > 0.01) {
+        ox.globalCompositeOperation = "source-over";
+        ox.fillStyle = `rgba(${col[0] | 0}, ${col[1] | 0}, ${col[2] | 0}, ${a.toFixed(3)})`;
+        ox.fillRect(q.x - size / 2, q.y - size / 2, size, size);
+      }
+      if (glow > 0.02) {
+        const gr = size * 3 + 2;
+        ox.globalCompositeOperation = "lighter";
+        ox.globalAlpha = Math.min(1, glow * a);
+        ox.drawImage(spot, q.x - gr, q.y - gr, gr * 2, gr * 2);
+        ox.globalAlpha = 1;
+      }
+    }
+    ox.globalCompositeOperation = "source-over";
+    if (words && (!alive || t > DUST.gather + 4200)) { finish(); return; }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+  setTimeout(finish, DUST.gather + 4600);   // (even if frames are paused)
+}
+
 // First tap: the card rises in a warm glow and turns over, releasing a halo that turns night to day.
 // After that, a tap opens the card's page.
 async function revealCardOfTheDay() {
@@ -887,13 +1220,19 @@ async function revealCardOfTheDay() {
   const label = $("cotd");
   label.classList.add("fade");
   mid.classList.add("lift");
-  if (!calm) await dawnReveal(mid);
+  if (!calm) {
+    dustToWords(mid, pick, performance.now());
+    await dawnReveal(mid);
+  }
   mid.classList.add("turned", "revealed");
   if (!calm) cardFlare(mid.querySelector(".fd-flip > .cface"), 250);
   revealTitle(pick.card.name, pick.reversed ? "Card of the day · Reversed" : "Card of the day",
     mid.getBoundingClientRect().top - 4, document.querySelector(".home-head h1").getBoundingClientRect().bottom);
   showCotdLabel(pick);
-  showCotdWords(pick, true);
+  if (calm) {
+    [...$("floatDeck").children].forEach((c) => c !== mid && c.classList.add("gone"));
+    showCotdWords(pick, true);
+  }
   label.classList.remove("fade");
   await wait(700);
   fdBusy = false;

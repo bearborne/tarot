@@ -161,14 +161,53 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ── 1. Choose a spread ───────────────────── */
 
-.home-head { text-align: center; margin: 28px 0 16px; }
+/* The name: wide gilt small caps under the stars of Scorpius
+   (twinkling, joined by hairlines), over a small four-pointed star between
+   two fading hairlines. While the card of the day's light passes, --day
+   (0 to 1, see dawnReveal) turns its gold towards ink, so it reads on the
+   bright sky. */
+.home-head {
+  --title-ink: #14244a;
+  --title-gold: color-mix(in srgb, var(--gold) calc(100% - var(--day, 0) * 100%), var(--title-ink));
+  --title-line: color-mix(in srgb, rgba(201, 169, 110, .45) calc(100% - var(--day, 0) * 100%), rgba(20, 36, 74, .6));
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  margin: 10px 0 12px;
+}
 .home-head h1 {
   margin: 0;
+  font-family: "IM Fell English SC", var(--serif);
   font-weight: normal;
-  font-size: clamp(1.8rem, 8vw, 2.4rem);
-  color: var(--gold);
-  letter-spacing: .04em;
+  font-size: clamp(1.75rem, 7.6vw, 2.3rem);
+  line-height: 1.05;
+  letter-spacing: .26em;
+  padding-left: .26em;   /* (so the spacing after the last letter doesn't push it off centre) */
+  background: linear-gradient(180deg,
+    color-mix(in srgb, #f6e4ad calc(100% - var(--day, 0) * 100%), var(--title-ink)) 0%,
+    color-mix(in srgb, #e2c483 calc(100% - var(--day, 0) * 100%), var(--title-ink)) 38%,
+    var(--title-gold) 55%,
+    color-mix(in srgb, #ac843e calc(100% - var(--day, 0) * 100%), var(--title-ink)) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 calc(var(--day, 0) * 6px) rgba(255, 255, 255, calc(var(--day, 0) * .7)));
 }
+.bear-stars { width: 124px; height: 43px; overflow: visible; margin-bottom: 4px; }
+.bear-line { fill: none; stroke: var(--title-line); stroke-width: .7; }
+.bear-stars circle {
+  fill: color-mix(in srgb, #fff3d6 calc(100% - var(--day, 0) * 100%), var(--title-ink));
+  filter: drop-shadow(0 0 3px rgba(255, 220, 160, calc(.9 - var(--day, 0) * .9)));
+  animation: bear-twinkle 3.4s ease-in-out infinite;
+}
+/* (Antares, its heart: a little warmer, and steady) */
+.bear-stars circle.heart { fill: color-mix(in srgb, #ffd9a8 calc(100% - var(--day, 0) * 100%), var(--title-ink)); animation: none; }
+@keyframes bear-twinkle { 50% { opacity: .45; } }
+.title-star { display: flex; align-items: center; gap: 8px; margin-top: 7px; }
+.title-star i { width: 64px; height: 1px; background: linear-gradient(90deg, transparent, var(--title-line)); }
+.title-star i:last-child { transform: scaleX(-1); }
+.title-star svg { width: 12px; height: 12px; fill: color-mix(in srgb, #e7cf9a calc(100% - var(--day, 0) * 100%), var(--title-ink)); }
+@media (prefers-reduced-motion: reduce) { .bear-stars circle { animation: none; } }
 .home-sub { margin: 0 0 14px; text-align: center; color: var(--muted); font-style: italic; }
 
 /* The night sky behind the home screen */
@@ -245,7 +284,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   --wash-day: rgba(255, 255, 255, calc(var(--day) * .22));
   --halo-day: 0 0 calc(var(--day) * 7px) rgba(255, 255, 255, calc(var(--day) * .6));
 }
-.home-head h1[style*="--day"], #cotd[style*="--day"], .fd-word[style*="--day"] {
+#cotd[style*="--day"], .fd-word[style*="--day"] {
   color: var(--ink-day) !important;
   text-shadow: var(--halo-day) !important;
 }#cotdReset[style*="--day"], .home-sub[style*="--day"] { color: var(--muted-day) !important; text-shadow: var(--halo-day); }
@@ -275,7 +314,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
   -webkit-mask: radial-gradient(closest-side, transparent 84%, #000 90%, #000 95%, transparent 100%);
   mask: radial-gradient(closest-side, transparent 84%, #000 90%, #000 95%, transparent 100%);
 }
-.fd-card { z-index: 1; }   /* (above the dawn behind them; the lifted card higher still) */
+.fd-card { z-index: 1; }
+/* Once the card of the day is revealed, the rest of the fan has gone to dust
+   (see dustToWords), drawn on canvases of its own while it goes. */
+.fd-card.gone { visibility: hidden; }
+.dust-fx { position: absolute; pointer-events: none; }
+.fd-word.asleep { opacity: 0; }   /* (above the dawn behind them; the lifted card higher still) */
 /* Hovering the floating deck: the card under the pointer rises a little in
    its place and glows; the others draw back, a touch smaller. Once the card
    of the day is revealed, only it answers the pointer; the rest stay still. */

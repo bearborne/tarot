@@ -27,7 +27,15 @@
   <section class="screen" id="home">
     <canvas class="sky" id="sky" aria-hidden="true"></canvas>
     <header class="home-head">
+      <!-- Scorpius, over the name: its claws on the right, Antares at its heart, the tail curling up on the left -->
+      <svg class="bear-stars" viewBox="-4 -4 158 55" aria-hidden="true">
+        <polyline class="bear-line" points="150.0,0.0 132.9,4.4 109.5,7.0 89.6,11.5 71.9,18.0 57.9,27.7 45.3,38.8 32.6,47.1 18.4,40.9 5.2,26.3 0.0,7.2 18.3,0.0 22.3,10.2"/>
+        <polyline class="bear-line" points="142.0,19.2 109.5,7.0"/>
+        <polyline class="bear-line" points="134.3,30.7 109.5,7.0"/>
+        <circle cx="150.0" cy="0.0" r="1.8" style="animation-delay:-0.00s"/><circle cx="132.9" cy="4.4" r="1.4" style="animation-delay:-0.53s"/><circle cx="142.0" cy="19.2" r="1.7" style="animation-delay:-1.06s"/><circle cx="134.3" cy="30.7" r="1.6" style="animation-delay:-1.59s"/><circle cx="109.5" cy="7.0" r="2.3" class="heart" style="animation-delay:-2.12s"/><circle cx="89.6" cy="11.5" r="1.7" style="animation-delay:-2.65s"/><circle cx="71.9" cy="18.0" r="1.4" style="animation-delay:-3.18s"/><circle cx="57.9" cy="27.7" r="1.4" style="animation-delay:-0.31s"/><circle cx="45.3" cy="38.8" r="1.4" style="animation-delay:-0.84s"/><circle cx="32.6" cy="47.1" r="1.8" style="animation-delay:-1.37s"/><circle cx="18.4" cy="40.9" r="1.4" style="animation-delay:-1.90s"/><circle cx="5.2" cy="26.3" r="1.4" style="animation-delay:-2.43s"/><circle cx="0.0" cy="7.2" r="1.8" style="animation-delay:-2.96s"/><circle cx="18.3" cy="0.0" r="1.9" style="animation-delay:-0.09s"/><circle cx="22.3" cy="10.2" r="1.4" style="animation-delay:-0.62s"/>
+      </svg>
       <h1>Bearcana</h1>
+      <div class="title-star" aria-hidden="true"><i></i><svg viewBox="0 0 14 14"><path d="M7 1 L8.4 5.6 L13 7 L8.4 8.4 L7 13 L5.6 8.4 L1 7 L5.6 5.6Z"/></svg><i></i></div>
     </header>
     <div class="float-deck" id="floatDeck"></div>
     <button class="cotd" id="cotd">Reveal card of the day</button>
@@ -226,5 +234,6 @@
   <script src="js/patterns.js"></script>
   <script src="js/own-themes.js"></script>
   <script src="js/share.js"></script>
+  <script src="js/warm-up.js"></script>
 </body>
 </html>

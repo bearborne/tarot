@@ -130,11 +130,23 @@ function ringElement(R) {
 // holeArt(hr) draws it, for a hole of up to radius hr; draw(ctx, ms, h, grow)
 // draws one moment, centred on 0, 0: `ms` drives the swirl, `h` (0 to 1) is
 // how strongly it holds, `grow` (0 to 1) how far it has opened.
+// The two working pictures a hole of a given size draws its disc on, kept
+// between holes (each frame redraws them completely before using them), so
+// a tap doesn't have to make them again.
+const HOLE_SHEETS = new Map();
+function holeSheets(px) {
+  if (!HOLE_SHEETS.has(px)) {
+    if (HOLE_SHEETS.size > 3) HOLE_SHEETS.delete(HOLE_SHEETS.keys().next().value);
+    const sheet = () => { const c = document.createElement("canvas"); c.width = c.height = px; return [c, c.getContext("2d")]; };
+    HOLE_SHEETS.set(px, [sheet(), sheet()]);
+  }
+  return HOLE_SHEETS.get(px);
+}
 function holeArt(hr) {
   const TAU = Math.PI * 2, TILT = 0.32, TIP = -0.22;
-  const box = Math.ceil(hr * 8), k = Math.min(devicePixelRatio || 1, 2) * 2, px = Math.ceil(box * k);
-  const sheet = () => { const c = document.createElement("canvas"); c.width = c.height = px; return [c, c.getContext("2d")]; };
-  const [D, dx] = sheet(), [N, nx] = sheet();
+  // (at most three times the page's sharpness: the light is soft, and a phone has to keep up)
+  const box = Math.ceil(hr * 8), k = Math.min(3, Math.min(devicePixelRatio || 1, 2) * 2), px = Math.ceil(box * k);
+  const [[D, dx], [N, nx]] = holeSheets(px);
   const conic = !!dx.createConicGradient;
   const arms = Array.from({ length: 10 }, (_, i) => ({
     a: (i / 10) * TAU + Math.random() * 0.5, ph: Math.random(), span: 0.8 + Math.random() * 0.7, hot: i % 3 === 0,
@@ -354,7 +366,7 @@ function collapseCopy(node, look = node) {
     drift.setAttribute("dy", ((ms / 55) % 200).toFixed(1));
   };
   set(0);
-  return { set, remove: () => { box.remove(); fx.remove(); } };
+  return { box, set, remove: () => { box.remove(); fx.remove(); } };
 }
 
 // How big a hole a card or button makes: most of a card's width, and for a

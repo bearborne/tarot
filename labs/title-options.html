@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Title Options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Literata:opsz,wght@7..72,400;7..72,500&display=swap">
+<style>
+  /* The home screen's title, eight ways. Each box is phone width, on the
+     app's night sky, in the app's gold and fonts. */
+  :root {
+    --bg: #0f0d1c; --ink: #e9e2d3; --muted: #9a917f; --gold: #c9a96e;
+    --gold-hi: #f6e4ad; --gold-lo: #ac843e; --line: rgba(201, 169, 110, .45);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 16px 60px; background: var(--bg); color: var(--ink);
+    font-family: Literata, Georgia, serif;
+  }
+  header { max-width: 900px; margin: 0 auto 22px; }
+  header h2 { margin: 0 0 4px; font-family: "IM Fell English SC", serif; font-weight: normal; color: var(--gold); letter-spacing: .06em; }
+  header p { margin: 0; color: var(--muted); font-style: italic; font-size: .92rem; }
+  .grid { max-width: 900px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr)); gap: 16px; }
+  .opt { border: 1px solid rgba(201, 169, 110, .25); border-radius: 10px; overflow: hidden; background: #121022; }
+  .stage {
+    position: relative; height: 150px; display: grid; place-items: center; overflow: hidden;
+    background:
+      radial-gradient(1px 1px at 12% 30%, #fff8 50%, transparent 51%),
+      radial-gradient(1px 1px at 78% 22%, #fff6 50%, transparent 51%),
+      radial-gradient(1.4px 1.4px at 64% 80%, #fff7 50%, transparent 51%),
+      radial-gradient(1px 1px at 30% 75%, #fff5 50%, transparent 51%),
+      radial-gradient(1px 1px at 90% 60%, #fff6 50%, transparent 51%),
+      radial-gradient(120% 90% at 50% 0%, #1a1630, #0d0b18);
+  }
+  .meta { padding: 10px 14px 12px; border-top: 1px solid rgba(201, 169, 110, .18); }
+  .meta b { font-family: "IM Fell English SC", serif; font-weight: normal; color: var(--gold); letter-spacing: .05em; }
+  .meta p { margin: 3px 0 0; color: var(--muted); font-size: .85rem; line-height: 1.4; }
+  .t { margin: 0; font-weight: normal; text-align: center; line-height: 1; }
+  .sc { font-family: "IM Fell English SC", serif; }
+  .fell { font-family: "IM Fell English", serif; }
+  .gilt {
+    background: linear-gradient(180deg, var(--gold-hi) 0%, #e2c483 38%, var(--gold) 55%, var(--gold-lo) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+
+  /* A · Engraved plate: small caps, wide, gilt, hairlines ending in diamonds */
+  .a { display: flex; align-items: center; gap: 14px; }
+  .a .t { font-size: 2.15rem; letter-spacing: .2em; padding-left: .2em; filter: drop-shadow(0 1px 0 rgba(0,0,0,.6)); }
+  .a .rule { width: 46px; height: 1px; background: linear-gradient(90deg, transparent, var(--line)); position: relative; }
+  .a .rule.r { transform: scaleX(-1); }
+  .a .rule::after { content: ""; position: absolute; right: -4px; top: -3px; width: 6px; height: 6px; border: 1px solid var(--gold); transform: rotate(45deg); }
+
+  /* B · Gilt with a passing glint (like the spread buttons) */
+  .b .t {
+    font-size: 2.6rem; letter-spacing: .05em;
+    background: linear-gradient(105deg, var(--gold-lo) 0%, var(--gold) 30%, var(--gold-hi) 45%, #fffaf0 50%, var(--gold-hi) 55%, var(--gold) 70%, var(--gold-lo) 100%);
+    background-size: 300% 100%; background-position: 100% 0;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 0 10px rgba(255, 200, 120, .18));
+    animation: glint 5s ease-in-out infinite;
+  }
+  @keyframes glint { 0%, 55% { background-position: 100% 0; } 85%, 100% { background-position: 0% 0; } }
+
+  /* C · The Great Bear: the Dipper's seven stars above, joined by hairlines */
+  .c { display: grid; justify-items: center; gap: 2px; }
+  .c svg { width: 150px; height: 46px; overflow: visible; }
+  .c .t { font-size: 2.4rem; letter-spacing: .06em; color: var(--gold); text-shadow: 0 0 14px rgba(255, 210, 140, .22); }
+  .c .star { fill: #fff3d6; filter: drop-shadow(0 0 3px rgba(255, 220, 160, .9)); animation: tw 3.4s ease-in-out infinite; }
+  @keyframes tw { 50% { opacity: .45; } }
+
+  /* D · Cartouche: a tarot card's title plate, clipped corners */
+  .d .plate {
+    position: relative; padding: 10px 30px 12px;
+    border: 1px solid var(--line);
+    clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+    background: linear-gradient(180deg, rgba(201,169,110,.06), rgba(201,169,110,0));
+  }
+  .d .plate::before { content: ""; position: absolute; inset: 3px; border: 1px solid rgba(201,169,110,.18); clip-path: inherit; }
+  .d .t { font-size: 2rem; letter-spacing: .18em; padding-left: .18em; color: var(--gold); }
+
+  /* E · Illuminated capital: a large swash B, the rest in small caps */
+  .e .t { display: flex; align-items: flex-end; color: var(--gold); }
+  .e .cap { font-family: "IM Fell English", serif; font-size: 3.6rem; line-height: .8; margin-right: 2px;
+    text-shadow: 0 0 12px rgba(255, 205, 130, .35); }
+  .e .rest { font-family: "IM Fell English SC", serif; font-size: 1.9rem; letter-spacing: .14em; padding-bottom: 4px;
+    border-bottom: 1px solid var(--line); }
+
+  /* F · Crescent and stars: a thin moon arc above, two stars at the ends */
+  .f { display: grid; justify-items: center; }
+  .f svg { width: 200px; height: 30px; overflow: visible; margin-bottom: -2px; }
+  .f .t { font-size: 2.5rem; letter-spacing: .04em; font-style: italic; }
+
+  /* G · Breathing light: plain Fell, a soft warm light behind that breathes */
+  .g .t { position: relative; font-size: 2.6rem; letter-spacing: .05em; color: #e7cf9a; }
+  .g .t::before {
+    content: ""; position: absolute; inset: -18px -40px; z-index: -1;
+    background: radial-gradient(closest-side, rgba(255, 196, 120, .22), transparent);
+    animation: breathe 4.5s ease-in-out infinite;
+  }
+  .g .stage { isolation: isolate; }
+  @keyframes breathe { 50% { opacity: .45; transform: scale(.92); } }
+
+  /* H · Sigil line: small caps between two fading lines with a rune-dot at the centre beneath */
+  .h { display: grid; justify-items: center; gap: 8px; }
+  .h .t { font-size: 2.2rem; letter-spacing: .26em; padding-left: .26em; }
+  .h .under { display: flex; align-items: center; gap: 8px; }
+  .h .under i { width: 70px; height: 1px; background: linear-gradient(90deg, transparent, var(--line)); }
+  .h .under i:last-child { transform: scaleX(-1); }
+  .h .under svg { width: 14px; height: 14px; }
+</style>
+</head>
+<body>
+<header>
+  <h2>Title options</h2>
+  <p>The home screen's title, eight ways, at phone width on the night sky. Pick one (or mix: say “C's stars with A's lettering”).</p>
+</header>
+<div class="grid">
+
+  <div class="opt"><div class="stage"><div class="a">
+    <span class="rule"></span><h1 class="t sc gilt">Bearcana</h1><span class="rule r"></span>
+  </div></div><div class="meta"><b>A · Engraved plate</b><p>Small caps, widely spaced, in gilt from pale to deep gold; a hairline each side ending in a small diamond.</p></div></div>
+
+  <div class="opt"><div class="stage b"><h1 class="t fell">Bearcana</h1></div>
+  <div class="meta"><b>B · Gilt with a glint</b><p>The current lettering in gilt, with a light that runs across it every few seconds, like the spread buttons.</p></div></div>
+
+  <div class="opt"><div class="stage"><div class="c">
+    <svg viewBox="0 0 150 46" aria-hidden="true">
+      <polyline points="8,30 34,24 56,26 76,32 82,44 112,44 118,22" fill="none" stroke="rgba(201,169,110,.4)" stroke-width=".7"/>
+      <polyline points="76,32 112,44" fill="none" stroke="rgba(201,169,110,.25)" stroke-width=".6"/>
+      <circle class="star" cx="8" cy="30" r="1.5"/><circle class="star" cx="34" cy="24" r="1.7" style="animation-delay:-.8s"/>
+      <circle class="star" cx="56" cy="26" r="1.6" style="animation-delay:-1.6s"/><circle class="star" cx="76" cy="32" r="1.5" style="animation-delay:-2.2s"/>
+      <circle class="star" cx="82" cy="44" r="1.6" style="animation-delay:-.4s"/><circle class="star" cx="112" cy="44" r="1.8" style="animation-delay:-2.9s"/>
+      <circle class="star" cx="118" cy="22" r="1.9" style="animation-delay:-1.2s"/>
+    </svg>
+    <h1 class="t fell">Bearcana</h1>
+  </div></div><div class="meta"><b>C · The Great Bear</b><p>The Big Dipper (the Great Bear's seven stars) faintly drawn above, twinkling; the lettering with a soft warm glow. Ties the name to the sky.</p></div></div>
+
+  <div class="opt"><div class="stage d"><div class="plate"><h1 class="t sc">Bearcana</h1></div></div>
+  <div class="meta"><b>D · Card plate</b><p>Framed like the name plate at the foot of a tarot card: a double hairline frame with clipped corners.</p></div></div>
+
+  <div class="opt"><div class="stage e"><h1 class="t"><span class="cap">B</span><span class="rest">earcana</span></h1></div>
+  <div class="meta"><b>E · Illuminated capital</b><p>A large glowing B, as in an old manuscript, the rest in small caps over a hairline.</p></div></div>
+
+  <div class="opt"><div class="stage"><div class="f">
+    <svg viewBox="0 0 200 30" aria-hidden="true">
+      <path d="M40 28 Q100 -6 160 28" fill="none" stroke="rgba(201,169,110,.5)" stroke-width=".8"/>
+      <path d="M92 9 a8 8 0 1 0 12 -2 a6 6 0 1 1 -12 2z" fill="#e7cf9a" opacity=".9"/>
+      <path d="M40 28 l2 -4 l2 4 l-2 4z M160 28 l2 -4 l2 4 l-2 4z" fill="#c9a96e" transform="translate(-2 -4)"/>
+    </svg>
+    <h1 class="t fell gilt">Bearcana</h1>
+  </div></div><div class="meta"><b>F · Crescent and arc</b><p>Italic gilt lettering under a thin arc with a small crescent moon at its top and a star at each end.</p></div></div>
+
+  <div class="opt"><div class="stage g"><h1 class="t fell">Bearcana</h1></div>
+  <div class="meta"><b>G · Breathing light</b><p>Almost as it is, but warmer and brighter, with a soft light behind it that slowly breathes. The quietest change.</p></div></div>
+
+  <div class="opt"><div class="stage"><div class="h">
+    <h1 class="t sc gilt">Bearcana</h1>
+    <div class="under"><i></i>
+      <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1 L8.4 5.6 L13 7 L8.4 8.4 L7 13 L5.6 8.4 L1 7 L5.6 5.6Z" fill="#e7cf9a"/></svg>
+    <i></i></div>
+  </div></div><div class="meta"><b>H · Star beneath</b><p>Wide gilt small caps, and under them a four-pointed star between two fading hairlines.</p></div></div>
+
+</div>
+</body>
+</html>
