@@ -397,74 +397,478 @@ function buildFloatDeck() {
   }
 }
 
-// The arcane reveal of the card of the day, around the middle card as it
-// lifts: the other cards dim, a great ring of runes snaps in round it and
-// turns, and gold motes spiral in from the ring to its heart. Resolves at
-// the peak, when the card should turn; then the ring flashes outward and
-// fades, and sparks scatter from the card.
-function arcaneReveal(mid) {
-  const b = mid.getBoundingClientRect();
-  // Where the card will be once lifted (.fd-card.lift: up 16px, 1.12 times
-  // as big, from a point half its height below it).
-  const C = { x: b.left + b.width / 2, y: b.top + b.height / 2 - 0.12 * b.height - 16 };
-  const R = (Math.hypot(b.width, b.height) / 2) * 1.12 * 1.3;
-  const PEAK = 620;
-  // The rest of the fan dims while the card is revealed.
-  [...$("floatDeck").children].forEach((c) => {
-    if (c === mid || !c.classList.contains("fd-card")) return;
-    c.querySelector(".fd-flip")?.animate([{ opacity: 1 }, { opacity: 0.45, offset: 0.25 }, { opacity: 0.45, offset: 0.7 }, { opacity: 1 }],
-      { duration: 1500, easing: "ease-in-out" });
-  });
-  // The ring snaps in, turning, and keeps turning; at the peak it flashes
-  // outward and fades.
-  const ring = runeRing(C, R);
-  ring.animate([
-    { transform: `${ring.at(R * 1.7)} rotate(-90deg)`, opacity: 0, filter: "brightness(1)" },
-    { transform: `${ring.at(R)} rotate(0deg)`, opacity: 1, filter: "brightness(1)", offset: 0.3 },
-    { transform: `${ring.at(R * 0.97)} rotate(25deg)`, opacity: 1, filter: "brightness(1.3)", offset: 0.55 },
-    { transform: `${ring.at(R * 1.05)} rotate(35deg)`, opacity: 1, filter: "brightness(2)", offset: 0.62 },
-    { transform: `${ring.at(R * 1.7)} rotate(60deg)`, opacity: 0, filter: "brightness(1)" },
-  ], { duration: 1000, delay: 100, easing: "cubic-bezier(.3, .6, .3, 1)", fill: "both" });
-  setTimeout(() => ring.remove(), 1150);
-  // Motes spiral in from the ring to the card's heart.
-  const mote = (from, to, ms, delay, size = 1) => {
-    const m = el("span", "theme-mote");
-    Object.assign(m.style, { left: `${C.x}px`, top: `${C.y}px`, zIndex: Z + 1 });
-    document.body.append(m);
-    m.animate([
-      { transform: `translate(${from[0]}px, ${from[1]}px) scale(${size})`, opacity: 0 },
-      { opacity: 1, offset: 0.25 },
-      { transform: `translate(${to[0]}px, ${to[1]}px) scale(${size * 0.35})`, opacity: 0 },
-    ], { duration: ms, delay, easing: "cubic-bezier(.5, 0, .5, 1)", fill: "both" });
-    setTimeout(() => m.remove(), ms + delay + 20);
-  };
-  const polar = (r, t) => [Math.cos(t) * r, Math.sin(t) * r];
-  for (let i = 0; i < 16; i++) {
-    const t = (i / 16) * Math.PI * 2;
-    const m = el("span", "theme-mote");
-    Object.assign(m.style, { left: `${C.x}px`, top: `${C.y}px`, zIndex: Z + 1 });
-    document.body.append(m);
-    const pts = [polar(R, t), polar(R * 0.7, t + 0.6), polar(R * 0.35, t + 1.2), [0, 0]];
-    const delay = 200 + (i % 4) * 45;
-    m.animate([
-      { transform: `translate(${pts[0][0]}px, ${pts[0][1]}px) scale(1.2)`, opacity: 0 },
-      { transform: `translate(${pts[1][0]}px, ${pts[1][1]}px) scale(1)`, opacity: 1 },
-      { transform: `translate(${pts[2][0]}px, ${pts[2][1]}px) scale(.7)`, opacity: 1 },
-      { transform: "translate(0, 0) scale(.3)", opacity: 0 },
-    ], { duration: PEAK - delay, delay, easing: "cubic-bezier(.4, 0, .6, 1)", fill: "both" });
-    setTimeout(() => m.remove(), PEAK + 20);
-  }
-  // At the peak, sparks scatter from the card as it turns.
-  setTimeout(() => {
-    for (let i = 0; i < 14; i++) {
-      const t = (i / 14) * Math.PI * 2 + Math.random() * 0.3;
-      mote([0, 0], polar(R * (0.9 + Math.random() * 0.6), t), 520 + Math.random() * 260, 0, 1.3);
-    }
-  }, PEAK);
-  return wait(PEAK);
+// ── The card of the day: a dawn ─────────────────────────
+// As the middle card lifts, a warm glow rises behind it and a few embers
+// drift up. As it turns over, the light bursts in a soft bloom and a halo of
+// living light is released: a ring of warm amber light (layered, uneven,
+// streaks of energy running round it, fine dust glittering along it, the
+// world bending a little where it passes) that sweeps out across the whole
+// screen, and inside it the night sky turns to a bright midday. The day
+// holds a moment, then the whole sky drifts evenly into golden hour; then
+// night falls, spreading softly out from the card to the corners: a wide,
+// smooth front of dusk (indigo, violet, rose, a little amber), fine silvery
+// stardust shimmering along it, and the stars waking one by one as it passes.
+// The light round the card is drawn on two canvases in the floating deck
+// (behind the cards, and in front); the day on one over the whole screen just
+// above the stars; the halo on one over the whole screen, above it all.
+const DAWN_PEAK = 650, DAWN_END = 4250;
+// When things happen after the card turns (ms): the halo leaves the screen,
+// golden hour, and the night falling.
+const DUSK = { haloGone: 1280, gold: [1250, 2000], night: [1650, 3500] };
+
+// Where the halo, the day and the night are, `t` ms in, for a halo released
+// at C (on screen) from a card `h` tall: the halo's radius R and strength a;
+// how far into golden hour the day is (gold, 0 to 1); and the night: where
+// the middle of its front is (f) and how wide the front is (FW). Night is
+// complete within f - FW/2, day still untouched beyond f + FW/2.
+function haloState(t, C, W, H, h) {
+  const burst = t - DAWN_PEAK;
+  const far = Math.hypot(Math.max(C.x, W - C.x), Math.max(C.y, H - C.y)) + 80;
+  const FW = Math.max(280, far * 0.6);
+  if (burst < 0) return { R: 0, a: 0, far, FW, f: -FW, gold: 0, burst };
+  const clamp = (v) => Math.min(1, Math.max(0, v));
+  const seg = (v, a, b) => clamp((v - a) / (b - a));
+  const r0 = h * 0.55, u = seg(burst, 0, 1250);
+  const R = r0 + (far + 140 - r0) * (1 - Math.pow(1 - u, 2.1));                   // quick at first, easing as it goes
+  const a = Math.min(1, burst / 120) * (1 - seg(burst, 1000, DUSK.haloGone));       // fading as it leaves the screen
+  const g = seg(burst, ...DUSK.gold), gold = g * g * (3 - 2 * g);
+  // The night's front travels from just short of the card (so it begins as a
+  // gentle dimming there, not an edge) to past the corners, easing in and out.
+  const n = seg(burst, ...DUSK.night), nE = n * n * (3 - 2 * n);
+  const f = -FW * 0.5 + (far + FW) * nE;
+  return { R, a, far, FW, f, gold, burst };
 }
 
-// First tap: the card rises inside a ring of runes and turns over.
+// How much day is behind a point (x, y) on the screen, `t` ms in (0 at
+// night, 1 in full day): the curve the day sky is drawn with (see daySky).
+function dayAmount(t, C, W, H, h, x, y) {
+  const s = haloState(t, C, W, H, h);
+  if (s.R <= 0) return 0;
+  const smooth = (v) => { v = Math.min(1, Math.max(0, v)); return v * v * v * (v * (6 * v - 15) + 10); };
+  const r = Math.hypot(x - C.x, y - C.y), ew = Math.max(40, s.R * 0.07);
+  return smooth((r - (s.f - s.FW / 2)) / s.FW) * (1 - smooth((r - (s.R - ew)) / ew));
+}
+
+// One moment of the light round the card, `t` ms in, for a card `h` tall,
+// centred on 0, 0: back(ctx) draws what's behind the cards, front(ctx) what's
+// in front. `motes` is the embers, made once (see dawnMotes).
+function dawnFrame(t, h, motes) {
+  const TAU = Math.PI * 2;
+  const clamp = (v) => Math.min(1, Math.max(0, v));
+  const seg = (v, a, b) => clamp((v - a) / (b - a));
+  const ease = (v) => 1 - Math.pow(1 - v, 3);
+  const rise = ease(seg(t, 0, DAWN_PEAK));
+  const glow = rise * (1 - ease(seg(t, DAWN_PEAK + 300, DAWN_PEAK + DUSK.gold[1])));
+  const burst = t >= DAWN_PEAK ? t - DAWN_PEAK : -1;
+  const flare = burst < 0 ? 0 : Math.exp(-Math.pow((burst - 120) / 380, 2));
+  return {
+    back(ctx) {
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      // A warm glow behind the card: a perfect circle, centred on it, coming up.
+      ctx.save();
+      const R = h * 1.5, g = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
+      g.addColorStop(0, `rgba(255, 238, 205, ${0.45 * glow})`);
+      g.addColorStop(0.22, `rgba(255, 196, 120, ${0.3 * glow})`);
+      g.addColorStop(0.55, `rgba(236, 130, 80, ${0.12 * glow})`);
+      g.addColorStop(1, "rgba(200, 90, 110, 0)");
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(0, 0, R, 0, TAU); ctx.fill();
+      ctx.restore();
+      // A small sun behind the card.
+      const core = glow * 0.7 + flare * 0.6;
+      const sg = ctx.createRadialGradient(0, 0, 0, 0, 0, h * 0.5);
+      sg.addColorStop(0, `rgba(255, 252, 240, ${Math.min(1, 0.85 * core)})`);
+      sg.addColorStop(0.25, `rgba(255, 226, 165, ${0.45 * core})`);
+      sg.addColorStop(1, "rgba(255, 190, 110, 0)");
+      ctx.fillStyle = sg;
+      ctx.beginPath(); ctx.arc(0, 0, h * 0.5, 0, TAU); ctx.fill();
+      ctx.restore();
+    },
+    front(ctx) {
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      if (burst >= 0) {
+        // A soft bloom as it turns.
+        const b = seg(burst, 0, 480), bR = h * (0.4 + 1 * ease(b)), ba = 0.6 * Math.pow(1 - b, 1.8);
+        if (ba > 0.01) {
+          const g = ctx.createRadialGradient(0, 0, 0, 0, 0, bR);
+          g.addColorStop(0, `rgba(255, 250, 236, ${ba})`);
+          g.addColorStop(0.35, `rgba(255, 224, 160, ${ba * 0.5})`);
+          g.addColorStop(1, "rgba(255, 190, 110, 0)");
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(0, 0, bR, 0, TAU); ctx.fill();
+        }
+        // A faint level streak of light across it.
+        const st = seg(burst, 0, 600), sta = 0.3 * Math.pow(1 - st, 1.8);
+        if (sta > 0.01) {
+          const L = h * (1 + 1 * ease(st));
+          ctx.save();
+          ctx.scale(1, 0.04);
+          const g = ctx.createRadialGradient(0, 0, 0, 0, 0, L);
+          g.addColorStop(0, `rgba(255, 248, 232, ${sta})`);
+          g.addColorStop(0.4, `rgba(255, 214, 150, ${sta * 0.4})`);
+          g.addColorStop(1, "rgba(255, 190, 120, 0)");
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(0, 0, L, 0, TAU); ctx.fill();
+          ctx.restore();
+        }
+      }
+      // The embers: warm motes, a few rising before the turn, a shower after
+      // it, the odd larger, softer one, all drifting up and twinkling.
+      motes.forEach((m) => {
+        const age = t - m.born;
+        if (age < 0 || age > m.life) return;
+        const u = age / m.life;
+        const k = 1 - Math.exp(-age / m.drag);
+        const x = m.x + m.vx * k * m.drag / 1000 + Math.sin(age / 500 + m.ph) * 4;
+        const y = m.y + m.vy * k * m.drag / 1000 - age * m.lift / 1000;
+        const a = Math.sin(Math.PI * Math.min(1, u * 1.2)) * (0.6 + 0.4 * Math.sin(age / 90 + m.ph)) * m.a * (m.big ? 0.45 : 1);
+        if (a <= 0.02) return;
+        const r = m.r * (m.big ? 4 : 1.6 + 0.6 * a);
+        const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.4);
+        g.addColorStop(0, `rgba(255, 244, 215, ${a})`);
+        g.addColorStop(0.35, `rgba(255, 196, 110, ${a * 0.5})`);
+        g.addColorStop(1, "rgba(250, 150, 70, 0)");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x, y, r * 2.4, 0, TAU); ctx.fill();
+      });
+      ctx.restore();
+    },
+  };
+}
+
+// The day, on the canvas over the whole screen just above the stars: a
+// bright blue midday sky, deepest at the top and paler towards the bottom,
+// the sun's white light round the card. It holds, then the whole sky drifts
+// evenly into golden hour (the sun's light fading where it is, not
+// shrinking). Then night falls from the card: the day gives way across a
+// wide, smooth front (no edges anywhere: every gradient follows a smooth
+// curve), tinted with dusk (indigo, violet, rose, a little amber); fine
+// silvery stardust shimmers along the front, and the stars wake one by one,
+// each with a small glint, as it passes them.
+function daySky(ctx, t, W, H, C, h, keep = {}) {
+  const s = haloState(t, C, W, H, h);
+  if (s.R <= 0 || s.f - s.FW / 2 >= s.far) return;
+  const TAU = Math.PI * 2;
+  const mix = (p, q, k) => p.map((v, i) => v + (q[i] - v) * k);
+  const rgba = (c, a = c[3]) => `rgba(${Math.round(c[0])}, ${Math.round(c[1])}, ${Math.round(c[2])}, ${Math.max(0, a).toFixed(3)})`;
+  const smooth = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * x * (x * (6 * x - 15) + 10); };   // softer than smoothstep at both ends
+  // Midday, and golden hour, evenly across the sky.
+  const noon = [[38, 112, 214, 0.94], [78, 150, 230, 0.9], [140, 196, 240, 0.86], [196, 226, 248, 0.82]];
+  const eve = [[74, 104, 176, 0.92], [236, 168, 96, 0.86], [232, 118, 72, 0.84], [168, 72, 86, 0.82]];
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  [0, 0.4, 0.75, 1].forEach((o, i) => sky.addColorStop(o, rgba(mix(noon[i], eve[i], s.gold))));
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+  // The sun round the card: white at midday, warmer and fading at golden hour.
+  const sunA = 1 - 0.85 * s.gold, sunR = Math.max(W, H) * 0.7;
+  const core = mix([255, 255, 248], [255, 206, 140], s.gold), mid = mix([236, 246, 255], [255, 170, 100], s.gold);
+  const sun = ctx.createRadialGradient(C.x, C.y, 0, C.x, C.y, sunR);
+  sun.addColorStop(0, rgba(core, 0.55 * sunA));
+  sun.addColorStop(0.3, rgba(mid, 0.18 * sunA));
+  sun.addColorStop(1, rgba(mid, 0));
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  ctx.fillStyle = sun;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+  // Where the day still is: none within the night, all of it beyond its
+  // front, a smooth curve across the front (and while the halo is still on
+  // the screen, only within it).
+  const ew = Math.max(40, s.R * 0.07);
+  const Rg = Math.max(s.far + s.FW, s.R + ew), N = 28;
+  const dayAt = (r) => smooth((r - (s.f - s.FW / 2)) / s.FW) * (1 - smooth((r - (s.R - ew)) / ew));
+  const m = ctx.createRadialGradient(C.x, C.y, 0, C.x, C.y, Rg);
+  for (let i = 0; i <= N; i++) m.addColorStop(i / N, `rgba(0, 0, 0, ${dayAt((Rg * i) / N).toFixed(4)})`);
+  ctx.save();
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.fillStyle = m;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+  // The dusk along the front: swelling and fading across it, deep indigo on
+  // the night's side, through violet and rose, to a little amber on the day's.
+  if (s.f + s.FW / 2 > 0) {
+    const cols = [[30, 22, 70], [78, 48, 128], [160, 72, 124], [226, 128, 82]];
+    const tint = ctx.createRadialGradient(C.x, C.y, 0, C.x, C.y, Rg);
+    for (let i = 0; i <= N; i++) {
+      const x = ((Rg * i) / N - (s.f - s.FW / 2)) / s.FW;        // across the front, 0 (night) to 1 (day)
+      const bell = x <= 0 || x >= 1 ? 0 : Math.pow(Math.sin(Math.PI * x), 1.5);
+      const c = x <= 0 ? cols[0] : x >= 1 ? cols[3] : (() => { const p = x * 3, k = Math.min(2, Math.floor(p)); return mix(cols[k], cols[k + 1], p - k); })();
+      tint.addColorStop(i / N, rgba(c, 0.42 * bell));
+    }
+    ctx.fillStyle = tint;
+    ctx.fillRect(0, 0, W, H);
+  }
+  // Stardust shimmering along the front, and the stars waking as it passes.
+  if (!keep.dust) {
+    const r = (a, b) => a + Math.random() * (b - a);
+    keep.dust = Array.from({ length: 220 }, () => ({ q: r(0, TAU), d: (Math.random() + Math.random() - 1) * 0.5, s: r(0.5, 1.4), ph: r(0, 6), tw: r(110, 300) }));
+    keep.stars = Array.from({ length: 120 }, () => ({ x: r(0, W), y: r(0, H), s: r(0.6, 1.5), lag: r(0, 0.25) }));
+    const dot = (inner, mid) => {
+      const c = document.createElement("canvas"); c.width = c.height = 48;
+      const x = c.getContext("2d"), g = x.createRadialGradient(24, 24, 0, 24, 24, 24);
+      g.addColorStop(0, inner); g.addColorStop(0.25, mid); g.addColorStop(1, "rgba(200, 190, 255, 0)");
+      x.fillStyle = g; x.fillRect(0, 0, 48, 48);
+      return c;
+    };
+    keep.sparkle = dot("rgba(250, 248, 255, 1)", "rgba(210, 200, 255, .45)");
+  }
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  keep.dust.forEach((d) => {
+    const rr = s.f + d.d * s.FW * 0.6, x = C.x + Math.cos(d.q) * rr, y = C.y + Math.sin(d.q) * rr;
+    if (rr <= 0 || x < -10 || y < -10 || x > W + 10 || y > H + 10) return;
+    const across = 1 - Math.abs(d.d) * 2;
+    const al = across * (0.35 + 0.65 * Math.pow(0.5 + 0.5 * Math.sin(t / d.tw + d.ph), 3)) * 0.8;
+    if (al < 0.03) return;
+    const sz = d.s * 4;
+    ctx.globalAlpha = al;
+    ctx.drawImage(keep.sparkle, x - sz, y - sz, sz * 2, sz * 2);
+  });
+  keep.stars.forEach((st) => {
+    const dist = Math.hypot(st.x - C.x, st.y - C.y);
+    const since = (s.f - dist) / s.FW - st.lag;   // how far behind the front's middle it now is
+    if (since <= 0 || since > 0.9) return;
+    const glint = Math.exp(-Math.pow((since - 0.12) / 0.1, 2)), rest = smooth(since / 0.3) * (1 - smooth((since - 0.5) / 0.4));
+    const al = 0.7 * glint + 0.25 * rest;
+    if (al < 0.03) return;
+    const sz = st.s * (2 + 3 * glint);
+    ctx.globalAlpha = Math.min(1, al);
+    ctx.drawImage(keep.sparkle, st.x - sz, st.y - sz, sz * 2, sz * 2);
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+// The halo, on the canvas over the whole screen above it all: a ring of
+// warm living light (a wide soft amber glow, a gold band, a thin hot core;
+// uneven, in patches that drift, its edge rippling a little), a warmth just
+// inside it and a violet glow just beyond, streaks of energy running round
+// it, and fine dust glittering along it.
+function haloLight(ctx, t, W, H, C, h, keep) {
+  const s = haloState(t, C, W, H, h);
+  if (s.a <= 0.01) return;
+  const TAU = Math.PI * 2, R = s.R, a = s.a, tt = (t - DAWN_PEAK) / 1000;
+  if (!keep.glint) {
+    const r = (x, y) => x + Math.random() * (y - x);
+    keep.glint = Array.from({ length: 300 }, () => ({ q: r(0, TAU), d: (Math.random() + Math.random() + Math.random() - 1.5) * 50, s: r(0.5, 1.6), ph: r(0, 6), tw: r(120, 380) }));
+    const c = document.createElement("canvas"); c.width = c.height = 64;
+    const x = c.getContext("2d"), g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, "rgba(255, 252, 235, 1)");
+    g.addColorStop(0.2, "rgba(255, 220, 150, .7)");
+    g.addColorStop(0.5, "rgba(255, 170, 80, .18)");
+    g.addColorStop(1, "rgba(255, 150, 60, 0)");
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    keep.spark = c;
+  }
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  // A warmth just inside the ring, and a violet glow just beyond it.
+  const band = Math.max(60, R * 0.12);
+  const inner = ctx.createRadialGradient(C.x, C.y, Math.max(0, R - band), C.x, C.y, R);
+  inner.addColorStop(0, "rgba(255, 190, 110, 0)");
+  inner.addColorStop(1, `rgba(255, 196, 120, ${0.22 * a})`);
+  ctx.fillStyle = inner;
+  ctx.beginPath(); ctx.arc(C.x, C.y, R, 0, TAU); ctx.arc(C.x, C.y, Math.max(0, R - band), 0, TAU, true); ctx.fill();
+  const outer = ctx.createRadialGradient(C.x, C.y, R, C.x, C.y, R + band * 0.9);
+  outer.addColorStop(0, `rgba(190, 90, 215, ${0.16 * a})`);
+  outer.addColorStop(1, "rgba(150, 60, 200, 0)");
+  ctx.fillStyle = outer;
+  ctx.beginPath(); ctx.arc(C.x, C.y, R + band * 0.9, 0, TAU); ctx.arc(C.x, C.y, R, 0, TAU, true); ctx.fill();
+  // The ring itself, uneven and rippling.
+  const lit = (q) => (0.55 + 0.45 * Math.pow(0.5 + 0.5 * Math.cos(q + Math.PI / 2), 1.4))
+    * (0.72 + 0.18 * Math.sin(3 * q + tt * 2.3) + 0.1 * Math.sin(7 * q - tt * 3.7));
+  const edge = new Path2D(), steps = 180;
+  for (let i = 0; i <= steps; i++) {
+    const q = (i / steps) * TAU, rr = R * (1 + 0.004 * Math.sin(5 * q + tt * 4) + 0.002 * Math.sin(11 * q - tt * 6));
+    i ? edge.lineTo(C.x + Math.cos(q) * rr, C.y + Math.sin(q) * rr) : edge.moveTo(C.x + Math.cos(q) * rr, C.y + Math.sin(q) * rr);
+  }
+  edge.closePath();
+  const tone = (rgb, k) => {
+    if (!ctx.createConicGradient) return `rgba(${rgb}, ${k * 0.6})`;
+    const g = ctx.createConicGradient(0, C.x, C.y);
+    for (let i = 0; i <= 24; i++) g.addColorStop(i / 24, `rgba(${rgb}, ${Math.min(1, k * lit((i / 24) * TAU))})`);
+    return g;
+  };
+  ctx.lineJoin = "round";
+  ctx.save();
+  ctx.shadowColor = `rgba(255, 140, 50, ${0.6 * a})`;
+  ctx.shadowBlur = 22;
+  ctx.strokeStyle = tone("255, 150, 60", 0.32 * a);
+  ctx.lineWidth = 14;
+  ctx.stroke(edge);
+  ctx.restore();
+  ctx.strokeStyle = tone("255, 196, 110", 0.6 * a);
+  ctx.lineWidth = 3.2;
+  ctx.stroke(edge);
+  ctx.strokeStyle = tone("255, 236, 190", 0.85 * a);
+  ctx.lineWidth = 1.1;
+  ctx.stroke(edge);
+  // Streaks of energy running round it.
+  for (let k = 0; k < 10; k++) {
+    const hsh = (m) => { const v = Math.sin(k * 91.7 + m * 47.3) * 43758.5453; return v - Math.floor(v); };
+    const from = hsh(4) * TAU + tt * (0.5 + 1.2 * hsh(5)) * (k % 2 ? 1 : -1), span = 0.25 + 0.5 * hsh(6);
+    const rr = R * (0.985 + 0.03 * hsh(3)), al = a * (0.3 + 0.45 * hsh(7));
+    if (ctx.createConicGradient) {
+      const g = ctx.createConicGradient(from, C.x, C.y), f = span / TAU;
+      g.addColorStop(0, "rgba(255, 230, 180, 0)");
+      g.addColorStop(f * 0.55, `rgba(255, 228, 175, ${al})`);
+      g.addColorStop(f, "rgba(255, 210, 150, 0)");
+      g.addColorStop(1, "rgba(255, 210, 150, 0)");
+      ctx.strokeStyle = g;
+    } else ctx.strokeStyle = `rgba(255, 228, 175, ${al * 0.5})`;
+    ctx.lineWidth = 1 + 1.5 * hsh(8);
+    ctx.lineCap = "round";
+    ctx.beginPath(); ctx.arc(C.x, C.y, rr, from, from + span); ctx.stroke();
+  }
+  // Fine dust glittering along it.
+  keep.glint.forEach((g) => {
+    const rr = R + g.d, x = C.x + Math.cos(g.q) * rr, y = C.y + Math.sin(g.q) * rr;
+    if (x < -10 || y < -10 || x > W + 10 || y > H + 10) return;
+    const al = a * (1 - Math.abs(g.d) / 80) * (0.4 + 0.6 * Math.pow(0.5 + 0.5 * Math.sin((t / g.tw) + g.ph), 3));
+    if (al < 0.03) return;
+    const sz = g.s * 5;
+    ctx.globalAlpha = Math.min(1, al);
+    ctx.drawImage(keep.spark, x - sz, y - sz, sz * 2, sz * 2);
+  });
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+// The dust for a dawn, for a card `h` tall: a few motes rising before the
+// turn, and the shower that bursts out as it turns.
+function dawnMotes(h) {
+  const r = (a, b) => a + Math.random() * (b - a);
+  const motes = [];
+  for (let i = 0; i < 10; i++) {   // rising through the beams
+    motes.push({ born: r(0, 450), life: r(1200, 1900), x: r(-0.6, 0.6) * h, y: r(0.3, 0.7) * h,
+      vx: 0, vy: 0, drag: 400, lift: r(30, 60), r: r(0.7, 1.3), a: r(0.35, 0.7), ph: r(0, 6) });
+  }
+  for (let i = 0; i < 6; i++) {    // a few large, soft ones (like light out of focus)
+    const ang = r(0, Math.PI * 2), sp = r(40, 140) * (h / 180);
+    motes.push({ born: DAWN_PEAK + r(40, 220), life: r(1300, 1900), x: Math.cos(ang) * h * 0.3, y: Math.sin(ang) * h * 0.3,
+      vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp * 0.7, drag: 500, lift: r(10, 25), r: r(1.6, 2.6), a: r(0.5, 0.9), ph: r(0, 6), big: true });
+  }
+  for (let i = 0; i < 46; i++) {   // the shower
+    const ang = r(0, Math.PI * 2), sp = r(90, 320) * (h / 180);
+    motes.push({ born: DAWN_PEAK + r(0, 90), life: r(1100, 1800), x: Math.cos(ang) * h * 0.15, y: Math.sin(ang) * h * 0.2,
+      vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp * 0.75, drag: r(260, 420), lift: r(14, 36), r: r(0.6, 1.4), a: r(0.55, 1), ph: r(0, 6) });
+  }
+  return motes;
+}
+
+// The dawn round the middle card of the floating deck. Resolves at its
+// peak, when the card should turn; the light carries on and fades by itself.
+function dawnReveal(mid) {
+  const deck = $("floatDeck"), d = deck.getBoundingClientRect(), b = mid.getBoundingClientRect();
+  // Where the card will be once lifted (.fd-card.lift: up 16px, 1.12 times
+  // as big, from a point half its height below it), within the deck's box.
+  const h = b.height * 1.12;
+  const cx = b.left + b.width / 2 - d.left, cy = b.top + b.height / 2 - 0.12 * b.height - 16 - d.top;
+  // The light round the card: room for its glow, never more than about 1400
+  // pixels across (it's soft, and a phone has to keep up).
+  const S = Math.ceil(h * 4.4), k = Math.min(devicePixelRatio || 1, 1.5, 1400 / S);
+  const layer = (z) => {
+    const c = document.createElement("canvas");
+    c.className = "dawn-fx";
+    c.width = c.height = Math.ceil(S * k);
+    Object.assign(c.style, { left: `${cx - S / 2}px`, top: `${cy - S / 2}px`, width: `${S}px`, height: `${S}px`, zIndex: z });
+    return c;
+  };
+  const back = layer(0), front = layer(5);
+  deck.append(back, front);   // (after the cards, so they keep their places; the stacking does the rest)
+  const bx = back.getContext("2d"), fx = front.getContext("2d"), motes = dawnMotes(h);
+  // The day (just above the stars, below everything else) and the halo (above
+  // it all), each over the whole screen; and the band at the halo's rim that
+  // bends what it passes over, like light through glass.
+  const W = innerWidth, Hs = innerHeight, C = { x: b.left + b.width / 2, y: cy + d.top };
+  const sk = Math.min(devicePixelRatio || 1, 1.5, Math.sqrt(2.6e6 / (W * Hs)));
+  const screen = (cls) => {
+    const c = document.createElement("canvas");
+    c.className = cls;
+    c.width = Math.ceil(W * sk); c.height = Math.ceil(Hs * sk);
+    return c;
+  };
+  const sky = screen("sky dawn-sky"), halo = screen("dawn-halo");
+  halo.style.zIndex = ++Z;
+  $("sky").after(sky);
+  document.body.append(halo);
+  const lens = document.createElement("div");
+  lens.className = "dawn-lens";
+  Object.assign(lens.style, { left: `${C.x}px`, top: `${C.y}px`, zIndex: Z, opacity: 0 });
+  document.body.append(lens);
+  const sx = sky.getContext("2d"), hx = halo.getContext("2d"), haloKeep = {}, skyKeep = {};
+  // The stars fade while it's day; as the night comes back they're there
+  // again behind it (the day still covers them beyond it).
+  const at = (ms) => Math.min(1, ms / DAWN_END);
+  $("sky").animate([{ opacity: 1 }, { opacity: 1, offset: at(DAWN_PEAK) }, { opacity: 0.12, offset: at(DAWN_PEAK + 500) },
+    { opacity: 0.12, offset: at(DAWN_PEAK + DUSK.night[0]) }, { opacity: 1, offset: at(DAWN_PEAK + DUSK.night[0] + 700) }, { opacity: 1 }],
+    { duration: DAWN_END, easing: "ease-in-out" });
+  // The rest of the fan dims a little while the card is revealed, and as
+  // the halo is released its edges catch the warm light, then lose it.
+  [...deck.children].forEach((c, i) => {
+    if (c === mid || !c.classList.contains("fd-card")) return;
+    c.querySelector(".fd-flip")?.animate([{ opacity: 1 }, { opacity: 0.55, offset: 0.25 }, { opacity: 0.55, offset: 0.6 }, { opacity: 1 }],
+      { duration: 1800, easing: "ease-in-out" });
+    const base = "0 4px 12px rgba(0, 0, 0, .45)";
+    c.querySelector(".fd-flip > .cback")?.animate([
+      { boxShadow: `${base}, 0 0 0 rgba(255, 170, 80, 0), inset 0 0 0 rgba(255, 190, 110, 0)` },
+      { boxShadow: `${base}, 0 0 18px 2px rgba(255, 170, 80, .5), inset 0 0 16px rgba(255, 190, 110, .3)`, offset: 0.25 },
+      { boxShadow: `${base}, 0 0 0 rgba(255, 170, 80, 0), inset 0 0 0 rgba(255, 190, 110, 0)` },
+    ], { duration: 1700, delay: DAWN_PEAK + 60 + Math.abs(i - 2) * 40, easing: "ease-out" });
+  });
+  setTimeout(() => {
+    mid.querySelector(".fd-flip > .cface")?.animate([{ boxShadow: "0 0 14px 3px rgba(255, 214, 130, .55)" },
+      { boxShadow: "0 0 22px 6px rgba(255, 210, 130, .7)", offset: 0.4 }, { boxShadow: "0 0 14px 3px rgba(255, 214, 130, .55)" }],
+      { duration: 1100, easing: "ease-in-out" });
+  }, DAWN_PEAK + DUSK.night[0] - 150);
+  // The home screen's words and lines darken towards ink where the day
+  // reaches them (and back as the night comes), so they stay readable on the
+  // bright sky: each gets --day, how much day is behind it (see style.css).
+  const ui = "#home .home-head h1, #cotd, #cotdReset, #home .home-sub, .spread-btn, #home .home-links .pill, #homeNudge, .option, .fd-word";
+  const shadeForDay = (t) => document.querySelectorAll(ui).forEach((el) => {
+    const r = el.getBoundingClientRect();
+    if (!r.width) return;
+    const v = dayAmount(t, C, W, Hs, h, r.left + r.width / 2, r.top + r.height / 2);
+    if (v > 0.002) el.style.setProperty("--day", v.toFixed(3));
+    else el.style.removeProperty("--day");
+  });
+  const all = [back, front, sky, halo, lens];
+  const done = () => {
+    all.forEach((n) => n.remove());
+    document.querySelectorAll(ui).forEach((el) => el.style.removeProperty("--day"));
+  };
+  const t0 = performance.now();
+  const frame = (now) => {
+    const t = now - t0;
+    if (t > DAWN_END || !back.isConnected) { done(); return; }
+    [[sx, sky], [hx, halo]].forEach(([x, c]) => {
+      x.setTransform(1, 0, 0, 1, 0, 0);
+      x.clearRect(0, 0, c.width, c.height);
+      x.setTransform(sk, 0, 0, sk, 0, 0);
+    });
+    daySky(sx, t, W, Hs, C, h, skyKeep);
+    haloLight(hx, t, W, Hs, C, h, haloKeep);
+    shadeForDay(t);
+    const s = haloState(t, C, W, Hs, h), lr = s.R * 1.08;
+    lens.style.width = lens.style.height = `${(2 * lr).toFixed(1)}px`;
+    lens.style.opacity = s.a.toFixed(3);
+    const f = dawnFrame(t, h, motes);
+    [[bx, f.back], [fx, f.front]].forEach(([x, draw]) => {
+      x.setTransform(1, 0, 0, 1, 0, 0);
+      x.clearRect(0, 0, x.canvas.width, x.canvas.height);
+      x.setTransform(k, 0, 0, k, (S / 2) * k, (S / 2) * k);
+      draw(x);
+    });
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+  setTimeout(done, DAWN_END + 100);   // (even if frames are paused)
+  return wait(DAWN_PEAK);
+}
+
+// First tap: the card rises in a warm glow and turns over, releasing a halo that turns night to day.
 // After that, a tap opens the card's page.
 async function revealCardOfTheDay() {
   if (fdBusy) return;
@@ -483,7 +887,7 @@ async function revealCardOfTheDay() {
   const label = $("cotd");
   label.classList.add("fade");
   mid.classList.add("lift");
-  if (!calm) await arcaneReveal(mid);
+  if (!calm) await dawnReveal(mid);
   mid.classList.add("turned", "revealed");
   if (!calm) cardFlare(mid.querySelector(".fd-flip > .cface"), 250);
   revealTitle(pick.card.name, pick.reversed ? "Card of the day · Reversed" : "Card of the day",
@@ -496,6 +900,19 @@ async function revealCardOfTheDay() {
 }
 
 $("floatDeck").addEventListener("click", revealCardOfTheDay);
+
+// TEMPORARY, for testing the reveal: forgets today's card (and its entry in
+// the history), so it can be revealed again. Remove with its button in index.html.
+function resetCardOfTheDay() {
+  if (fdBusy) return;
+  try { localStorage.removeItem("tarot-cotd"); } catch {}
+  const today = new Date().toDateString();
+  loadHistory().filter((r) => r.spread === COTD_SPREAD && new Date(r.t).toDateString() === today)
+    .forEach((r) => removeReading(r.id));
+  buildFloatDeck();
+  placeCotdWords();
+}
+$("cotdReset").addEventListener("click", resetCardOfTheDay);
 $("cotd").addEventListener("click", revealCardOfTheDay);
 
 addEventListener("resize", () => { sizeSky(); if (calm) drawSky(0); placeCotdWords(); });

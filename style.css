@@ -230,11 +230,59 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .fd-card.revealed .fd-flip > .cface {
   box-shadow: 0 0 14px 3px rgba(255, 214, 130, .55);
 }
+/* TEMPORARY, for testing: the reset under the card of the day's label */
+.cotd-reset { display: block; margin: 2px auto 0; color: var(--muted); font-size: .72rem; opacity: .7; }
+/* While the card of the day turns night to day: the home screen's words and
+   lines shift from gold towards a deep ink blue where the day reaches them
+   (and back as night returns), with a soft pale halo, so they stay readable
+   on the bright sky. --day (0 to 1, how much day is behind each) is set on
+   them frame by frame by dawnReveal, and only while it plays. */
+[style*="--day"] {
+  --ink-day: color-mix(in srgb, var(--gold) calc(100% - var(--day) * 100%), #14244a);
+  --text-day: color-mix(in srgb, var(--ink) calc(100% - var(--day) * 100%), #14244a);
+  --muted-day: color-mix(in srgb, var(--muted) calc(100% - var(--day) * 100%), #2a3d66);
+  --line-day: color-mix(in srgb, rgba(201, 169, 110, .45) calc(100% - var(--day) * 100%), rgba(20, 36, 74, .6));
+  --wash-day: rgba(255, 255, 255, calc(var(--day) * .22));
+  --halo-day: 0 0 calc(var(--day) * 7px) rgba(255, 255, 255, calc(var(--day) * .6));
+}
+.home-head h1[style*="--day"], #cotd[style*="--day"], .fd-word[style*="--day"] {
+  color: var(--ink-day) !important;
+  text-shadow: var(--halo-day) !important;
+}#cotdReset[style*="--day"], .home-sub[style*="--day"] { color: var(--muted-day) !important; text-shadow: var(--halo-day); }
+#homeNudge[style*="--day"] { color: var(--ink-day) !important; }
+.spread-btn[style*="--day"], #home .home-links .pill[style*="--day"], .option[style*="--day"] {
+  border-color: var(--line-day) !important;
+  background: var(--wash-day) !important;
+}
+.spread-btn[style*="--day"] .spread-num, #home .home-links .pill[style*="--day"], .option[style*="--day"] .option-icon { color: var(--ink-day) !important; text-shadow: var(--halo-day); }
+.spread-btn[style*="--day"] .spread-word, .option[style*="--day"] .option-note { color: var(--muted-day) !important; }
+.option[style*="--day"] .option-name { color: var(--text-day) !important; }
+.spread-btn[style*="--day"] .spread-fan rect, .spread-btn[style*="--day"] .spread-fan circle { stroke: var(--ink-day); }
+.option[style*="--day"] .option-switch { border-color: var(--line-day); }
+/* The dawn the card of the day is revealed in (see dawnReveal): one canvas
+   behind the cards, one in front. */
+.dawn-fx { position: absolute; pointer-events: none; }
+/* the halo it releases, over the whole screen, */
+.dawn-halo { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+/* and the band at the halo's rim, bending and warming what it passes over */
+.dawn-lens {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(1.4px) brightness(1.25) saturate(1.4) sepia(.2);
+  backdrop-filter: blur(1.4px) brightness(1.25) saturate(1.4) sepia(.2);
+  -webkit-mask: radial-gradient(closest-side, transparent 84%, #000 90%, #000 95%, transparent 100%);
+  mask: radial-gradient(closest-side, transparent 84%, #000 90%, #000 95%, transparent 100%);
+}
+.fd-card { z-index: 1; }   /* (above the dawn behind them; the lifted card higher still) */
 /* Hovering the floating deck: the card under the pointer rises a little in
-   its place and glows; the others draw back, a touch smaller. */
+   its place and glows; the others draw back, a touch smaller. Once the card
+   of the day is revealed, only it answers the pointer; the rest stay still. */
+.float-deck:has(.fd-card.revealed) .fd-card:not(.revealed) { pointer-events: none; }
 .fd-flip > .cback, .fd-flip > .cface { transition: box-shadow .35s ease; }
 @media (hover: hover) {
-  .float-deck:has(.fd-card:hover) .fd-card:not(:hover):not(.lift) { transform: rotate(var(--a)) scale(.94); }
+  .float-deck:not(:has(.revealed)):has(.fd-card:hover) .fd-card:not(:hover):not(.lift) { transform: rotate(var(--a)) scale(.94); }
   /* (it keeps its place in the fan: lifted a little, not brought over the others) */
   .fd-card:not(.lift):hover { transform: rotate(var(--a)) translateY(-8px); }
   .fd-card.lift:hover { transform: translateY(-20px) scale(1.15); }

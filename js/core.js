@@ -601,7 +601,9 @@ function holeWindow(sheet, C, ms, delay, radius, pull, outside = false) {
     };
     requestAnimationFrame(frame);
   }, delay);
-  setTimeout(() => { draw(1); finish(); }, delay + ms + 120);
+  // (only if the frames haven't already finished it: drawing the last moment
+  // again after that would put the page's cut-out back, and leave it there)
+  setTimeout(() => { if (!finished) { draw(1); finish(); } }, delay + ms + 120);
   return { over, draw, finish, parts };
 }
 const easeOut3 = (v) => 1 - Math.pow(1 - v, 3);
