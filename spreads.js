@@ -231,6 +231,42 @@ const THEMES_LIST = [
       { label: "Permission", rank: 3, question: "What do I need to give myself permission for?" },
     ],
   },
+  {
+    name: "A symptom's message", topic: "Body",
+    about: "For an ache or symptom that keeps asking for attention. A reflection, not a diagnosis: see a doctor for care.",
+    brief: "What an ache is asking",
+    positions: [
+      { label: "The symptom", rank: 2, question: "What is this symptom drawing my attention to?" },
+      { label: "What it guards", rank: 4, question: "What might it be protecting me from?" },
+      { label: "Held feeling", rank: 3, question: "What feeling might it be holding?" },
+      { label: "Its request", rank: 1, question: "What is it asking of me?" },
+      { label: "Care", rank: 5, question: "How can I care for this part of me?" },
+    ],
+  },
+  {
+    name: "Where I hold stress", topic: "Body",
+    about: "Where tension settles in you, and how to let it go.",
+    brief: "Find the tension, let it go",
+    positions: [
+      { label: "Where it lives", rank: 1, question: "Where in my body does stress settle?" },
+      { label: "Its cause", rank: 3, question: "What is putting it there?" },
+      { label: "Ignored signal", rank: 4, question: "What signal have I been ignoring?" },
+      { label: "Release", rank: 2, question: "What would help me release it?" },
+      { label: "Ease", rank: 5, question: "What would ease feel like in my body?" },
+    ],
+  },
+  {
+    name: "Gut feeling", topic: "Body",
+    about: "Before a choice, ask the body as well as the head.",
+    brief: "Ask the body before you choose",
+    positions: [
+      { label: "The choice", rank: 4, question: "What am I really deciding?" },
+      { label: "Body to yes", rank: 1, question: "How does my body answer yes?" },
+      { label: "Body to no", rank: 2, question: "How does my body answer no?" },
+      { label: "The head", rank: 5, question: "What is my head adding?" },
+      { label: "Trust", rank: 3, question: "What can I trust here?" },
+    ],
+  },
 
   // Dreams
   {
@@ -305,6 +341,30 @@ const THEMES_LIST = [
       { label: "What calls me", rank: 2, question: "What is calling me forward?" },
       { label: "Practice", rank: 5, question: "What practice would deepen my path?" },
       { label: "My guide", rank: 3, question: "What can I trust to guide me?" },
+    ],
+  },
+  {
+    name: "A sign", topic: "Spirit",
+    about: "For a sign, a coincidence or a moment that felt meant for you.",
+    brief: "A sign, and why it came",
+    positions: [
+      { label: "The sign", rank: 2, question: "What is this sign pointing to?" },
+      { label: "Its meaning", rank: 1, question: "What does it mean for me?" },
+      { label: "Why now", rank: 4, question: "Why has it come now?" },
+      { label: "Its ask", rank: 3, question: "What is it asking me to do?" },
+      { label: "Watch for", rank: 5, question: "What should I watch for next?" },
+    ],
+  },
+  {
+    name: "Purpose", topic: "Spirit",
+    about: "What you are here to give, and what stands in the way.",
+    brief: "What you're here to give",
+    positions: [
+      { label: "My gifts", rank: 2, question: "What gifts do I bring?" },
+      { label: "What lights me", rank: 3, question: "What makes me come alive?" },
+      { label: "How I serve", rank: 1, question: "How can my gifts serve others?" },
+      { label: "In the way", rank: 5, question: "What is in the way of my purpose?" },
+      { label: "Next step", rank: 4, question: "What is my next step toward it?" },
     ],
   },
 
@@ -547,6 +607,54 @@ const THEMES_LIST = [
       { label: "What begins", rank: 2, question: "What is beginning?" },
     ],
   },
+  {
+    name: "Stay or go?", topic: "Journey",
+    about: "For a place, a job or a bond you're unsure whether to leave.",
+    brief: "Weigh staying against leaving",
+    positions: [
+      { label: "If I stay", rank: 2, question: "What happens if I stay?" },
+      { label: "If I go", rank: 3, question: "What happens if I go?" },
+      { label: "My fear", rank: 4, question: "What is my fear telling me?" },
+      { label: "My heart", rank: 5, question: "What is my heart telling me?" },
+      { label: "What I need", rank: 1, question: "What do I need to know to decide?" },
+    ],
+  },
+  {
+    name: "Starting over", topic: "Journey",
+    about: "For a fresh start after a move, a loss or a change.",
+    brief: "Begin again on new ground",
+    positions: [
+      { label: "What I leave", rank: 3, question: "What am I leaving behind?" },
+      { label: "What I carry", rank: 4, question: "What do I carry with me?" },
+      { label: "New ground", rank: 1, question: "What is this new beginning about?" },
+      { label: "Support", rank: 5, question: "What will support me?" },
+      { label: "First step", rank: 2, question: "What is my first step?" },
+    ],
+  },
+  {
+    name: "Through a hard time", topic: "Journey",
+    about: "For a difficult stretch: what it asks, and what will carry you through.",
+    brief: "What carries you through",
+    positions: [
+      { label: "What's happening", rank: 2, question: "What is this hard time really about?" },
+      { label: "What it asks", rank: 4, question: "What is it asking of me?" },
+      { label: "My strength", rank: 1, question: "What strength do I have that I'm not seeing?" },
+      { label: "Support", rank: 3, question: "Where can I find support?" },
+      { label: "Light ahead", rank: 5, question: "What light is ahead?" },
+    ],
+  },
+  {
+    name: "Feeling stuck", topic: "Journey",
+    about: "When nothing seems to move: what holds you, and the smallest way out.",
+    brief: "The smallest way to move",
+    positions: [
+      { label: "Where I'm stuck", rank: 2, question: "Where exactly am I stuck?" },
+      { label: "What holds me", rank: 3, question: "What is holding me in place?" },
+      { label: "What I avoid", rank: 4, question: "What am I avoiding?" },
+      { label: "Smallest move", rank: 1, question: "What is the smallest move I can make?" },
+      { label: "What opens", rank: 5, question: "What opens up when I move?" },
+    ],
+  },
 ];
 
 // The groups of themes, in order, each with a short note.
@@ -562,7 +670,7 @@ const THEME_TOPICS = {
   Parts:      "Internal Family Systems: every part of you has a reason, and a Self beneath them all.",
   Flashbacks: "Emotional flashbacks: old feelings flooding the present, often with no memory attached (Pete Walker). Go gently, and reach out for support if you need it.",
   Self:       "Authenticity, boundaries and creativity.",
-  Journey:    "Crossroads, endings and new chapters.",
+  Journey:    "Crossroads, hard times, endings and new chapters.",
 };
 
 // A theme's places for a spread of n cards: its n most important,

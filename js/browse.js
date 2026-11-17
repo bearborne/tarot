@@ -142,8 +142,39 @@ const TOPIC_TAGS = {
   Fear: "Face what scares you", Feelings: "Name and tend them", Mind: "Worry, critic, energy",
   Body: "Listen and rest", Dreams: "Symbols and stories", Spirit: "Lessons and messages",
   Chakras: "Your energy centres", Jung: "Shadow and the Self", Parts: "Your inner family",
-  Flashbacks: "Old pain, safe now", Self: "Being yourself", Journey: "Choices and chapters",
+  Flashbacks: "When old feelings return", Self: "Being yourself", Journey: "Choices and hard times",
 };
+// The topics in four groups of three.
+const TOPIC_GROUPS = [
+  ["Heart", ["Fear", "Feelings", "Body"]],
+  ["Mind", ["Mind", "Parts", "Self"]],
+  ["Depths", ["Jung", "Dreams", "Flashbacks"]],
+  ["Spirit", ["Spirit", "Chakras", "Journey"]],
+];
+// A small line-drawn sign for each topic, in thin gold strokes.
+const TOPIC_ICONS = {
+  Fear: '<path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-6 1 1 1.5 2 1.5 3 1-2 1.5-4 1.5-7z"/>',
+  Feelings: '<path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/>',
+  Mind: '<path d="M11 12a1 1 0 0 1 2 0a2 2 0 0 1-4 0a3.5 3.5 0 0 1 7 0a5 5 0 0 1-10 0"/>',
+  Body: '<path d="M5 19c0-8 5-14 14-14 0 9-6 14-14 14zM5 19l8-8"/>',
+  Dreams: '<path d="M15 4a8 8 0 1 0 5 13A7 7 0 0 1 15 4z"/><circle cx="18" cy="7" r=".6"/>',
+  Spirit: '<path d="M12 3l1.8 7.2L21 12l-7.2 1.8L12 21l-1.8-7.2L3 12l7.2-1.8z"/>',
+  Chakras: '<path d="M12 5c2 2.5 2 7 0 10-2-3-2-7.5 0-10zM12 15c-2-1-6-1-8-4 3-1 6 0 8 4zM12 15c2-1 6-1 8-4-3-1-6 0-8 4zM6 18.5h12"/>',
+  Jung: '<circle cx="12" cy="12" r="8"/><path d="M12 4a4 4 0 0 1 0 8 4 4 0 0 0 0 8"/><circle cx="12" cy="8" r=".7"/><circle cx="12" cy="16" r=".7"/>',
+  Parts: '<circle cx="12" cy="7.5" r="2.6"/><circle cx="7" cy="16" r="2.6"/><circle cx="17" cy="16" r="2.6"/>',
+  Flashbacks: '<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3M6.7 3v3.7h3.7"/>',
+  Self: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="1.6"/>',
+  Journey: '<circle cx="12" cy="12" r="8"/><path d="M12 6l2 6-2 6-2-6z"/>',
+  Yours: '<path d="M19 4c-6 1-10 6-11 13l-2 3M8 17c4 0 8-3 10-8M11 13l5-5"/>',
+};
+function topicIcon(t) {
+  const s = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  s.setAttribute("viewBox", "0 0 24 24");
+  s.setAttribute("aria-hidden", "true");
+  s.classList.add("topic-icon");
+  s.innerHTML = TOPIC_ICONS[t] || '<path d="M12 6l1.4 4.6L18 12l-4.6 1.4L12 18l-1.4-4.6L6 12l4.6-1.4z"/>';
+  return s;
+}
 function renderThemed() {
   const n = S ? S.n : 5;
   const note = $("topicNote");
@@ -152,25 +183,44 @@ function renderThemed() {
   $("themeNone").hidden = !(S && S.theme);
   $("themedTitle").textContent = themedTopic || "Themes";
 
+  note.classList.toggle("topics-lead", !themedTopic);
   if (!themedTopic) {
     note.textContent = "What would you like to explore?";
-    const grid = el("div", "topic-grid");
-    Object.keys(THEME_TOPICS).forEach((t) => {
-      const tile = el("button", "topic-tile");
+    const tile = (t, cls) => {
+      const b = el("button", cls);
       const name = el("span", "topic-name", t);
       // The topic of the theme in use is marked.
       if (S && S.theme && S.theme.topic === t) name.append(el("span", "topic-mark", " ✦"));
-      tile.append(name, el("span", "topic-tag", TOPIC_TAGS[t] || ""));
-      tile.addEventListener("click", () => showTopic(t));
-      grid.append(tile);
+      const words = el("span", "topic-words");
+      words.append(name, el("span", "topic-tag", TOPIC_TAGS[t] || ""));
+      b.append(topicIcon(t), words);
+      b.addEventListener("click", () => showTopic(t));
+      return b;
+    };
+    // The topics in a few groups, each under a small heading; any topic
+    // not placed in a group joins the last.
+    const own = typeof OWN_TOPIC !== "undefined" ? OWN_TOPIC : null;
+    const placed = TOPIC_GROUPS.flatMap(([, ts]) => ts);
+    const stray = Object.keys(THEME_TOPICS).filter((t) => t !== own && !placed.includes(t));
+    TOPIC_GROUPS.forEach(([head, ts], i) => {
+      const topics = ts.filter((t) => t in THEME_TOPICS).concat(i === TOPIC_GROUPS.length - 1 ? stray : []);
+      if (!topics.length) return;
+      list.append(el("h3", "topic-group", head));
+      const grid = el("div", "topic-grid");
+      topics.forEach((t) => grid.append(tile(t, "topic-tile")));
+      list.append(grid);
     });
-    list.append(grid);
+    // Your own themes: set apart, on one line of their own.
+    if (own && own in THEME_TOPICS) {
+      list.append(el("div", "topic-rule"), tile(own, "topic-tile topic-own"));
+    }
     return;
   }
 
   note.textContent = THEME_TOPICS[themedTopic] || "";
   const rows = el("div", "themed-rows");
   list.append(rows);
+  const canHover = matchMedia("(hover: hover) and (pointer: fine)").matches;
   if (themedTopic === OWN_TOPIC) {
     const add = el("button", "pill small own-new", "✦ New theme");
     add.addEventListener("click", () => editOwnTheme(null));
@@ -183,10 +233,18 @@ function renderThemed() {
     const sum = el("summary");
     // The title stands out; a few words under it say what the reading explores.
     sum.append(el("span", "themed-name", th.name), el("span", "themed-brief", th.brief || ""));
+    // With a mouse, a column opens while the pointer rests on it and widens
+    // a little; a click on its title doesn't shut it again.
+    if (canHover) {
+      item.addEventListener("mouseenter", () => { item.dataset.hover = "1"; item.open = true; });
+      item.addEventListener("mouseleave", () => { item.open = false; delete item.dataset.hover; });
+      sum.addEventListener("click", (e) => e.preventDefault());
+    }
     // One open at a time; it unfolds out of a little light.
     item.addEventListener("toggle", () => {
       if (!item.open) return;
       list.querySelectorAll(".themed-item[open]").forEach((o) => { if (o !== item) o.open = false; });
+      if (item.dataset.hover) return;
       if (!calm) item.animate([
         { opacity: .4, filter: "blur(3px)", boxShadow: "0 0 24px rgba(255, 214, 140, .6)" },
         { opacity: 1, filter: "blur(0)", boxShadow: "0 0 0 rgba(255, 214, 140, 0)" },
