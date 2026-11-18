@@ -896,7 +896,7 @@ function cardBackArt() {
       done({ img, px, GW, GH });
     };
     img.onerror = () => done({ img: null, px: null, GW: 1, GH: 1 });
-    img.src = "card-back.jpg";
+    img.src = "card-back-art.svg";
   });
   return backArt;
 }

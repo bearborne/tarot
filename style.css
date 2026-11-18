@@ -11,7 +11,7 @@
 
   /* The back of every card. Put your own picture here to replace it,
      e.g. url("cards/back.jpg") */
-  --card-back: url("card-back.jpg");
+  --card-back: url("card-back-art.svg");
 }
 
 * { box-sizing: border-box; }
