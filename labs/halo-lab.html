@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Halo Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Literata:opsz,wght@7..72,400;7..72,500&display=swap">
+<style>
+  /* The card back's halo, live: every slider redraws it on the real card
+     (card-back-art.svg). Copy the settings to have them put into the file,
+     or download the card as it is here. */
+  :root { --bg: #15131c; --panel: #1f1b29; --ink: #e9e2d3; --muted: #9a917f; --gold: #c9a96e; --line: rgba(201, 169, 110, .28); }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: Literata, Georgia, serif; }
+  .wrap { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; max-width: 1100px; margin: 0 auto; padding: 18px 16px 40px; }
+  @media (max-width: 760px) { .wrap { grid-template-columns: 1fr; } }
+  h1 { grid-column: 1 / -1; margin: 0; font: 400 1.5rem "IM Fell English SC", serif; color: var(--gold); letter-spacing: .05em; }
+  .stage { display: grid; place-items: center; align-self: start; position: sticky; top: 12px; }
+  #card { width: min(100%, 420px); aspect-ratio: 784 / 1358; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
+  #card svg { width: 100%; height: 100%; display: block; }
+  .tools { display: grid; gap: 14px; align-content: start; }
+  fieldset { margin: 0; padding: 10px 12px 12px; border: 1px solid var(--line); border-radius: 10px; }
+  legend { padding: 0 6px; font: 400 1rem "IM Fell English SC", serif; color: var(--gold); letter-spacing: .04em; }
+  label { display: grid; grid-template-columns: 112px 1fr 46px; align-items: center; gap: 8px; font-size: .8rem; color: var(--muted); margin: 5px 0; }
+  label output { text-align: right; color: var(--ink); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; accent-color: var(--gold); }
+  .check { grid-template-columns: 112px 1fr; }
+  select { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; font: inherit; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  button { background: none; border: 1px solid rgba(201, 169, 110, .5); color: var(--gold); border-radius: 999px; padding: 7px 14px; font: inherit; font-size: .85rem; cursor: pointer; }
+  button:hover { background: rgba(201, 169, 110, .1); }
+  textarea { width: 100%; min-height: 70px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px; font: .75rem/1.35 ui-monospace, monospace; }
+  .note { font-size: .75rem; color: var(--muted); margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Halo Lab</h1>
+  <div class="stage"><div id="card"></div></div>
+  <div class="tools" id="tools"></div>
+</div>
+<script type="text/plain" id="card-art">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 784 1358">
+  <defs>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6e4ad"/><stop offset="1" stop-color="#d9b56f"/></linearGradient>
+  </defs>
+  <!-- The card back's art without its frame, traced from the design one to one,
+       on the card's own grid (784 x 1358) so it lines up with the frame. Edit freely:
+       each group is one part; lines are strokes, the crescent and nose are fills. -->
+  <rect id="background" width="784" height="1358" fill="#35273a"/>
+  <!-- The halo behind his head: a single gold ring, open for a moment low on the right. -->
+  <g id="halo" fill="none" stroke="#d6ae62" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M408.3,752.4A248,248 0 1 1 471.7,739.5" stroke-width="8"/>
+  </g>
+  <g id="bear" fill="none" stroke="#d6ae62" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M269,396Q275.7,398.4 280.2,402.7Q284.6,406.9 287.2,411Q289.8,415 290.6,418Q291.5,421 290.8,423.5Q290,426 286,430Q282.1,434.1 280,437.1L278,440"/>
+    <path d="M514,396Q508.4,398.3 503.3,403.3Q498.3,408.4 496,412.2Q493.8,416 493.1,419Q492.5,422 493.4,424.4Q494.3,426.9 498.3,430.8Q502.2,434.8 506.1,440.4L510,446"/>
+    <path d="M353,485Q347.9,482.1 342.4,480.8Q337,479.5 331.5,480.9Q326,482.3 322.5,484.7L319,487"/>
+    <path d="M465,486Q452,480.3 448.5,480.2Q445,480 440,481.4Q435,482.8 432.5,484.9L430,487"/>
+    <path d="M448,503Q430.3,510.4 428.6,511.6Q426.8,512.8 426.5,513.4Q426.2,514.1 427.8,520.4Q429.3,526.7 432.6,534.8Q435.9,543 438.4,551.1Q440.9,559.1 441.9,566.6Q442.9,574 442.9,579Q443,584 442.4,588.5Q441.9,593 440.1,598.5Q438.2,604 436.7,606.1Q435.3,608.2 433.1,610.1Q431,612 426.2,613.7Q421.5,615.5 420.9,617.7Q420.2,620 418.4,622.9Q416.6,625.9 414.3,627.7Q412,629.5 407,631.7Q401.9,633.9 392.9,633.9Q384,634 381,633.3Q378,632.6 374.2,630.6Q370.3,628.5 367.9,626.2Q365.5,623.9 364.3,620Q363.1,616.1 364.1,615.2Q365,614.4 369,613.6Q372.9,612.9 381.4,610.3Q390,607.6 392.5,604.8L395,602"/>
+    <path d="M338,504Q357.9,511.9 360.4,510.3Q363,508.7 364.6,506.5Q366.3,504.3 372,499Q377.7,493.8 382.4,491.9Q387.1,490.1 390.6,489.6Q394,489.1 400.4,491.6Q406.9,494.1 415.9,503.1L425,512"/>
+    <path d="M358,513Q356.6,521 353,530Q349.4,539 349,541.5Q348.7,544 345.5,554Q342.3,564 341.7,568Q341,572 341,577.5Q341,583 341.6,588.4Q342.1,593.9 343.8,598.5Q345.5,603 347.6,606.1Q349.8,609.2 352,610.9Q354.3,612.6 358.2,613.8L362,615"/>
+    <path d="M262,544Q262,553 262.6,556.5Q263.1,560 266.7,572.5Q270.3,585 271.9,588.8Q273.4,592.6 279.7,602.8Q286.1,613 294.1,621.3Q302,629.7 307.4,634.4Q312.8,639.2 327.9,650.1Q343,661 347.5,663.7Q352,666.4 360,673.2Q368,680.1 370.8,683.2Q373.7,686.3 378.9,694.2Q384.2,702.1 385.9,705.5Q387.7,708.9 389.8,710.3Q391.9,711.8 393.8,710.2Q395.8,708.7 402.8,697.7Q409.8,686.8 413.6,682.9Q417.4,679 422.4,674.6Q427.4,670.3 448.3,655.7Q469.2,641.2 480.7,630.7Q492.2,620.2 500.7,608.1Q509.3,595.9 512.4,588.4Q515.6,581 518.3,571Q520.9,561 521.4,553.5L522,546"/>
+    <path d="M411,580Q413,580.8 414,580.4L415,580"/>
+    <path d="M370,581L374,581"/>
+    <path d="M393,607Q400,609.7 410,611.8L420,614"/>
+    <path d="M549,624Q549,617 548,609.5Q547,602 547.5,575.5Q548,549 547.4,543.5Q546.9,538 543.9,524.6Q540.9,511.1 538.1,504.9Q535.3,498.7 534,494Q532.6,489.3 531.3,487.1Q530,484.9 528,477.4Q526,470 526.9,465.5Q527.8,461 534.7,447Q541.6,433 542.8,429Q543.9,425 544.4,418.5Q545,412 543.8,407Q542.7,402 541.2,398.5Q539.8,395 534.4,388.6Q529,382.1 526,380.2Q523,378.3 519,377.4Q515,376.4 509,377.3Q503,378.3 499.3,380.1Q495.7,381.8 485.5,390Q475.3,398.2 472.2,400.1Q469,401.9 464.5,401.9Q460,401.9 449.5,398.6Q439,395.3 431,394.2Q423,393 409.5,395.5Q396,398 391,397.9Q386,397.9 373.5,395.5Q361,393.1 353,394.2Q345,395.3 335,398.6Q325,401.9 321,401.9Q317,402 313.7,400.8Q310.4,399.7 307.3,396.7Q304.2,393.8 296.1,387.6Q288,381.5 284.8,379.9Q281.7,378.3 277.8,377.3Q274,376.2 268,377.3Q262,378.4 258,380.7Q254,383.1 248.5,390.1Q243,397 241.6,401.5Q240.1,406 239.6,411Q239.1,416 240.7,424.5Q242.4,433 244.6,438Q246.8,443 251.2,450.5Q255.7,458 256.8,463.5Q258,469 257.3,473Q256.6,477 253,485Q249.4,493 246.4,501.5Q243.4,510 239.7,525.5Q236.1,541 236.1,558.5Q236,576 236.5,578.5Q237,581 237,587.5Q237,594 236,607.5Q235,621 235.2,622.5Q235.5,624 236.2,625L237,626"/>
+    <path d="M582,712Q581.5,717.7 581.9,719.3Q582.4,721 585.5,728Q588.6,735 590.3,740Q592,745 598,763.6Q603.9,782.1 605.9,790.1Q607.9,798.1 611.4,814.6Q614.9,831.1 616.9,847.1Q618.9,863 619.4,870.5Q620,878 620,896.5Q620,915 619.5,921Q619,927 615.9,947.9Q612.9,968.9 610.4,978.4L608,988"/>
+    <path d="M201,716Q201.9,719 201.3,721.5Q200.6,724 195.5,737.2Q190.3,750.3 184.4,769.2Q178.4,788 174.2,806Q170.1,824 168.1,835.5Q166,847 165.5,859Q165,871 164,876Q163,881 163.5,899Q164,917 165,921.5Q165.9,926 166.5,935Q167.1,944 171.1,965.5L175,987"/>
+    <path d="M259,782Q261.6,787 263.5,794.5Q265.3,802 267.8,809.5Q270.3,817 273.3,822.5Q276.2,828 277.3,831.3Q278.3,834.7 287,847.3Q295.7,859.9 307.7,874.6Q319.7,889.3 324.4,896Q329.2,902.6 334.4,908.5Q339.5,914.3 344.1,920.7Q348.6,927 353.2,934.5Q357.8,942 362.7,952Q367.7,962 370.2,968.5Q372.7,975 373.8,980L375,985"/>
+    <path d="M527,782Q521.8,788 519.5,797.5Q517.3,807 511.3,820.4Q505.3,833.9 500.4,841.4Q495.6,849 487.9,859.6Q480.2,870.2 457.3,898.8Q434.3,927.4 425.8,942.4Q417.3,957.3 412.7,971.7L408,986"/>
+  </g>
+  <g id="crescent-and-nose" fill="#d6ae62" fill-rule="evenodd">
+    <path d="M195.9,519Q197.2,518.5 198.9,519Q200.6,519.4 201.2,520.3Q201.9,521.1 201.9,531.1Q202,541 203,546.5Q204,552 204.1,555.9Q204.1,559.9 206.6,570.9Q209.1,581.9 211.3,589.2Q213.4,596.6 215.5,602.5Q217.7,608.3 222,617Q226.4,625.6 227.8,627.2Q229.1,628.8 230.9,628.6Q232.7,628.4 234.6,629.4Q236.6,630.4 237,637Q237.4,643.6 241.6,649.9Q245.8,656.2 248.2,658.3Q250.5,660.5 256.5,667.5Q262.5,674.5 264.8,676.2Q267.2,677.8 268.5,679.5Q269.8,681.2 280.1,688.9Q290.4,696.6 298.2,701.3Q306,706 313.7,709.8Q321.4,713.6 334.4,718.1Q347.4,722.6 358.8,724.7Q370.1,726.9 375.6,727.4Q381,728 394,728Q407,728 414.4,726.9Q421.9,725.9 429.4,724.4Q436.9,722.9 449.7,718.7Q462.6,714.6 464,713.5Q465.4,712.4 468.7,711.2Q472,710 481.8,704.3Q491.6,698.6 497.3,694.8Q503,691 503.9,689.9Q504.8,688.8 513.5,682Q522.3,675.3 526.9,670.4Q531.5,665.5 533.2,663.2Q534.8,660.8 536,660Q537.2,659.2 541.4,653.4Q545.6,647.6 546.7,645.2Q547.9,642.9 548.1,636.1Q548.4,629.4 550.4,628.4Q552.3,627.4 553.7,627.6Q555,627.7 556.3,627.1Q557.5,626.5 559.1,624.6Q560.6,622.6 564.6,614.1Q568.6,605.6 572.1,595.6Q575.6,585.6 576.4,581.9Q577.1,578.1 578,576Q578.9,573.9 580.9,557.9Q583,542 583.1,531.6Q583.1,521.1 584.1,520.1Q585.1,519.1 586.4,518.8Q587.8,518.5 588.8,518.8Q589.9,519.1 590.7,520.3Q591.6,521.4 594.6,529.9Q597.6,538.4 600.7,552.3Q603.9,566.1 603.9,569.6Q604,573 605,579Q606,585 606,599.5Q606,614 604.9,624.9Q603.9,635.9 603,638.5Q602.1,641.1 601,647.5Q599.9,653.9 597.2,663.2Q594.6,672.6 592.2,679.2Q589.7,685.7 585.5,694Q581.4,702.4 580.9,704.6Q580.5,706.8 581.1,708.4Q581.7,710 581.2,711.8Q580.6,713.6 577.2,715.2Q573.8,716.8 569.7,723.2Q565.6,729.6 559.4,737.9Q553.2,746.2 551.7,747.2Q550.3,748.3 546.9,752.4Q543.5,756.5 536.7,762.7Q529.8,768.8 529,771.5Q528.1,774.1 527.7,777.7Q527.2,781.2 525.5,781.8Q523.8,782.5 520.9,781.3Q518,780.1 515.7,780.7Q513.4,781.4 509,784.5Q504.6,787.6 482.5,800Q460.4,812.4 449.6,820.1Q438.8,827.8 432.5,833Q426.3,838.3 419.3,845.8Q412.4,853.4 408.4,859.4Q404.4,865.4 400.3,874.3Q396.2,883.2 394.5,883.8Q392.8,884.5 391.5,884.2Q390.1,883.9 388.9,882.1Q387.7,880.3 385.6,875.4Q383.6,870.4 375.1,858.4Q366.6,846.4 360.4,841.1Q354.3,835.7 352.7,833.8Q351.2,831.8 340.9,824.1Q330.6,816.4 318.5,809.5Q306.4,802.6 305,801.5Q303.6,800.4 301.5,799.5Q299.4,798.6 293,794.5Q286.6,790.4 284.5,789.5Q282.4,788.6 279.5,786.5Q276.6,784.4 274.8,783.7Q273,783 271.5,781.5Q270,780 268.6,779.6Q267.1,779.2 264.9,780.3Q262.8,781.5 260.8,780.8Q258.8,780.2 258.1,778.9Q257.4,777.6 256.3,773.2Q255.2,768.8 250.8,765.2Q246.5,761.5 242.8,757.2Q239.2,752.8 234.5,748.5Q229.8,744.2 227.5,740.5Q225.2,736.8 221.8,732.7Q218.4,728.6 215.6,723.9Q212.7,719.3 211.2,717.8Q209.6,716.4 207.4,716.2Q205.1,715.9 204.3,715.2Q203.4,714.6 203.5,710Q203.6,705.3 199.5,696.5Q195.4,687.6 193.5,681.5Q191.6,675.4 190.5,673.5Q189.4,671.6 186.8,661.7Q184.1,651.9 182.1,640.9Q180,630 180,627Q180,624 179.5,622Q179,620 179,612.5Q179,605 178.5,602.5Q178,600 178.5,596.5Q179,593 179,588Q179,583 181.1,569.6Q183.1,556.1 185.8,546.3Q188.4,536.4 190.9,528.9Q193.4,521.4 193.9,520.4Q194.5,519.5 195.9,519Z"/>
+    <path d="M380.2,554.7Q384.4,553.4 391.7,553.2Q399,553 403.3,554.2Q407.6,555.4 411.9,558.6Q416.2,561.8 417.5,565Q418.9,568.1 418.9,572Q418.9,575.9 418.2,577.2Q417.5,578.5 415.7,579.1Q414,579.7 412.3,579.1Q410.5,578.5 409.2,577.3Q407.9,576.1 405.9,576.5Q403.9,576.8 403.9,577.9Q404,579 405.8,581.7Q407.6,584.4 407.6,585.5Q407.6,586.6 406.4,588.9Q405.2,591.2 402,593.5Q398.8,595.8 397.7,597.2Q396.6,598.6 394.7,599.6Q392.8,600.5 391.5,600.2Q390.1,599.9 388.8,598.2Q387.5,596.5 385.4,595.6Q383.4,594.6 380.6,592.4Q377.8,590.2 377.1,588.2Q376.5,586.2 377.2,584.5Q377.8,582.8 379.7,581.2Q381.6,579.6 381.4,578.2Q381.2,576.8 379.7,576.5Q378.1,576.2 376.5,577.5Q374.9,578.9 373.1,579.2Q371.3,579.6 369.7,578.8Q368,578 366.6,574.9Q365.1,571.9 365.3,570.6Q365.4,569.4 367.3,565.3Q369.3,561.3 372.6,558.6Q376,556 380.2,554.7Z"/>
+  </g>
+  <!-- The frame: the deck's own double gold hairline, with the four suits in its corners
+       (wand, sword, cup, pentacle), drawn on a 140 x 245 grid and scaled up to the card. -->
+  <g id="frame" transform="translate(4 0) scale(5.543)">
+    <rect x="4.5" y="4.5" width="131" height="236" rx="4" fill="none" stroke="url(#line)" stroke-width="0.4"/>
+    <rect x="8.25" y="8.25" width="123.5" height="228.5" rx="2.5" fill="none" stroke="url(#line)" stroke-width="0.2"/>
+    <g fill="none" stroke="#d9b56f" stroke-width="0.57" stroke-linecap="round" stroke-linejoin="round">
+      <g transform="translate(18.5 21.5) scale(1.15)"><path d="M0,-4.8 L0,4.8"/><path d="M0,-2 L2,-3.6"/><path d="M0,.4 L-2,-1.2"/></g><g transform="translate(121.5 21.5) scale(1.15)"><path d="M0,-5 L1,-3.8 L1,1.4 L-1,1.4 L-1,-3.8Z"/><path d="M-3,1.6 L3,1.6"/><path d="M0,1.6 L0,4.2"/><circle cy="4.8" r=".6"/></g><g transform="translate(18.5 223.5) scale(1.15)"><path d="M-3.6,-4.2 L3.6,-4.2 Q3.6,.6 0,.8 Q-3.6,.6 -3.6,-4.2Z"/><path d="M0,.8 L0,3.8"/><path d="M-2.6,4.4 L2.6,4.4"/></g><g transform="translate(121.5 223.5) scale(1.15)"><circle r="4.6"/><path d="M0,-3.6 L2.12,2.91 L-3.42,-1.11 L3.42,-1.11 L-2.12,2.91Z"/></g>
+    </g>
+  </g>
+</svg>
+</script>
+<script>
+// Each control: [key, label, min, max, step, default]. The defaults are the halo
+// as it is in card-back-art.svg now.
+const GROUPS = [
+  ["Place", [
+    ["cx", "Centre across", 300, 484, 1, 392],
+    ["cy", "Centre down", 380, 620, 1, 505],
+  ]],
+  ["Ring", [
+    ["R0", "Radius", 140, 260, 1, 186],
+    ["ringW", "Line width", 0, 12, 0.2, 5.4],
+    ["from", "Starts at (°)", 90, 200, 1, 170],
+    ["to", "Ends at (°)", -20, 90, 1, 10],
+    ["ring2Gap", "Inner ring gap", 0, 40, 1, 11],
+    ["ring2W", "Inner ring width", 0, 8, 0.2, 2.4],
+    ["ring2Op", "Inner ring opacity", 0, 1, 0.05, 0.6],
+  ]],
+  ["Rays", [
+    ["n", "How many", 3, 41, 1, 17],
+    ["a0", "First ray at (°)", -240, -90, 1, -186],
+    ["a1", "Last ray at (°)", -90, 60, 1, 6],
+    ["gap", "Gap from ring", 0, 40, 1, 8],
+    ["longLen", "Long length", 10, 220, 1, 106],
+    ["shortLen", "Short length", 0, 220, 1, 62],
+    ["longW", "Long base width", 0, 40, 0.5, 13],
+    ["shortW", "Short base width", 0, 40, 0.5, 10],
+    ["taper", "Taper", 0.3, 3, 0.05, 1.1],
+    ["longAmp", "Long sway", 0, 40, 0.5, 10],
+    ["shortAmp", "Short sway", 0, 40, 0.5, 6],
+    ["waves", "Waves along", 0, 4, 0.1, 1.6],
+    ["rayW", "Line width", 0.5, 8, 0.1, 3.2],
+  ]],
+];
+const SELECTS = [
+  ["sway", "Sway", [["pairs", "Pairs: left, left, right, right"], ["alt", "Alternate each ray"], ["same", "All the same way"], ["fan", "Fan out from the top"]], "pairs"],
+  ["style", "Rays drawn as", [["outline", "Outlined flames"], ["filled", "Filled flames"], ["line", "Single wavy lines"]], "outline"],
+  ["pattern", "Lengths", [["alt", "Long and short in turn"], ["long", "All long"], ["grad", "Longest at the top"]], "alt"],
+];
+const S = {};
+GROUPS.forEach(([, cs]) => cs.forEach(([k, , , , , v]) => (S[k] = v)));
+SELECTS.forEach(([k, , , v]) => (S[k] = v));
+const GOLD = "#d6ae62";
+
+const f = (v) => (Math.round(v * 10) / 10).toString();
+const rad = (d) => (d * Math.PI) / 180;
+function haloMarkup(s) {
+  const pt = (r, a) => [s.cx + r * Math.cos(a), s.cy + r * Math.sin(a)];
+  const arc = (R, a, b) => {
+    // from angle a, round over the top, to angle b
+    const [x0, y0] = pt(R, rad(a)), [x1, y1] = pt(R, rad(b));
+    const sweep = ((b - a) % 360 + 360) % 360;
+    return `M${f(x0)},${f(y0)}A${R},${R} 0 ${sweep > 180 ? 1 : 0} 1 ${f(x1)},${f(y1)}`;
+  };
+  const out = [];
+  if (s.ringW > 0) out.push(`<path d="${arc(s.R0, s.from, s.to)}" stroke-width="${s.ringW}"/>`);
+  if (s.ring2W > 0 && s.ring2Op > 0) out.push(`<path d="${arc(s.R0 - s.ring2Gap, s.from - 4, s.to + 4)}" stroke-width="${s.ring2W}" opacity="${s.ring2Op}"/>`);
+  const rays = [];
+  for (let i = 0; i < s.n; i++) {
+    const t0 = s.n === 1 ? 0.5 : i / (s.n - 1);
+    const a = rad(s.a0 + (s.a1 - s.a0) * t0);
+    const long = s.pattern === "long" ? true : s.pattern === "grad" ? true : i % 2 === 0;
+    let len = long ? s.longLen : s.shortLen;
+    if (s.pattern === "grad") len = s.shortLen + (s.longLen - s.shortLen) * Math.pow(Math.sin(Math.PI * t0), 1.5);
+    if (len <= 0) continue;
+    const w0 = long ? s.longW : s.shortW, amp = long ? s.longAmp : s.shortAmp;
+    const side = s.sway === "alt" ? (i % 2 ? -1 : 1) : s.sway === "same" ? 1 : s.sway === "fan" ? (t0 < 0.5 ? -1 : 1) : (i % 4 < 2 ? 1 : -1);
+    const r0 = s.R0 + s.gap, K = 16, px = -Math.sin(a), py = Math.cos(a);
+    const mid = [], L = [], R = [];
+    for (let k = 0; k <= K; k++) {
+      const t = k / K, r = r0 + len * t;
+      const wob = side * amp * Math.sin(t * Math.PI * s.waves) * t;
+      const w = (w0 * Math.pow(1 - t, s.taper)) / 2;
+      let [x, y] = pt(r, a); x += px * wob; y += py * wob;
+      mid.push([x, y]); L.push([x + px * w, y + py * w]); R.push([x - px * w, y - py * w]);
+    }
+    const curve = (pts, close) => {
+      let d = `M${f(pts[0][0])},${f(pts[0][1])}`;
+      for (let k = 1; k < pts.length - 1; k++) d += `Q${f(pts[k][0])},${f(pts[k][1])} ${f((pts[k][0] + pts[k + 1][0]) / 2)},${f((pts[k][1] + pts[k + 1][1]) / 2)}`;
+      const e = pts[pts.length - 1];
+      return d + (close ? "Z" : `L${f(e[0])},${f(e[1])}`);
+    };
+    rays.push(s.style === "line" ? `<path d="${curve(mid, false)}"/>` : `<path d="${curve(L.concat(R.reverse()), true)}"/>`);
+  }
+  const rayFill = s.style === "filled" ? `fill="${GOLD}"` : "";
+  return `<g id="halo" fill="none" stroke="${GOLD}" stroke-linecap="round" stroke-linejoin="round">
+    ${out.join("\n    ")}
+    <g id="halo-rays" stroke-width="${s.rayW}" ${rayFill}>
+      ${rays.join("\n      ")}
+    </g>
+  </g>`;
+}
+
+// The card, from the real file, with its halo swapped for the lab's.
+let base = "";
+const card = document.getElementById("card");
+function draw() {
+  if (!base) return;
+  card.innerHTML = base.replace(/<g id="halo"[\s\S]*?<\/g>\s*<\/g>/, haloMarkup(S));
+  out.value = JSON.stringify(S);
+}
+// The card's latest version from the folder when the page is served (so edits
+// to the file show here); a copy built into this page otherwise, so it also
+// works opened straight from the folder.
+const BUILT_IN = document.getElementById("card-art").textContent.trim();
+fetch("../card-back-art.svg", { cache: "no-store" }).then((r) => (r.ok ? r.text() : Promise.reject()))
+  .then((t) => { base = t; draw(); })
+  .catch(() => { base = BUILT_IN; draw(); });
+
+// Controls
+const tools = document.getElementById("tools");
+const inputs = {};
+GROUPS.forEach(([name, cs]) => {
+  const fs = document.createElement("fieldset");
+  fs.innerHTML = `<legend>${name}</legend>`;
+  cs.forEach(([k, label, min, max, step]) => {
+    const l = document.createElement("label");
+    l.innerHTML = `<span>${label}</span><input type="range" min="${min}" max="${max}" step="${step}"><output></output>`;
+    const inp = l.querySelector("input"), o = l.querySelector("output");
+    inp.value = S[k]; o.textContent = S[k];
+    inp.addEventListener("input", () => { S[k] = +inp.value; o.textContent = inp.value; draw(); });
+    inputs[k] = [inp, o];
+    fs.append(l);
+  });
+  tools.append(fs);
+});
+const fs = document.createElement("fieldset");
+fs.innerHTML = "<legend>Style</legend>";
+SELECTS.forEach(([k, label, opts]) => {
+  const l = document.createElement("label");
+  l.className = "check";
+  l.innerHTML = `<span>${label}</span><select>${opts.map(([v, t]) => `<option value="${v}">${t}</option>`).join("")}</select>`;
+  const sel = l.querySelector("select");
+  sel.value = S[k];
+  sel.addEventListener("change", () => { S[k] = sel.value; draw(); });
+  inputs[k] = [sel];
+  fs.append(l);
+});
+tools.append(fs);
+
+const io = document.createElement("fieldset");
+io.innerHTML = `<legend>Settings</legend>
+  <p class="note">Copy these and send them to have them put into card-back-art.svg; paste settings here to load them.</p>
+  <textarea id="out" spellcheck="false"></textarea>
+  <div class="buttons"><button id="copy">Copy settings</button><button id="load">Load pasted</button><button id="reset">Reset</button><button id="save">Download card SVG</button></div>`;
+tools.append(io);
+const out = io.querySelector("#out");
+const setAll = (vals) => {
+  Object.assign(S, vals);
+  Object.entries(inputs).forEach(([k, [inp, o]]) => { if (k in S) { inp.value = S[k]; if (o) o.textContent = S[k]; } });
+  draw();
+};
+const defaults = { ...S };
+io.querySelector("#copy").addEventListener("click", () => { out.select(); navigator.clipboard?.writeText(out.value); });
+io.querySelector("#load").addEventListener("click", () => { try { setAll(JSON.parse(out.value)); } catch { out.value = "Those settings couldn't be read."; } });
+io.querySelector("#reset").addEventListener("click", () => setAll(defaults));
+io.querySelector("#save").addEventListener("click", () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([card.innerHTML], { type: "image/svg+xml" }));
+  a.download = "card-back-art.svg";
+  a.click();
+});
+</script>
+</body>
+</html>
