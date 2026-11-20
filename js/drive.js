@@ -218,5 +218,5 @@ function setUpDrive() {
 }
 $("driveBackupBtn").addEventListener("click", driveBackup);
 $("driveRestoreBtn").addEventListener("click", driveRestore);
-$("historyBtn").addEventListener("click", setUpDrive);   // (the home screen's reminder opens it too)
+$("historyBtn").addEventListener("click", setUpDrive);
 setUpDrive();

@@ -124,9 +124,9 @@ function glintIfIdle() {
 }
 setTimeout(() => { glintIfIdle(); setInterval(glintIfIdle, 5000); }, 700);
 
-// The on/off switches under the spreads: two small pills, each with a
-// little drawing of what it does, its name and a short line, and a small
-// sliding switch that lights gold when on. (Each is still a checkbox
+// The on/off switches under the spreads: a mirrored pair either side of a
+// gold hairline, each a name and a little drawing of what it does in a
+// ring that glows when on and dims when off. (Each is still a checkbox
 // inside, for keys and screen readers.)
 const OPTION_ICONS = {
   // a crown
@@ -140,7 +140,7 @@ OPTIONS.forEach((o) => {
   const icon = el("span", "option-icon");
   icon.innerHTML = OPTION_ICONS[o.id] || "";
   const text = el("span", "option-text");
-  text.append(el("span", "option-name", o.name), el("span", "option-note", o.short));
+  text.append(el("span", "option-name", o.name));
   const box = el("input");
   box.type = "checkbox";
   box.className = "switch";
@@ -150,20 +150,13 @@ OPTIONS.forEach((o) => {
   box.checked = SET[o.id];
   box.setAttribute("aria-description", o.note);
   row.classList.toggle("on", box.checked);
+  // (Today's revealed card stays as it is; the switches only shape what's drawn next.)
   box.addEventListener("change", () => {
-    const before = todaysCard();
     SET[o.id] = box.checked;
     row.classList.toggle("on", box.checked);
     saveOptions();
-    // The floating deck is only drawn again if today's card has stopped
-    // (or started) counting: a court card with court cards turned off, say.
-    // Otherwise it carries on floating as it was.
-    const after = todaysCard();
-    if (!!before !== !!after || before?.card !== after?.card || before?.reversed !== after?.reversed) buildFloatDeck();
   });
-  const knob = el("span", "option-switch");
-  knob.setAttribute("aria-hidden", "true");
-  row.append(box, icon, text, knob);
+  row.append(box, icon, text);
   $("options").append(row);
 });
 
@@ -256,7 +249,7 @@ const startSky = () => homeSky.start();
 
 // The card of the day is drawn at random from the deck in play the
 // moment you reveal it (with Court cards and Reversed cards as set),
-// then kept until tomorrow.
+// then kept as it is until tomorrow, even if the switches change.
 const FD_ANGLES = [-22, -11, 0, 11, 22];
 let fdBusy = false;
 
@@ -266,14 +259,14 @@ function dayStamp() {
 }
 
 // Today's drawn card, or null if it hasn't been revealed yet today.
-// If a switch has since been turned off, it's drawn again.
+// Once revealed it stays as it was until tomorrow, whatever the switches
+// are turned to since (they only shape the next draw).
 function todaysCard() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem("tarot-cotd")); } catch {}
   if (!saved || saved.day !== dayStamp()) return null;
-  const card = activeDeck().find((c) => c.name === saved.name);
-  if (!card) return null;                      // a court card, now switched off
-  if (saved.reversed && !SET.reversals) return null;
+  const card = CARDS.find((c) => c.name === saved.name);
+  if (!card) return null;
   return { card, reversed: !!saved.reversed };
 }
 
@@ -818,7 +811,7 @@ function dawnReveal(mid) {
   // The home screen's words and lines darken towards ink where the day
   // reaches them (and back as the night comes), so they stay readable on the
   // bright sky: each gets --day, how much day is behind it (see style.css).
-  const ui = "#home .home-head, #cotd, #home .home-sub, .spread-btn, #home .home-links .pill, #homeNudge, .option, .fd-word";
+  const ui = "#home .home-head, #cotd, #home .home-sub, .spread-btn, #home .home-links .pill, .option, .fd-word";
   const shadeForDay = (t) => document.querySelectorAll(ui).forEach((el) => {
     const r = el.getBoundingClientRect();
     if (!r.width) return;

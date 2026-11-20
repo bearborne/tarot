@@ -30,7 +30,3 @@ function reflectionPart(id) {
 }
 
 showBackupNudge();
-$("homeNudge").addEventListener("click", () => {
-  $("historyBtn").click();
-  if ($("backupPanel").hidden) $("backupToggle").click();   // straight to the ways to back up
-});

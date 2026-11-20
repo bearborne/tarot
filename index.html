@@ -46,7 +46,6 @@
       <button class="pill" id="historyBtn">Your history</button>
       <button class="pill sky-link" id="skyBtn">✦ Sky now</button>
     </div>
-    <button class="link small gold home-nudge" id="homeNudge" hidden>Back up your readings</button>
     <div class="options" id="options"></div>
   </section>
 
@@ -121,21 +120,14 @@
       <!-- One quiet line about backups; "Back up" opens the ways to do it. -->
       <p class="history-note backup-line">
         <span id="backupText">Saved on this device only</span> ·
-        <button class="link small gold" id="backupToggle" aria-expanded="false" aria-controls="backupPanel">Back up</button>
+        <button class="link small gold" id="backupToggle" aria-expanded="false" aria-controls="backupPanel">Manage history</button>
       </p>
       <div class="backup-panel" id="backupPanel" hidden>
         <div class="backup-row">
-          <span class="backup-ask">Back up to</span>
-          <button class="chip" id="exportBtn">This device</button>
-          <button class="chip" id="driveBackupBtn">Google Drive</button>
-        </div>
-        <div class="backup-row">
-          <span class="backup-ask">Restore from</span>
-          <button class="chip" id="importBtn">A file</button>
-          <button class="chip" id="driveRestoreBtn">Google Drive</button>
-        </div>
-        <div class="backup-row" id="clearRow">
-          <span class="backup-ask">Start over</span>
+          <button class="chip" id="exportBtn">Save to device</button>
+          <button class="chip" id="driveBackupBtn">Save to Drive</button>
+          <button class="chip" id="importBtn">Restore backup</button>
+          <button class="chip" id="driveRestoreBtn">Restore from Drive</button>
           <button class="chip danger" id="clearHistBtn">Clear history</button>
         </div>
         <input type="file" id="importFile" accept=".json,application/json" hidden>

@@ -46,10 +46,10 @@ let S = null;           // the reading in progress
 
 // ── Options (remembered on this device) ─────────────────
 
-// name, a short line for its tile, and the full note (shown on hover).
+// name and the full note (read out by screen readers).
 const OPTIONS = [
-  { id: "court",    name: "Court cards",    short: "Pages to Kings",       note: "Add the Pages, Knights, Queens and Kings" },
-  { id: "reversals", name: "Reversed cards", short: "Can fall upside down", note: "Cards can come out upside down" },
+  { id: "court",    name: "Court cards",    note: "Add the Pages, Knights, Queens and Kings" },
+  { id: "reversals", name: "Reversed cards", note: "Cards can come out upside down" },
 ];
 const SET = { court: false, reversals: false };
 

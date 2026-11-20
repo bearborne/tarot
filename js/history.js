@@ -38,7 +38,7 @@ function renderHistory() {
     const seen = new Set();
     readings = readings.filter((r) => { const d = dayName(r.t) + new Date(r.t).getFullYear(); return !seen.has(d) && seen.add(d); });
   }
-  $("clearRow").hidden = !loadHistory().length;   // (under Back up: nothing to clear, no row)
+  $("clearHistBtn").hidden = !loadHistory().length;   // (nothing to clear, no button)
   $("histSearch").placeholder = daily ? "Search by card or date" : "Search by name, card, note or date";
   showBackupNudge();
   if (!readings.length) {
@@ -247,9 +247,6 @@ function showBackupNudge() {
   // The history's backup line says so in gold, in place of "Saved on this device only".
   $("backupText").textContent = due || "Saved on this device only";
   $("backupText").classList.toggle("due", !!due);
-  // On the home screen only once it's been a month or more (or never).
-  const late = due && (due.startsWith("No") || +due.match(/\d+/)[0] >= 30);
-  $("homeNudge").hidden = !late;
 }
 
 document.querySelectorAll("#histTabs .chip").forEach((c) => c.addEventListener("click", () => {
@@ -473,7 +470,7 @@ $("backupToggle").addEventListener("click", () => {
   const open = $("backupPanel").hidden;
   $("backupPanel").hidden = !open;
   $("backupToggle").setAttribute("aria-expanded", open);
-  $("backupToggle").textContent = open ? "Close" : "Back up";
+  $("backupToggle").textContent = open ? "Close" : "Manage history";
 });
 $("importBtn").addEventListener("click", () => $("importFile").click());
 $("importFile").addEventListener("change", async (e) => {
