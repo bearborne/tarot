@@ -211,12 +211,13 @@ const THEME_TEXT = {
 
 const ELEMENT_TEXT = { Fire: "passion, will", Water: "feelings, dreams", Air: "thought, truth", Earth: "the body, work" };
 
+// Each number's lesson (see NUMBER_LESSONS in js/card-pages.js).
 const NUMBER_TEXT = {
-  1: "beginnings", 2: "balance, choice", 3: "growth", 4: "stability", 5: "challenge",
-  6: "harmony", 7: "reflection", 8: "mastery", 9: "near completion", 10: "completion",
+  1: "potential", 2: "balance", 3: "connection", 4: "a pause", 5: "struggle",
+  6: "rebalancing, giving", 7: "choices", 8: "rebalancing yourself", 9: "the inner self", 10: "a cycle completed",
 };
 
-const RANK_TEXT = { Page: "messages, study", Knight: "pursuit", Queen: "inner mastery", King: "outer mastery" };
+const RANK_TEXT = { Page: "curiosity", Knight: "on the move", Queen: "growing it slowly", King: "planning, deciding" };
 
 const isMajorCard = (card) => CARDS.indexOf(card) < 22;
 

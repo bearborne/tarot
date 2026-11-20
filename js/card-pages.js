@@ -211,16 +211,44 @@ function starsOf(card) {
   return [...PLANETS, ...SIGNS].filter((w) => new RegExp(`\\b${w}\\b`).test(a));
 }
 
+// Each number of the Minor Arcana is one lesson, met in four parts of
+// life: its name, and how each suit shows it.
+const NUMBER_LESSONS = {
+  1: ["Aces", "potential", { Wands: "the first spark of a passion", Cups: "the first stirring of a feeling", Swords: "the first wisp of an idea", Pentacles: "the first seed of something real" }],
+  2: ["Twos", "balance", { Wands: "keeping your drive pointed one way", Cups: "the bond you keep with your own heart", Swords: "two sides of your mind held in a truce", Pentacles: "juggling, and knowing which ball can drop" }],
+  3: ["Threes", "connection", { Wands: "gathering your scattered energy into one direction", Cups: "letting joy be shared, and burdens halved", Swords: "telling yourself hard truths kindly", Pentacles: "work that is its own reward" }],
+  4: ["Fours", "a pause", { Wands: "a first stage finished, and a rest", Cups: "a routine that can turn stale", Swords: "a truce, and time to recover", Pentacles: "holding on so tightly that nothing new can come" }],
+  5: ["Fives", "struggle", { Wands: "competition that tests your nerve", Cups: "a loss that hides what remains", Swords: "a defeat that teaches you your limits", Pentacles: "hard times, and help found again" }],
+  6: ["Sixes", "rebalancing and giving", { Wands: "a victory you let yourself enjoy", Cups: "remembering what the past taught you", Swords: "a change of scene that clears the mind", Pentacles: "giving and receiving, starting with yourself" }],
+  7: ["Sevens", "choices", { Wands: "courage, with fear as a warning light", Cups: "telling real options from illusions", Swords: "choosing your methods with care", Pentacles: "risking more, or tending what you have" }],
+  8: ["Eights", "rebalancing yourself", { Wands: "everything moving once the way is clear", Cups: "leaving what no longer fills you", Swords: "a trap of your own thinking, undone by calm", Pentacles: "dedication to growing your skill" }],
+  9: ["Nines", "the inner self", { Wands: "the inner stamina for one last try", Cups: "contentment that comes from within", Swords: "fears that grow too big in the dark", Pentacles: "a self-made abundance, enjoyed" }],
+  10: ["Tens", "a cycle completed", { Wands: "knowing when to ask for help, or set the load down", Cups: "a peace within that reaches those you love", Swords: "an ending that clears the way for dawn", Pentacles: "a legacy passed on" }],
+};
+// The court ranks: the same four characters in every suit, and in everyone.
+const RANK_LESSONS = {
+  Page: "The curious child in you",
+  Knight: "The restless traveller in you",
+  Queen: "The part of you that grows things slowly, by trial and error",
+  King: "The part of you that plans and decides",
+};
+const suitOf = (card) => card.name.split(" of ")[1] || "";
+
 // Groups of cards linked to this one: by number (or rank) and by the stars.
 function relatedGroups(card) {
   const deck = activeDeck().filter((c) => c !== card);
   const groups = [];
   if (card.court) {
     const rank = rankOf(card);
-    groups.push({ title: `The other ${rank}s`, cards: deck.filter((c) => c.court && rankOf(c) === rank) });
+    groups.push({ title: `The other ${rank}s`, note: RANK_LESSONS[rank] || "",
+      cards: deck.filter((c) => c.court && rankOf(c) === rank) });
   } else {
     const n = (card.correspondences || {}).number;
-    if (n) groups.push({ title: `Also number ${n}`, cards: deck.filter((c) => !c.court && (c.correspondences || {}).number === n) });
+    const lesson = !isMajor(card) && NUMBER_LESSONS[+n];
+    const cards = n ? deck.filter((c) => !c.court && (c.correspondences || {}).number === n) : [];
+    if (lesson) {
+      groups.push({ title: `The ${lesson[0]}: ${lesson[1]}`, note: `In ${suitOf(card)}: ${lesson[2][suitOf(card)]}.`, cards });
+    } else if (n) groups.push({ title: `Also number ${n}`, cards });
   }
   const stars = starsOf(card);
   if (stars.length) {
@@ -239,6 +267,7 @@ function relatedCards(card) {
   box.append(el("p", "asks-title", "Related cards"));
   groups.forEach((g) => {
     box.append(el("p", "related-title", g.title));
+    if (g.note) box.append(el("p", "related-note", g.note));
     const row = el("div", "related-row");
     g.cards.forEach((c, i) => {
       const b = el("button", "related-card");
@@ -266,7 +295,8 @@ function journeyBox(card) {
   if (!st || k < 0) return null;
   const first = k < 22 ? 0 : 22 + Math.floor((k - 22) / 14) * 14;
   const size = k < 22 ? 22 : 14;
-  const prev = k > first ? CARDS[k - 1] : null;
+  // (Each Ace is one of the four tools the Magician laid out for the Fool.)
+  const prev = k > first ? CARDS[k - 1] : k >= 22 ? CARDS[1] : null;
   const next = CARDS[first + ((k - first + 1) % size)];
   const box = el("div", "details-text journey");
   box.append(el("p", "asks-title", k < 22 ? "The journey" : `The journey of ${card.name.split(" of ")[1]}`));
