@@ -53,10 +53,10 @@ function wireSpreadButton(b) {
   b.addEventListener("pointercancel", () => fanRest(b));
 }
 
-function edgeLight(b) {
+function edgeLight(b, r = 10.5) {
   if (calm) return;
   b.querySelector(".spread-edge")?.remove();
-  const w = b.offsetWidth + 2, h = b.offsetHeight + 2, r = 10.5;
+  const w = b.offsetWidth + 2, h = b.offsetHeight + 2;
   // Half the border each: from the top's middle round to the bottom's, right way and left way.
   const right = `M ${w / 2} .5 H ${w - r} A ${r} ${r} 0 0 1 ${w - 0.5} ${r} V ${h - r} A ${r} ${r} 0 0 1 ${w - r} ${h - 0.5} H ${w / 2}`;
   const left = `M ${w / 2} .5 H ${r} A ${r} ${r} 0 0 0 .5 ${r} V ${h - r} A ${r} ${r} 0 0 0 ${r} ${h - 0.5} H ${w / 2}`;

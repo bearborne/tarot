@@ -1570,15 +1570,35 @@ button { font: inherit; color: inherit; cursor: pointer; }
   grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 16px 10px;
 }
-.grid-card { padding: 0; border: 0; background: none; text-align: center; }
+.grid-card {
+  padding: 0; border: 0; background: none; text-align: center;
+  align-self: start;
+  transition: opacity .3s, transform .3s, filter .3s;
+}
 .grid-pic {
+  position: relative;
   aspect-ratio: 4 / 7;
+  transition: box-shadow .3s;
   border-radius: 7px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, .45);
 }
 .grid-pic .placeholder { font-size: .7rem; }
 .grid-name { margin-top: 6px; font-size: .82rem; line-height: 1.25; }
 .grid .empty-note { grid-column: 1 / -1; text-align: center; }
+/* Between the Major Arcana and each Minor suit: the group heading, full width. */
+.grid-group { grid-column: 1 / -1; margin: 10px 0 0; }
+.grid-group:first-child { margin-top: 0; }
+/* Hovered or focused: the card lifts a little and glows, the others dim. */
+.grid-name { transition: color .3s; }
+@media (hover: hover) {
+  .grid-card:hover { transform: translateY(-3px) scale(1.05); }
+  .grid:has(.grid-card:hover) .grid-card:not(:hover) { opacity: .45; filter: saturate(.5); }
+}
+.grid-card:focus-visible { outline: none; transform: translateY(-3px) scale(1.05); }
+.grid:has(.grid-card:focus-visible) .grid-card:not(:focus-visible) { opacity: .45; filter: saturate(.5); }
+.grid-card:is(:hover, :focus-visible) .grid-pic { box-shadow: 0 6px 16px rgba(0, 0, 0, .5), 0 0 12px rgba(255, 200, 110, .3); }
+.grid-card:is(:hover, :focus-visible) .grid-name { color: #ffe9bf; }
+@media (prefers-reduced-motion: reduce) { .grid-card { transition: none; } }
 
 /* ── Wide screens (computers, tablets on their side) ──────
    The phone layout above stays as it is. Here the reading table grows

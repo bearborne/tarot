@@ -28,22 +28,40 @@ function renderBrowse() {
     c.classList.toggle("on", c.dataset.suit === B.suit));
   // Every word typed must be in the card's name, words, sign or element.
   const words = fold($("browseSearch").value).split(/\s+/).filter(Boolean);
-  const list = activeDeck().filter((c) => (B.suit === "All" || suitOf(c) === B.suit)
+  // The whole deck, court cards too, whatever the home page's switch says.
+  const list = CARDS.filter((c) => (B.suit === "All" || suitOf(c) === B.suit)
     && words.every((w) => browseText(c).includes(w)));
 
   const grid = $("grid");
   grid.innerHTML = "";
+  // A heading between the Major Arcana and each Minor suit, when more than one shows.
+  const groups = new Set(list.map(suitOf));
+  let group = null;
   list.forEach((card) => {
+    if (groups.size > 1 && suitOf(card) !== group) {
+      group = suitOf(card);
+      grid.append(el("div", "topic-group grid-group", group));
+    }
     const b = el("button", "grid-card");
     const pic = el("div", "grid-pic");
     const face = cardFace(card, true);
     face.style.height = "100%";
     pic.append(face);
     b.append(pic, el("div", "grid-name", card.name));
+    wireGridCard(b, pic);
     b.addEventListener("click", () => openDetails(list.map((c) => detailsItem(c)), list.indexOf(card)));
     grid.append(b);
   });
   if (!list.length) grid.append(el("p", "empty-note", "No cards found"));
+}
+
+// Hover or focus a card: light runs round its edge, as on the spread
+// buttons, while it lifts a little and the others dim (see style.css).
+function wireGridCard(b, pic) {
+  b.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") edgeLight(pic, 7.5); });
+  b.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") edgeOff(pic); });
+  b.addEventListener("focus", () => edgeLight(pic, 7.5));
+  b.addEventListener("blur", () => edgeOff(pic));
 }
 
 const browseTexts = new Map();
