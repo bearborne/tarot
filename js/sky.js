@@ -195,7 +195,7 @@ function updateWheel(bodies, moon, opening) {
 }
 
 // The sheet's own night sky, like the home screen's.
-const skySheetShown = () => !$("skySheet").hidden && !document.hidden;
+const skySheetShown = () => !$("skySheet").hidden && !$("skySheet").classList.contains("closing") && !document.hidden;
 const skyField = makeStarfield($("skyStars"), skySheetShown);
 
 const SKY_UNITS = ["Hour", "Day", "Week", "Month", "Year"];

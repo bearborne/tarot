@@ -998,6 +998,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
     calc(env(safe-area-inset-bottom) + 32px);
   -webkit-user-select: text;
   user-select: text;
+/* Closing into its button or card: frozen, on a layer of its own, so it's drawn
+   once and only that picture moves (see holeClose, in js/core.js). */
+.sheet.closing { will-change: transform; contain: paint; }
+.sheet.closing, .sheet.closing * { animation-play-state: paused !important; transition: none !important; }
 }
 .details-body {
   max-width: 36rem;

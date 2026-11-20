@@ -354,7 +354,14 @@ function collapseCopy(node, look = node) {
   const copy = look.cloneNode(true);
   copy.removeAttribute("id");
   copy.querySelectorAll(".spread-edge, .rune-ring").forEach((n) => n.remove());
-  Object.assign(copy.style, { position: "absolute", inset: "0", width: "100%", height: "100%", margin: "0", transform: "none", visibility: "visible" });
+  // The copy sits on <body>, out of reach of rules scoped to where the
+  // original is (the home buttons' daytime colours), so it keeps the look
+  // the original has right now.
+  const cs = getComputedStyle(look);
+  ["color", "backgroundColor", "backgroundImage", "borderColor", "boxShadow", "textShadow",
+    "fontFamily", "fontSize", "letterSpacing", "lineHeight", "whiteSpace", "padding", "opacity"]
+    .forEach((k) => { copy.style[k] = cs[k]; });
+  Object.assign(copy.style, { position: "absolute", inset: "0", width: "100%", height: "100%", margin: "0", transform: "none", visibility: "visible", boxSizing: "border-box" });
   const shade = fxDiv("collapse-shade");
   shade.style.borderRadius = getComputedStyle(look).borderRadius;
   keep.append(copy, shade);
@@ -390,7 +397,9 @@ function holeSize(b) {
 // js/core.js), and lets go as the page covers it. The real node is hidden
 // meanwhile, and back once the page covers it (for the page to close back
 // into). Returns how long the collapse takes, and where and how big the hole is.
-const COLLAPSE_MS = 540;
+// Quick: a short collapse, and the page sets off while it's still falling
+// in, so there's no wait between the two.
+const QUICK_FX = { collapseMs: 173, lead: 80, openMs: 413, shut: 147 };
 function collapseInto(node, look) {
   const b = node.getBoundingClientRect();
   const at = { x: b.left + b.width / 2, y: b.top + b.height / 2, hr: holeSize(b) };
@@ -398,11 +407,12 @@ function collapseInto(node, look) {
   node.style.visibility = "hidden";
   // It stays while the ring closes in on it, swelling a little as the ring
   // nears; once the ring has gone into it, it closes up and is gone.
-  const open = OPEN_FX.bloomMs, shut = 300, total = COLLAPSE_MS + open + shut;
+  const CMS = QUICK_FX.collapseMs, lead = QUICK_FX.lead;
+  const open = QUICK_FX.openMs, shut = QUICK_FX.shut, total = lead + open + shut;
   const ease = (v) => 1 - Math.pow(1 - Math.min(1, Math.max(0, v)), 3);
   const hole = miniHole(at, at.hr, (ms) => {
     if (ms > total) return null;
-    const p = ms / COLLAPSE_MS, q = (ms - COLLAPSE_MS) / open, z = (ms - COLLAPSE_MS - open) / shut;
+    const p = ms / CMS, q = (ms - lead) / open, z = (ms - lead - open) / shut;
     const grow = p < 1 ? ease(p * 1.25) : q < 1 ? 1 + 0.18 * Math.pow(Math.max(0, q), 3) : 1.18 * (1 - ease(z));
     return { grow, h: Math.min(1, p * 4) * (z > 0 ? 1 - z : 1) };
   });
@@ -410,15 +420,15 @@ function collapseInto(node, look) {
   const t0 = performance.now();
   const step = (now) => {
     const ms = now - t0;
-    fall.set(ms / COLLAPSE_MS, ms);
-    if (ms < COLLAPSE_MS) requestAnimationFrame(step);
+    fall.set(ms / CMS, ms);
+    if (ms < CMS) requestAnimationFrame(step);
     else fall.remove();
   };
   requestAnimationFrame(step);
-  setTimeout(() => fall.remove(), COLLAPSE_MS + 80);   // (even if the page's frames are paused)
+  setTimeout(() => fall.remove(), CMS + 80);   // (even if the page's frames are paused)
   setTimeout(() => hole.remove(), total + 80);
-  setTimeout(() => { node.style.visibility = ""; }, COLLAPSE_MS + open);
-  return { ms: COLLAPSE_MS, at, hole };
+  setTimeout(() => { node.style.visibility = ""; }, lead + open);
+  return { ms: lead, open, at, hole };
 }
 
 // The other way: `node` re-forms out of a hole at its centre over `ms`, its

@@ -628,19 +628,21 @@ const easeInOut3 = (v) => (v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3)
 // page is all there is. `parts` then rise into place one after another.
 // `delay`: while the card or button is still collapsing into the hole.
 // (The page is there meanwhile, so it can be measured, but held hidden.)
-function holeOpen(sheet, at, parts = [], delay = 0, hole = null) {
+// `ms`, `curve`: how long the ring takes, and how slowly it sets off (1: not at all).
+function holeOpen(sheet, at, parts = [], delay = 0, hole = null, ms = QUICK_FX.openMs, curve = 1.1) {
   sheet.hidden = false;
   sheet.style.zIndex = ++Z;
   sheet.scrollTop = 0;
-  const far = reachFrom(at) * 1.05, rEnd = at.hr * 0.85, ms = OPEN_FX.bloomMs;
+  const far = reachFrom(at) * 1.05, rEnd = at.hr * 0.85;
   const hidden = `radial-gradient(circle at ${at.x}px ${at.y}px, transparent ${far + 50}px, #000 ${far + 52}px)`;
   sheet.style.maskImage = sheet.style.webkitMaskImage = hidden;   // (nothing of it shows until the ring sets off)
   const win = holeWindow(sheet, at, ms, delay,
-    (u) => rEnd + (far - rEnd) * (1 - Math.pow(u, 1.7)),   // slow at first, then faster and faster into the hole
+    (u) => rEnd + (far - rEnd) * (1 - Math.pow(u, curve)),   // slow at first, then faster and faster into the hole
     (u) => u, true);
   // The hole stays above it all, so the ring goes into its dark.
   if (hole) setTimeout(() => { hole.style.zIndex = ++Z; }, delay + 20);
-  riseIn(parts, 10, delay + ms * 0.55 + OPEN_FX.riseAfter * 0.4, OPEN_FX.riseStep);
+  const rise = ms / OPEN_FX.bloomMs;
+  riseIn(parts, 10, delay + ms * 0.55 + OPEN_FX.riseAfter * 0.4 * rise, OPEN_FX.riseStep * rise);
   return win;
 }
 
@@ -650,13 +652,19 @@ function holeOpen(sheet, at, parts = [], delay = 0, hole = null) {
 // hole fades, and flares as it's whole (see reformFrom, in js/rune-ring.js).
 // If it's gone from the screen, the page is swallowed into a hole in the
 // middle. Resolves once the page is gone.
-function holeClose(sheet, node, look = node, glow = node) {
+// (1.5 times quicker than the first tuning: `speed`.)
+// While it goes it's frozen (.closing: nothing in it moves, and it's on a
+// layer of its own), so the browser draws it once, as a still picture, and
+// only moves that picture, instead of redrawing it all every frame.
+async function holeClose(sheet, node, look = node, glow = node, speed = 1.5) {
+  sheet.classList.add("closing");
+  sheet.getBoundingClientRect();   // (frozen before it starts to move)
   const here = !!(node?.isConnected && node.getClientRects().length);
   const b = here ? node.getBoundingClientRect() : null;
   const C = b ? { x: b.left + b.width / 2, y: b.top + b.height / 2 } : { x: innerWidth / 2, y: innerHeight / 2 };
   const hr = b ? holeSize(b) : 40;
   if (here) node.style.visibility = "hidden";
-  const far = reachFrom(C) * 1.02, IN = OPEN_FX.inMs, GONE = OPEN_FX.goneMs, BACK = 460, total = GONE + BACK;
+  const far = reachFrom(C) * 1.02, IN = OPEN_FX.inMs / speed, GONE = OPEN_FX.goneMs / speed, BACK = 460 / speed, total = GONE + BACK;
   const grow = (v) => 1 - Math.pow(1 - Math.min(1, v), 3);
   sheet.style.pointerEvents = "none";
   const hole = miniHole(C, hr, (ms) => (ms > total ? null : {
@@ -674,7 +682,8 @@ function holeClose(sheet, node, look = node, glow = node) {
     hole.style.zIndex = ++Z;   // the hole over the card re-forming round it
   }, GONE);
   setTimeout(() => hole.remove(), total + 80);
-  return win.over;
+  await win.over;
+  sheet.classList.remove("closing");
 }
 
 // A window opened by a button on the home screen: the button falls in on
@@ -683,8 +692,8 @@ function holeClose(sheet, node, look = node, glow = node) {
 // motion, it just slides up.)
 function bloomFromButton(sheet, btn, parts = []) {
   if (calm || !btn.getClientRects().length) { slideIn(sheet); return; }
-  const { ms, at, hole } = collapseInto(btn, btn);
-  holeOpen(sheet, at, parts, ms, hole);
+  const { ms, open, at, hole } = collapseInto(btn, btn);
+  holeOpen(sheet, at, parts, ms, hole, open);
 }
 // The dip a tapped thing gives (none, at a dip of 1).
 function tapDip(node) {
