@@ -56,7 +56,8 @@ function landHome() {
 }
 
 // The timings (ms): the hole forming, everything pulled in, the gulp, and home coming back.
-const GREAT_FX = { form: 520, pullFrom: 160, pullMs: 1450, gulpFrom: 1480, gulpMs: 420, hold: 90, emergeMs: 760, flareMs: 520 };
+// (Home comes the moment the screen is all dark: no pause in the black.)
+const GREAT_FX = { form: 520, pullFrom: 160, pullMs: 1450, gulpFrom: 1480, gulpMs: 420, emergeMs: 620, flareMs: 520 };
 // The dust: how many grains a whole screen makes, and how long one takes to fall in.
 const GREAT_DUST = { grains: LITE ? 1400 : 3200, fallMs: [650, 1150] };
 
@@ -148,7 +149,7 @@ function playGreatHole(snap, dpr, colours = null) {
   const C = { x: W / 2, y: H / 2 };
   const far = Math.hypot(W / 2, H / 2) + 8, base = Math.min(W, H);
   const HR = 72, art = holeArt(HR);   // drawn for radius HR, scaled to the size it is
-  const F = GREAT_FX, GULP_END = F.gulpFrom + F.gulpMs, LAND = GULP_END + F.hold, END = LAND + F.emergeMs + F.flareMs;
+  const F = GREAT_FX, GULP_END = F.gulpFrom + F.gulpMs, LAND = F.gulpFrom + F.gulpMs * 0.9, END = LAND + F.emergeMs + F.flareMs;
   const easeIn = (v) => v * v * v;
   const smooth = (v) => v * v * (3 - 2 * v);
   const seg = (t, a, b) => Math.min(1, Math.max(0, (t - a) / (b - a)));
@@ -360,7 +361,7 @@ function playGreatHole(snap, dpr, colours = null) {
       node.style.transform = node.style.transformOrigin = node.style.clipPath = node.style.pointerEvents = "";
     });
     landHome();
-    $("home").animate([{ transform: "scale(1.06)", filter: "brightness(.6)" }, { transform: "none", filter: "none" }],
+    $("home").animate([{ transform: "scale(1.06)", filter: "brightness(.85)" }, { transform: "none", filter: "none" }],
       { duration: F.emergeMs + 200, easing: "cubic-bezier(.2, .8, .2, 1)" });
   };
 
@@ -442,16 +443,18 @@ function playGreatHole(snap, dpr, colours = null) {
         dk.addColorStop(1, "rgba(2, 1, 6, 0)");
         ctx.fillStyle = dk;
         ctx.fillRect(0, 0, W, H);
-        if (g > 0.85) {
-          ctx.fillStyle = `rgba(2, 1, 6, ${seg(g, 0.85, 1)})`;
+        // (all dark just as home lands: see LAND)
+        if (g > 0.78) {
+          ctx.fillStyle = `rgba(2, 1, 6, ${seg(g, 0.78, 0.9)})`;
           ctx.fillRect(0, 0, W, H);
         }
       }
     } else {
       // ── Home, out of the dark ──
       const u = seg(t, LAND, LAND + F.emergeMs);
-      const e = u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
-      const Rd = far * 1.1 * (1 - e);
+      // (quick at once, from just the corners in, easing as it nears the point)
+      const e = 1 - Math.pow(1 - u, 3);
+      const Rd = far * (1 - e);
       if (Rd > 0.5) {
         // The dark drawing in to a point, home showing beyond its soft edge.
         const soft = Math.max(6, Rd * 0.12);
