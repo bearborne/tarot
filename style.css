@@ -259,6 +259,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
    frame costs them more.) */
 .fd-bob { position: relative; top: 0; width: 100%; height: 100%; animation: fd-bob 3.2s ease-in-out infinite; }
 @keyframes fd-bob { 0%, 100% { top: 0; } 50% { top: var(--bob, -6px); } }
+/* But `top` snaps to whole pixels, so a 6px bob jerks along in a few steps a
+   second. The lifted card (the card of the day) stands upright, with nothing
+   to stair-step, so it floats by transform, smoothly. */
+.fd-card.lift .fd-bob { animation-name: fd-bob-t; }
+@keyframes fd-bob-t { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(var(--bob, -6px)); } }
 .fd-flip {
   position: relative;
   width: 100%;
@@ -1213,6 +1218,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* Related cards, and the cards in a past reading */
 .related-title { margin: 10px 0 6px; font-size: .95rem; color: var(--muted); }
+.related-note { margin: -2px 0 8px; font-size: .88rem; font-style: italic; text-align: center; color: var(--muted); }
 /* Rows of cards wrap, centred, instead of scrolling sideways */
 .related-row {
   --rc: 72px;
@@ -1775,6 +1781,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .card-page .picture-guide strong { font-family: var(--serif); font-size: 1.2rem; margin-bottom: 4px; }
   .card-page .history-sum, .card-page .history-list li { font-family: var(--read); font-size: 1.08rem; }
   .card-page .related-title { font-size: 1.05rem; }
+  .card-page .details-text .related-note { font-size: 1rem; line-height: 1.5; margin: -2px 0 10px; }
   .card-page .related-row { --rc: 92px; }
   .card-page .journey-end .related-card { width: 92px; }
   .card-page .details-text .journey-text { font-size: 1.05rem; line-height: 1.55; margin: 0; }
