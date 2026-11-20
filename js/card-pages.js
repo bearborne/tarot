@@ -145,6 +145,9 @@ function meaning(card, rev, fell) {
   const said = [
     ["In a reading", rev ? r.reversed : r.upright],
     ["Advice", rev ? r.reversedAdvice || r.advice : r.advice],
+    ["Action", rev ? r.reversedAction : r.action],
+    ["Feeling", rev ? r.reversedFeeling : r.feeling],
+    ["As you", rev ? r.reversedYou : r.you],
     ["Challenge", rev ? "" : r.challenge],
   ].filter(([, x]) => (x || "").trim());
   if (said.length) {
@@ -232,7 +235,7 @@ const RANK_LESSONS = {
   Queen: "The part of you that grows things slowly, by trial and error",
   King: "The part of you that plans and decides",
 };
-const suitOf = (card) => card.name.split(" of ")[1] || "";
+const suitName = (card) => card.name.split(" of ")[1] || "";
 
 // Groups of cards linked to this one: by number (or rank) and by the stars.
 function relatedGroups(card) {
@@ -247,7 +250,7 @@ function relatedGroups(card) {
     const lesson = !isMajor(card) && NUMBER_LESSONS[+n];
     const cards = n ? deck.filter((c) => !c.court && (c.correspondences || {}).number === n) : [];
     if (lesson) {
-      groups.push({ title: `The ${lesson[0]}: ${lesson[1]}`, note: `In ${suitOf(card)}: ${lesson[2][suitOf(card)]}.`, cards });
+      groups.push({ title: `The ${lesson[0]}: ${lesson[1]}`, note: `In ${suitName(card)}: ${lesson[2][suitName(card)]}.`, cards });
     } else if (n) groups.push({ title: `Also number ${n}`, cards });
   }
   const stars = starsOf(card);
