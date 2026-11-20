@@ -51,6 +51,7 @@ addEventListener("load", () => (window.requestIdleCallback || setTimeout)(() => 
 async function snapshotPage(sheet, dpr = 1) {
   const css = await snapAssets();
   const W = innerWidth, H = innerHeight;
+  if (!W || !H) throw new Error("no screen to picture");
   const copy = sheet.cloneNode(true);
   // What the copy can't carry over by itself: pictures, drawings, what's typed, where it's scrolled.
   // (Pictures inside an SVG image don't reliably draw, so each is left out

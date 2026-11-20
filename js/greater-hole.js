@@ -9,9 +9,9 @@
 // dust in the page's own colours, hot, then ash, then caught by the hole,
 // each grain spiralling in, faster and faster, violet as it nears the dark.
 // Streaks of light spiral in from beyond the screen and the view trembles.
-// Then the hole gulps: its dark swells out past the corners until there's
-// nothing but the dark. Out of it the home screen comes back, the dark
-// drawing in to a point, which flares and throws off a ring of gold.
+// The moment the last grain goes in, that's the end: the home screen is
+// simply there, its night sky filling the screen, and its title, cards and
+// buttons flare to life one after another.
 // (If the picture can't be taken, the live page itself is pulled in instead.)
 // The small holes a card or button falls into are in js/rune-ring.js; this
 // one draws the same hole, holeArt, at the size of the screen.
@@ -55,9 +55,12 @@ function landHome() {
   startSky();
 }
 
-// The timings (ms): the hole forming, everything pulled in, the gulp, and home coming back.
-// (Home comes the moment the screen is all dark: no pause in the black.)
-const GREAT_FX = { form: 520, pullFrom: 160, pullMs: 1450, gulpFrom: 1480, gulpMs: 420, emergeMs: 620, flareMs: 520 };
+// The timings (ms): the hole forming, everything pulled in, and home's parts flaring.
+// It's over by pullFrom + pullMs at the latest: the picture is all crumbled
+// `tailMs` before that, and the last of its dust is
+// in by then. It cuts the moment the last grain is in. Then home's parts
+// flare to life, `flareStep` apart.
+const GREAT_FX = { form: 520, pullFrom: 160, pullMs: 1450, tailMs: 220, flareMs: 720, flareStep: 45 };
 // The dust: how many grains a whole screen makes, and how long one takes to fall in.
 const GREAT_DUST = { grains: LITE ? 1400 : 3200, fallMs: [650, 1150] };
 
@@ -81,6 +84,7 @@ async function swallowHome(btn) {
       console.warn("Home: no picture of the page, so the page itself goes in.", err);
     }
   }
+  if (snap && !(snap.width && snap.height)) snap = null;
   playGreatHole(snap, dpr, colours);
 }
 
@@ -149,8 +153,8 @@ function playGreatHole(snap, dpr, colours = null) {
   const C = { x: W / 2, y: H / 2 };
   const far = Math.hypot(W / 2, H / 2) + 8, base = Math.min(W, H);
   const HR = 72, art = holeArt(HR);   // drawn for radius HR, scaled to the size it is
-  const F = GREAT_FX, GULP_END = F.gulpFrom + F.gulpMs, LAND = F.gulpFrom + F.gulpMs * 0.9, END = LAND + F.emergeMs + F.flareMs;
-  const easeIn = (v) => v * v * v;
+  // SWALLOWED: the latest it's over, every grain in; EATEN: the picture is all crumbled.
+  const F = GREAT_FX, SWALLOWED = F.pullFrom + F.pullMs, EATEN = SWALLOWED - F.tailMs;
   const smooth = (v) => v * v * (3 - 2 * v);
   const seg = (t, a, b) => Math.min(1, Math.max(0, (t - a) / (b - a)));
   const r = (a, b) => a + Math.random() * (b - a);
@@ -216,28 +220,27 @@ function playGreatHole(snap, dpr, colours = null) {
     a: Math.random() * TAU, d: 0.75 + Math.random() * 0.5, at: Math.random() * 1250, dur: 420 + Math.random() * 420,
     w: 0.6 + Math.random() * 1.5, hot: Math.random() > 0.72, gold: Math.random() > 0.8,
   }));
-  // Motes of gold flung out of the point as home arrives.
-  const sparks = Array.from({ length: LITE ? 26 : 44 }, () => ({
-    a: Math.random() * TAU, v: 0.25 + Math.random() * 0.75, r: 0.7 + Math.random() * 1.5, life: 0.5 + Math.random() * 0.5,
-  }));
-
-  // How big the hole's dark is at a moment: it forms, swells as it eats,
-  // then gulps out past the corners.
+  // How big the hole's dark is at a moment: it forms, and swells as it eats.
   const holeR = (t) => {
     const r0 = base * 0.13 * (1 - Math.pow(1 - seg(t, 0, F.form), 3));
-    const eat = 1 + 0.55 * seg(t, F.pullFrom, F.gulpFrom);
-    return r0 * eat + (far * 1.25 - r0 * eat) * easeIn(seg(t, F.gulpFrom, GULP_END));
+    return r0 * (1 + 0.55 * seg(t, F.pullFrom, EATEN));
   };
   // How far a page has fallen in (0 to 1): slowly at first, then rushing.
-  const pull = (t) => Math.pow(seg(t, F.pullFrom, F.pullFrom + F.pullMs), 2.1);
+  const pull = (t) => Math.pow(seg(t, F.pullFrom, SWALLOWED), 2.1);
 
   // ── The picture crumbling ──
   // The front: how far from the middle (in the picture's own place) it has
-  // eaten in, at angle `a`: ragged, and wavering a little as it goes.
+  // eaten in, at angle `a`: ragged, and wavering a little as it goes. It
+  // ends at the hole's edge, not the middle: what's under the dark is
+  // already gone, so the last of the picture goes just as the time is up.
+  // (Easing in, but never slowing at the end, so there's no lingering.)
   const ph = [r(0, TAU), r(0, TAU), r(0, TAU)];
-  const eaten = (t) => smooth(seg(t, F.pullFrom + 60, F.gulpFrom - 40));
-  const front = (q, a, t) => far * (1 - q) * (1 + 0.1 * (Math.sin(3 * a + ph[0] + t * 0.0013) + 0.6 * Math.sin(7 * a + ph[1] - t * 0.002)
-    + 0.35 * Math.sin(13 * a + ph[2] + t * 0.003)) / 1.95);
+  const eaten = (t) => Math.pow(seg(t, F.pullFrom + 60, EATEN), 1.25);
+  const front = (q, a, t, g) => {
+    const rh = (holeR(t) * 0.9) / g.s;
+    return (rh + (far - rh) * (1 - q)) * (1 + 0.1 * (Math.sin(3 * a + ph[0] + t * 0.0013) + 0.6 * Math.sin(7 * a + ph[1] - t * 0.002)
+      + 0.35 * Math.sin(13 * a + ph[2] + t * 0.003)) / 1.95);
+  };
   const dust = [];
   const perPx = GREAT_DUST.grains / (far * 0.62);   // (about this many fall in over the whole of it)
   // The picture's place this moment: turned and drawn in about the middle.
@@ -253,11 +256,13 @@ function playGreatHole(snap, dpr, colours = null) {
   function shed(t, g, q0, q1) {
     const n = Math.min(400, Math.round(perPx * far * (q1 - q0) * (0.6 + Math.random() * 0.8)));
     for (let j = 0; j < n; j++) {
-      const a = r(0, TAU), ra = front(q1, a, t), rb = front(q0, a, t), rr = ra + Math.random() * (rb - ra);
+      const a = r(0, TAU), ra = front(q1, a, t, g), rb = front(q0, a, t, g), rr = ra + Math.random() * (rb - ra);
       const lx = C.x + Math.cos(a) * rr, ly = C.y + Math.sin(a) * rr;
       if (lx < 0 || ly < 0 || lx > W || ly > H) continue;
       const at = toScreen(g, lx, ly), dx = at.x - C.x, dy = at.y - C.y;
-      dust.push({ r0: Math.hypot(dx, dy), a0: Math.atan2(dy, dx), born: t, ms: r(...GREAT_DUST.fallMs), size: r(0.7, 2.1),
+      // (every grain is in by the end)
+      const ms = Math.max(100, Math.min(r(...GREAT_DUST.fallMs), SWALLOWED - t));
+      dust.push({ r0: Math.hypot(dx, dy), a0: Math.atan2(dy, dx), born: t, ms, size: r(0.7, 2.1),
         col: colourAt(lx, ly), puff: r(0.04, 0.16), spin: r(2, 3.4), glow: Math.random() < 0.3, x: at.x, y: at.y });
     }
   }
@@ -276,7 +281,7 @@ function playGreatHole(snap, dpr, colours = null) {
     const ring = () => {
       ctx.beginPath();
       for (let k = 0; k <= 96; k++) {
-        const a = (k / 96) * TAU, rr = front(q, a, t);
+        const a = (k / 96) * TAU, rr = front(q, a, t, g);
         k ? ctx.lineTo(C.x + Math.cos(a) * rr, C.y + Math.sin(a) * rr) : ctx.moveTo(C.x + Math.cos(a) * rr, C.y + Math.sin(a) * rr);
       }
       ctx.closePath();
@@ -344,158 +349,111 @@ function playGreatHole(snap, dpr, colours = null) {
     }
   }
 
-  let landed = false, finished = false, swirlClock = 0, last = 0;
+  let finished = false, swirlClock = 0, last = 0;
   const t0 = performance.now();
+  // The end, the moment everything is in: home is simply there, under the
+  // canvas, which goes; its parts flare to life.
   const finish = () => {
     if (finished) return;
     finished = true;
-    if (!landed) land();
-    cv.remove();
-    root.style.overflow = overflow;
-    swallowing = false;
-  };
-  const land = () => {
-    landed = true;
     layers.forEach(({ node }) => {
       node.classList.remove("closing", "swallowed");
       node.style.transform = node.style.transformOrigin = node.style.clipPath = node.style.pointerEvents = "";
     });
     landHome();
-    $("home").animate([{ transform: "scale(1.06)", filter: "brightness(.85)" }, { transform: "none", filter: "none" }],
-      { duration: F.emergeMs + 200, easing: "cubic-bezier(.2, .8, .2, 1)" });
+    flareHome();   // (set going before the canvas goes, so they start unlit)
+    cv.remove();
+    root.style.overflow = overflow;
+    swallowing = false;
   };
 
   const frame = (now) => {
     if (finished) return;
     const t = now - t0, dt = last ? Math.min(50, t - last) : 0;
     last = t;
-    if (t >= LAND && !landed) land();
+    // Over the moment everything is in: the picture all crumbled and its last grain gone.
+    if (t >= SWALLOWED || (snap && t >= EATEN && !dust.length)) { finish(); return; }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    // The tremble: growing as the pull strengthens, strongest at the gulp.
-    const quake = 4.5 * seg(t, 500, F.gulpFrom) * (1 - seg(t, GULP_END - 60, GULP_END));
+    // The tremble: growing as the pull strengthens.
+    const quake = 4.5 * seg(t, 500, EATEN);
     const jx = quake * (Math.sin(t * 0.091) + 0.6 * Math.sin(t * 0.217)) / 1.6;
     const jy = quake * (Math.cos(t * 0.083) + 0.6 * Math.sin(t * 0.191 + 1)) / 1.6;
 
-    if (!landed) {
-      // ── Swallowing ──
-      const R = holeR(t);
-      if (snap) {
-        // Deep space behind the picture, then the picture crumbling, then its dust.
-        ctx.fillStyle = "rgb(9, 7, 15)";
-        ctx.fillRect(0, 0, W, H);
-        drawPicture(t, place(t, jx, jy));
-        drawDust(t);
-      } else {
-        const p = pull(t);
-        const s = Math.max(0.002, 1 - p), turn = twist * (35 * p + 520 * Math.pow(p, 2.6));
-        layers.forEach(({ node, o }) => {
-          node.style.transform = `translate(${jx.toFixed(1)}px, ${jy.toFixed(1)}px) scale(${s.toFixed(4)}) rotate(${turn.toFixed(2)}deg)`;
-          node.style.clipPath = `circle(${(far * (1 - 0.55 * Math.pow(p, 0.7))).toFixed(1)}px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)`;
-        });
-        // Everything dims as it nears the dark.
-        const dim = 0.62 * seg(t, 0, F.pullFrom + F.pullMs);
-        ctx.fillStyle = `rgba(3, 1, 8, ${dim})`;
-        ctx.fillRect(0, 0, W, H);
-      }
-      ctx.save();
-      ctx.translate(jx, jy);
-      // Streaks spiralling in.
-      swirlClock += dt * (1 + 1.6 * seg(t, 600, GULP_END));
-      ctx.globalCompositeOperation = "lighter";
-      ctx.lineCap = "round";
-      const fadeOut = 1 - seg(t, F.gulpFrom + 80, GULP_END);
-      swirl.forEach((w) => {
-        const u = (swirlClock - w.at) / w.dur;
-        if (u <= 0 || u >= 1 || fadeOut <= 0) return;
-        const at = (q) => {
-          const rr = R * 1.05 + (far * w.d * 1.2 - R * 1.05) * Math.pow(1 - q, 1.5);
-          const a = w.a + twist * 3.4 * Math.pow(q, 1.7);
-          return [C.x + Math.cos(a) * rr, C.y + Math.sin(a) * rr];
-        };
-        const al = Math.sin(Math.PI * u) * fadeOut;
-        ctx.strokeStyle = w.gold ? `rgba(${SPARK_GOLD}, ${0.75 * al})` : w.hot ? `rgba(240, 225, 255, ${0.85 * al})` : `rgba(180, 120, 255, ${0.7 * al})`;
-        ctx.lineWidth = w.w * (0.7 + 1.4 * u);
-        ctx.beginPath();
-        for (let k = 0; k <= 7; k++) {
-          const [x, y] = at(Math.max(0, u - 0.16 + 0.02 * k));
-          k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-        }
-        ctx.stroke();
+    const R = holeR(t);
+    if (snap) {
+      // Deep space behind the picture, then the picture crumbling, then its dust.
+      ctx.fillStyle = "rgb(9, 7, 15)";
+      ctx.fillRect(0, 0, W, H);
+      drawPicture(t, place(t, jx, jy));
+      drawDust(t);
+    } else {
+      const p = pull(t);
+      const s = Math.max(0.002, 1 - p), turn = twist * (35 * p + 520 * Math.pow(p, 2.6));
+      layers.forEach(({ node, o }) => {
+        node.style.transform = `translate(${jx.toFixed(1)}px, ${jy.toFixed(1)}px) scale(${s.toFixed(4)}) rotate(${turn.toFixed(2)}deg)`;
+        node.style.clipPath = `circle(${(far * (1 - 0.55 * Math.pow(p, 0.7))).toFixed(1)}px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)`;
       });
-      ctx.globalCompositeOperation = "source-over";
-      // The hole itself, scaled up from its own drawing.
+      // Everything dims as it nears the dark.
+      ctx.fillStyle = `rgba(3, 1, 8, ${0.62 * seg(t, 0, SWALLOWED)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+    ctx.save();
+    ctx.translate(jx, jy);
+    // Streaks spiralling in, gone with the last of the picture.
+    swirlClock += dt * (1 + 1.6 * seg(t, 600, EATEN));
+    ctx.globalCompositeOperation = "lighter";
+    ctx.lineCap = "round";
+    const fadeOut = 1 - seg(t, EATEN - 250, EATEN);
+    swirl.forEach((w) => {
+      const u = (swirlClock - w.at) / w.dur;
+      if (u <= 0 || u >= 1 || fadeOut <= 0) return;
+      const at = (q) => {
+        const rr = R * 1.05 + (far * w.d * 1.2 - R * 1.05) * Math.pow(1 - q, 1.5);
+        const a = w.a + twist * 3.4 * Math.pow(q, 1.7);
+        return [C.x + Math.cos(a) * rr, C.y + Math.sin(a) * rr];
+      };
+      const al = Math.sin(Math.PI * u) * fadeOut;
+      ctx.strokeStyle = w.gold ? `rgba(${SPARK_GOLD}, ${0.75 * al})` : w.hot ? `rgba(240, 225, 255, ${0.85 * al})` : `rgba(180, 120, 255, ${0.7 * al})`;
+      ctx.lineWidth = w.w * (0.7 + 1.4 * u);
+      ctx.beginPath();
+      for (let k = 0; k <= 7; k++) {
+        const [x, y] = at(Math.max(0, u - 0.16 + 0.02 * k));
+        k ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    });
+    ctx.globalCompositeOperation = "source-over";
+    // The hole itself, scaled up from its own drawing.
+    if (R > 0.5) {
       ctx.save();
       ctx.translate(C.x, C.y);
       const k = R / HR;
       ctx.scale(k, k);
       art.draw(ctx, swirlClock * 1.8, Math.min(1, t / 160), 1);
       ctx.restore();
-      ctx.restore();
-      // The gulp: the dark swells past the corners; once it's past, all is dark.
-      const g = seg(t, F.gulpFrom, GULP_END);
-      if (g > 0) {
-        const edge = R * 1.1;
-        const dk = ctx.createRadialGradient(C.x, C.y, edge * 0.6, C.x, C.y, edge * 1.05);
-        dk.addColorStop(0, "rgba(2, 1, 6, 1)");
-        dk.addColorStop(1, "rgba(2, 1, 6, 0)");
-        ctx.fillStyle = dk;
-        ctx.fillRect(0, 0, W, H);
-        // (all dark just as home lands: see LAND)
-        if (g > 0.78) {
-          ctx.fillStyle = `rgba(2, 1, 6, ${seg(g, 0.78, 0.9)})`;
-          ctx.fillRect(0, 0, W, H);
-        }
-      }
-    } else {
-      // ── Home, out of the dark ──
-      const u = seg(t, LAND, LAND + F.emergeMs);
-      // (quick at once, from just the corners in, easing as it nears the point)
-      const e = 1 - Math.pow(1 - u, 3);
-      const Rd = far * (1 - e);
-      if (Rd > 0.5) {
-        // The dark drawing in to a point, home showing beyond its soft edge.
-        const soft = Math.max(6, Rd * 0.12);
-        const dk = ctx.createRadialGradient(C.x, C.y, Math.max(0, Rd - soft), C.x, C.y, Rd + soft);
-        dk.addColorStop(0, "rgba(2, 1, 6, 1)");
-        dk.addColorStop(0.5, "rgba(6, 2, 16, .85)");
-        dk.addColorStop(1, "rgba(6, 2, 16, 0)");
-        ctx.fillStyle = dk;
-        ctx.beginPath(); ctx.arc(C.x, C.y, Rd + soft, 0, TAU); ctx.fill();
-        // and the hole's violet light caught on its edge
-        const rim = Math.sin(Math.PI * Math.min(1, u * 1.2));
-        [[7, 0.18, "170, 100, 255"], [1.4, 0.8, "235, 215, 255"]].forEach(([lw, a, rgb]) => {
-          ctx.strokeStyle = `rgba(${rgb}, ${a * rim})`;
-          ctx.lineWidth = lw;
-          ctx.beginPath(); ctx.arc(C.x, C.y, Rd, 0, TAU); ctx.stroke();
-        });
-      }
-      // The point flares, throws off a ring of gold and a scatter of motes, and is gone.
-      const f = seg(t, LAND + F.emergeMs * 0.82, END);
-      if (f > 0 && f < 1) {
-        glint(ctx, C.x, C.y, 26 * (1 - f) + 8, Math.sin(Math.PI * Math.min(1, f * 1.6)));
-        const rr = base * 0.55 * (1 - Math.pow(1 - f, 3));
-        [[9, 0.16], [3.5, 0.3], [1.2, 0.8]].forEach(([lw, a]) => {
-          ctx.strokeStyle = `rgba(${PORTAL_GOLD}, ${a * (1 - f)})`;
-          ctx.lineWidth = lw;
-          ctx.beginPath(); ctx.arc(C.x, C.y, rr, 0, TAU); ctx.stroke();
-        });
-        sparks.forEach((m) => {
-          const q = f / m.life;
-          if (q >= 1) return;
-          const d = base * 0.6 * m.v * (1 - Math.pow(1 - q, 2));
-          ctx.fillStyle = `rgba(${PORTAL_GOLD}, ${0.85 * (1 - q)})`;
-          ctx.beginPath(); ctx.arc(C.x + Math.cos(m.a) * d, C.y + Math.sin(m.a) * d, m.r, 0, TAU); ctx.fill();
-        });
-      }
     }
-    if (t < END) requestAnimationFrame(frame);
-    else finish();
+    ctx.restore();
+    requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
-  // (on timers too, so a paused page still gets home)
-  setTimeout(() => { if (!landed) land(); }, LAND + 200);
-  setTimeout(finish, END + 300);
+  setTimeout(finish, SWALLOWED + 150);   // (even if the page's frames are paused)
+}
+
+// Home's parts flaring to life, one after another, top to bottom: each
+// lights up out of nothing in a burst of gold, then settles as it is.
+// (On a phone, the light without the soft glow round it.)
+function flareHome() {
+  const home = $("home");
+  const parts = [home.querySelector(".home-head"), $("floatDeck"), $("cotd"), home.querySelector(".home-sub"),
+    ...$("spreadList").children, ...(home.querySelector(".home-links")?.children || []), ...$("options").children]
+    .filter((p) => p && p.getClientRects().length);
+  const halo = (a, r) => (LITE ? "" : ` drop-shadow(0 0 ${r}px rgba(255, 206, 120, ${a}))`);
+  parts.forEach((p, i) => p.animate([
+    { opacity: 0, filter: `brightness(2.6)${halo(0.95, 12)}` },
+    { opacity: 1, filter: `brightness(1.8)${halo(0.75, 9)}`, offset: 0.3 },
+    { opacity: 1, filter: `brightness(1)${halo(0, 0)}` },
+  ], { duration: GREAT_FX.flareMs, delay: i * GREAT_FX.flareStep, easing: "cubic-bezier(.2, .8, .2, 1)", fill: "backwards" }));
 }
