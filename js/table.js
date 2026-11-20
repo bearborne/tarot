@@ -3,6 +3,8 @@
 
 // ── 2. The table ────────────────────────────────────────
 
+let readingsCast = 0;   // readings started since the app opened
+
 function startReading(spread, from) {
   if (swapping) return;
   const n = spread.positions.length;
@@ -13,7 +15,9 @@ function startReading(spread, from) {
   }
   // base: the spread as chosen; spread: the one in use, with a theme's
   // questions laid over it once one is chosen (see applyTheme).
-  S = { spread, base: spread, theme: null, n, deck, slots: [], picked: 0, revealed: 0, phase: "shuffle" };
+  // quick: after the first reading since the app opened, the motes and the
+  // fan opening play much faster (see castSpread, moteToDeck and fanOut).
+  S = { spread, base: spread, theme: null, n, deck, slots: [], picked: 0, revealed: 0, phase: "shuffle", quick: readingsCast++ > 0 };
   resetMagic();
 
   // The spread's cards leap out of the button you tapped and fly to their
@@ -47,9 +51,13 @@ function startReading(spread, from) {
   pile.hidden = false;
   for (let i = 0; i < DECK_LOOK; i++) {
     const c = el("div", "cback");
-    c.style.transform = pileOffset(i);
+    c.style.setProperty("--i", i);   // (its place in the pile: see .deck .cback)
     pile.append(c);
   }
+  // The deck wakes once the last mote has come down into it (moteToDeck);
+  // in case none comes (no cast to this table), it wakes anyway.
+  const waking = S;
+  setTimeout(() => { if (S === waking) wakeDeck(); }, 2600 + n * 60);
   $("fan").innerHTML = "";
   // Once the spread has landed, while nothing moves, ready the circle's
   // light for the first pick (see prepareMagic).
@@ -58,7 +66,7 @@ function startReading(spread, from) {
     const go = () => { if (S === reading && S.phase === "shuffle") prepareMagic(); };
     window.requestIdleCallback ? requestIdleCallback(go, { timeout: 600 }) : go();
   }, 1300);
-  $("hint").textContent = "Tap the deck to spread the cards";
+  $("hint").textContent = " ";   // (the deck opens by itself: see wakeDeck)
   $("hint").classList.remove("dim");
 }
 
@@ -168,14 +176,15 @@ function castSpread(btn, n) {
           { borderColor: "rgba(201, 169, 110, .3)", boxShadow: "0 0 0 0 rgba(255, 200, 110, 0)" },
         ], { duration: 1100, delay: lag + 300, easing: "ease-out" });
         // The circle gathers into a mote and goes down into the deck.
+        const gather = reading.quick ? 110 : 260;
         c.orb.animate([
           { transform: "translate(-50%, -50%) scale(1)", boxShadow: "0 0 0 rgba(255, 220, 150, 0)" },
           { transform: "translate(-50%, -50%) scale(.18)", boxShadow: "0 0 10px 3px rgba(255, 220, 150, .9)" },
-        ], { duration: 260, delay: lag, easing: "ease-in", fill: "forwards" });
+        ], { duration: gather, delay: lag, easing: "ease-in", fill: "forwards" });
         setTimeout(() => {
           c.orb.style.visibility = "hidden";
           if (S === reading) moteToDeck(c.orb, k);
-        }, lag + 260);
+        }, lag + gather);
         setTimeout(() => c.f.remove(), lag + 620);
       }, wait + ms);
     });
@@ -194,7 +203,7 @@ function moteToDeck(from, k) {
   Object.assign(m.style, { left: `${sx}px`, top: `${sy}px`, zIndex: 9600 });
   document.body.append(m);
   const dx = ex - sx, dy = ey - sy, bend = (k % 2 ? 1 : -1) * Math.min(60, Math.abs(dx) * 0.35 + 20);
-  const ms = 520;
+  const ms = S?.quick ? 230 : 520;
   m.animate([
     { transform: "translate(-50%, -50%) scale(1)", opacity: 1 },
     { transform: `translate(calc(-50% + ${dx * 0.5 + bend}px), calc(-50% + ${dy * 0.45}px)) scale(.9)`, opacity: 1, offset: 0.5 },
@@ -208,7 +217,17 @@ function moteToDeck(from, k) {
       { boxShadow: "0 4px 12px rgba(0, 0, 0, .45), 0 0 16px 4px rgba(255, 210, 130, .55)", offset: 0.3 },
       { boxShadow: "0 4px 12px rgba(0, 0, 0, .45), 0 0 0 rgba(255, 210, 130, 0)" },
     ], { duration: 700, easing: "ease-out" });
+    if (S && k === S.n - 1) wakeDeck();
   }, ms);
+}
+
+// With all the light gathered in it, the deck opens by itself into the
+// fan (spreadDeck), as the last mote's glow fades.
+function wakeDeck() {
+  const pile = $("deck");
+  if (!pile || pile.hidden || !S || S.phase !== "shuffle") return;
+  const reading = S;
+  setTimeout(() => { if (S === reading) spreadDeck(); }, calm || S.quick ? 0 : 250);
 }
 
 // How many cards go in each row. Every spread, of any size, fits on one
@@ -228,15 +247,14 @@ function layoutSlots() {
 }
 addEventListener("resize", layoutSlots);
 
-function pileOffset(i) {
-  return `translate(${i * 0.5}px, ${-i * 0.6}px)`;
-}
-
 // ── Spread the cards ────────────────────────────────────
-// Tapping the deck shuffles it (instantly, out of sight) and fans the
-// cards out to pick from.
+// Once the deck has woken (see wakeDeck) it shuffles itself (instantly,
+// out of sight) and opens into a fan to pick from. Tapping it before
+// then opens it at once.
 
-$("deck").addEventListener("click", async () => {
+$("deck").addEventListener("click", () => spreadDeck());
+
+async function spreadDeck() {
   if (!S || S.phase !== "shuffle") return;
   S.phase = "busy";
   prepareMagic();   // (if it isn't ready yet: better now, before anything moves, than mid-pick)
@@ -244,30 +262,87 @@ $("deck").addEventListener("click", async () => {
   setHint(S.n === 1 ? "Pick a card" : `Pick ${S.n} cards`);
   await fanOut();
   S.phase = "pick";
-});
+}
 
-// Spread the cards out in an arc, face down.
+// The deck opens into an arc of cards, face down. Out of a flare of light
+// where the deck stood, the cards sweep apart to both sides from the
+// middle outward, glowing as they go and leaving sparks at their tips,
+// overshooting a little and settling; then a slow glint runs to and fro
+// along the fan while it waits for a pick.
 async function fanOut() {
   const count = Math.min(FAN_MAX, S.deck.length);
   const width = Math.min(48, count * 4);
   const fan = $("fan");
+  const pile = $("deck");
   fan.innerHTML = "";
-  $("deck").hidden = true;
+  fan.classList.remove("ready");
+  if (!calm) deckFlare(pile);
+  pile.hidden = true;
 
+  const mid = (count - 1) / 2, step = S.quick ? 8 : 26, ms = S.quick ? 360 : 760;
+  let last = 0;
   for (let i = 0; i < count; i++) {
     const a = (count === 1 ? 0 : -width / 2 + (width * i) / (count - 1)) + wobble(0.6);
     const c = el("div", "cback fan-card");
     c.style.setProperty("--a", `${a}deg`);
+    c.style.setProperty("--i", i);
     c.dataset.card = S.order[i];
     c.dataset.angle = a;
-    c.animate(
-      [{ transform: "rotate(0deg)" }, { transform: `rotate(${a}deg)` }],
-      { duration: 380, delay: i * 8, easing: "cubic-bezier(.2,.7,.2,1)", fill: "backwards" }
-    );
+    if (calm) {
+      c.animate([{ transform: "rotate(0deg)" }, { transform: `rotate(${a}deg)` }],
+        { duration: 380, delay: i * 8, easing: "cubic-bezier(.2,.7,.2,1)", fill: "backwards" });
+      last = 380 + i * 8;
+    } else {
+      // The middle cards go first, the outer ones last, each sweeping out
+      // past its place and easing back onto it, lifted and glowing on the way.
+      const delay = Math.abs(i - mid) * step;
+      c.animate([
+        { transform: "translateY(-10px) rotate(0deg) scale(.96)", boxShadow: "0 4px 12px rgba(0, 0, 0, .45), 0 0 18px 5px rgba(255, 215, 140, .8)" },
+        { transform: `translateY(-16px) rotate(${a * 1.1}deg) scale(1.02)`, boxShadow: "0 4px 12px rgba(0, 0, 0, .45), 0 0 14px 4px rgba(255, 215, 140, .6)", offset: 0.6 },
+        { transform: `rotate(${a}deg)`, boxShadow: "0 4px 12px rgba(0, 0, 0, .45), 0 0 0 0 rgba(255, 215, 140, 0)" },
+      ], { duration: ms, delay, easing: "cubic-bezier(.25, .8, .3, 1)", fill: "backwards" });
+      // Every other card leaves a spark at its tip as it passes.
+      if (i % 2 === (count % 2 ? 0 : 1) || i === 0 || i === count - 1) {
+        setTimeout(() => { if (c.isConnected) tipSpark(c, a); }, delay + ms * 0.5);
+      }
+      last = Math.max(last, delay + ms);
+    }
     c.addEventListener("click", () => pick(c));
     fan.append(c);
   }
-  await wait(380 + count * 8);
+  await wait(last);
+  if (!calm) fan.classList.add("ready");
+}
+
+// A flash of light where the deck stood, as it opens: a gold ring widening
+// and fading, around a soft glow.
+function deckFlare(pile) {
+  const r = pile.getBoundingClientRect();
+  const f = el("span", "deck-flare");
+  Object.assign(f.style, { left: `${r.left + r.width / 2}px`, top: `${r.top + r.height / 2}px`,
+    width: `${r.width * 1.6}px`, height: `${r.width * 1.6}px` });
+  document.body.append(f);
+  f.animate([
+    { transform: "translate(-50%, -50%) scale(.4)", opacity: 0.9 },
+    { transform: "translate(-50%, -50%) scale(3.2)", opacity: 0 },
+  ], { duration: 900, easing: "cubic-bezier(.2, .7, .3, 1)" }).finished.then(() => f.remove());
+}
+
+// A spark of light at the top of a fan card as it sweeps past, drifting
+// outward and up, and fading.
+function tipSpark(card, a) {
+  const r = card.getBoundingClientRect();
+  const rad = (a * Math.PI) / 180;
+  const x = r.left + r.width / 2, y = r.top + 4;
+  const m = el("span", "deck-mote");
+  Object.assign(m.style, { left: `${x}px`, top: `${y}px`, zIndex: 30 });
+  document.body.append(m);
+  const dx = Math.sin(rad) * 26 + wobble(6), dy = -18 - Math.random() * 16;
+  m.animate([
+    { transform: "translate(-50%, -50%) scale(.6)", opacity: 0 },
+    { transform: `translate(calc(-50% + ${dx * 0.3}px), calc(-50% + ${dy * 0.3}px)) scale(1)`, opacity: 1, offset: 0.2 },
+    { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.3)`, opacity: 0 },
+  ], { duration: 900 + Math.random() * 300, easing: "ease-out" }).finished.then(() => m.remove());
 }
 
 // ── Pick ────────────────────────────────────────────────

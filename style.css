@@ -655,9 +655,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .deck .cback {
   position: absolute;
   inset: 0;
+  transform: translate(calc(var(--i) * .5px), calc(var(--i) * -.6px));
   transition: transform .2s;
 }
-.deck:active .cback:last-child { transform: translateY(-3px); }
+.deck:active .cback:last-child { transform: translate(calc(var(--i) * .5px), calc(var(--i) * -.6px - 3px)); }
 
 .fan-card {
   transform-origin: 50% 300%;
@@ -667,6 +668,22 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 @media (hover: hover) {
   .fan-card:hover { transform: rotate(var(--a)) translateY(-14px); }
+}
+/* Once the fan has opened (see fanOut, in js/table.js): a slow glint of
+   gold runs along it, card by card, while it waits for a pick. */
+.fan.ready .fan-card { animation: fan-glint 3.6s ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
+@keyframes fan-glint {
+  0%, 30%, 100% { box-shadow: 0 4px 12px rgba(0, 0, 0, .45), 0 0 0 0 rgba(255, 215, 140, 0); }
+  12%           { box-shadow: 0 4px 12px rgba(0, 0, 0, .45), 0 0 10px 2px rgba(255, 215, 140, .55); }
+}
+.deck-flare {
+  position: fixed;
+  z-index: 30;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 225, 160, .9);
+  background: radial-gradient(circle, rgba(255, 220, 150, .45), rgba(255, 210, 130, 0) 60%);
+  box-shadow: 0 0 18px rgba(255, 210, 130, .6);
+  pointer-events: none;
 }
 
 .flyer { position: fixed; z-index: 20; pointer-events: none; }
@@ -997,11 +1014,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
     calc(env(safe-area-inset-bottom) + 32px);
   -webkit-user-select: text;
   user-select: text;
+}
 /* Closing into its button or card: frozen, on a layer of its own, so it's drawn
    once and only that picture moves (see holeClose, in js/core.js). */
 .sheet.closing { will-change: transform; contain: paint; }
 .sheet.closing, .sheet.closing * { animation-play-state: paused !important; transition: none !important; }
-}
 .details-body {
   max-width: 36rem;
   margin: 0 auto;
