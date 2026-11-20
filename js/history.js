@@ -326,17 +326,11 @@ function readingItem(r) {
 
   const actions = el("span", "reading-actions");
   if (known.length) {
-    const one = known.length === 1;
-    const sum = el("button", "link small gold", one ? "Card" : "Summary");
+    const sum = el("button", "link small gold", "Summary");
     // The spread's questions, if it still exists and has them.
     // (A themed reading keeps its own questions.)
     const positions = (SPREADS.find((sp) => sp.name === r.spread) || {}).positions || [];
     sum.addEventListener("click", () => {
-      if (one) {   // one card: its page, with the theme's reading if it had one
-        const it = items[0];
-        openDetails([{ ...it, reading: themedReading(it, r.spread) }]);
-        return;
-      }
       const entries = items.map((it, i) => ({ card: it.card, reversed: it.reversed, label: it.label,
         question: known[i].c.question || (positions[i] || {}).question || "" }));
       summonSummary((magic) => openSummary(entries, readingTitle(r), magic, {
