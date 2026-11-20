@@ -91,7 +91,7 @@ const GROUPS = [
   ["Bear and crescent", [
     ["artScale", "Size", 0.6, 1.3, 0.01, 1],
     ["artY", "Up / down", -200, 200, 1, 0],
-    ["lineW", "Line width", 1, 14, 0.1, 5.4],
+    ["lineW", "Line width", 1, 14, 0.1, 7.2],
   ]],
   ["Halo ring", [
     ["haloR", "Radius", 120, 340, 1, 248],
@@ -194,6 +194,13 @@ function cardSVG(s) {
     <filter id="shine" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur in="SourceGraphic" stdDeviation="${s.shineBlur}" result="b"/><feColorMatrix in="b" values="1 0 0 0 .08  0 1 0 0 .05  0 0 1 0 0  0 0 0 ${s.shine} 0" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     <filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0"/></filter>
   </defs>
+  <!-- Drawn small (the home fan, the table), the bear's lines would come
+       out under a pixel wide and bead into steps, so they grow heavier as the
+       card gets smaller. (Media queries here go by the picture's own size.) -->
+  <style>
+    @media (max-width: 170px) { #bear { stroke-width: ${+(s.lineW * 1.3).toFixed(1)}px } #halo circle { stroke-width: ${+(s.haloW * 1.25).toFixed(1)}px } }
+    @media (max-width: 120px) { #bear { stroke-width: ${+(s.lineW * 1.6).toFixed(1)}px } #halo circle { stroke-width: ${+(s.haloW * 1.55).toFixed(1)}px } }
+  </style>
   <rect id="background" width="${W}" height="${H}" fill="${s.bg}"/>
   ${s.grain > 0 ? `<rect width="${W}" height="${H}" filter="url(#grain)" opacity="${s.grain}"/>` : ""}
   ${s.vignette > 0 ? `<rect width="${W}" height="${H}" fill="url(#vig)" opacity="${s.vignette}"/>` : ""}

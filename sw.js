@@ -5,7 +5,7 @@
 // so a card you've never drawn still shows without internet. The fonts
 // (from Google) are saved the first time they load.
 
-const CACHE = "tarot-v68";
+const CACHE = "tarot-v71";
 
 importScripts("cards.js");   // for the list of card pictures
 
