@@ -944,7 +944,7 @@ function openSummary(entries, title, magic = false, named = null) {
   const share = el("button", "link bar-end", "Share");
   share.setAttribute("aria-label", "Share this reading as a picture");
   share.addEventListener("click", () => shareReading(entries, title, named && loadHistory().find((r) => r.id === named.id)?.t));
-  bar.append(back, el("span", "bar-title", "Reading summary"), share);
+  bar.append(barStart(bar, back), el("span", "bar-title", "Reading summary"), share);
 
   // Two columns on a wide screen: the cards and the lens on the left,
   // the reading on the right. On a phone they stack.

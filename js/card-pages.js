@@ -500,7 +500,7 @@ function openDetails(items, index = 0) {
   next.setAttribute("aria-label", "Next card");
   nav.append(prev, next);
   nav.hidden = items.length < 2;
-  bar.append(back, count, nav);
+  bar.append(barStart(bar, back), count, nav);
 
   let i = index;
   let body = detailsBody(items[i]);

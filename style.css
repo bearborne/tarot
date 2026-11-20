@@ -2988,3 +2988,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
     to   { opacity: 1; letter-spacing: normal; transform: none; }
   }
 }
+
+/* The Home button beside Back on a card's page and a reading's summary,
+   and the greater black hole it opens (see js/greater-hole.js). */
+.bar-start { display: flex; align-items: center; gap: 2px; width: 92px; }
+.bar-start .link { width: auto; padding-right: 4px; white-space: nowrap; }
+.bar.has-home .bar-nav, .bar.has-home .bar-end { width: 92px; }
+.bar.has-home .bar-title { white-space: nowrap; }
+.home-btn { width: 34px; height: 34px; flex: none; }
+.great-hole { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 9500; pointer-events: auto; touch-action: none; }
+.screen.swallowed { will-change: transform; contain: paint; }
+.swallowed { scrollbar-width: none; }
+.swallowed::-webkit-scrollbar { display: none; }
