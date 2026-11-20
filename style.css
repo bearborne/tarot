@@ -251,8 +251,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
   transition: transform .6s cubic-bezier(.3,.7,.3,1);
 }
 .fd-card.lift { transform: translateY(-6px) scale(1.12); transform-origin: 50% 100%; z-index: 2; }
-.fd-bob { width: 100%; height: 100%; animation: fd-bob 3.2s ease-in-out infinite; }
-@keyframes fd-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(var(--bob, -6px)); } }
+/* The bob moves the card by `top`, not a transform: an animated transform
+   gives each card its own GPU layer, drawn upright and then turned to the
+   fan's angle as a picture, which left the thin gold lines stair-stepped.
+   Moved by `top`, the card is painted straight at its angle. (Phones keep the
+   transform, below: their sharper screens hide the steps, and a repaint per
+   frame costs them more.) */
+.fd-bob { position: relative; top: 0; width: 100%; height: 100%; animation: fd-bob 3.2s ease-in-out infinite; }
+@keyframes fd-bob { 0%, 100% { top: 0; } 50% { top: var(--bob, -6px); } }
 .fd-flip {
   position: relative;
   width: 100%;
@@ -2932,6 +2938,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .thread-strip { background: rgba(21, 19, 28, .97); }
   .overlay { background: rgba(10, 8, 15, .86); }
   .themed-pop { filter: none; }
+  @keyframes fd-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(var(--bob, -6px)); } }
   .sky-wheel .w-moon { animation: none; filter: drop-shadow(0 0 6px rgba(255, 214, 130, .5)); }
   .sky-wheel .w-planet, .sky-wheel .w-tick { transition: font-size .25s, fill .25s, fill-opacity .25s, stroke-opacity .25s; }
   @keyframes fd-word-in {
