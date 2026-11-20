@@ -737,5 +737,5 @@ function drawArcaneCircle(ctx, t, { cx, cy, R1, seal, from }) {
   ctx.restore();
 }
 
-addEventListener("resize", () => { if (MG.ctx) { sizeMagic(); if (calm && S) { drawMagic(performance.now() + 10000); drawFrames(performance.now() + 10000); } } });
+addEventListener("resize", () => { if (MG.ctx) { sizeMagic(); if (calm && S) { drawMagic(performance.now() + 10000); clearTop(); } } });
 document.addEventListener("visibilitychange", () => { if (S && !$("table").hidden && MG.cards.length) startMagic(); });

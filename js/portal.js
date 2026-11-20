@@ -162,7 +162,7 @@ function arcanePortal(points, open) {
     p.fly = flyingCopy(p.el, 9001, p.el.querySelector(".cface") || p.el).c;
     p.el.style.visibility = "hidden";
   });
-  // The elemental frames around the cards fade as the cards leave them.
+  // The top layer (above the cards) fades as the cards leave.
   const frames = src.some((p) => p.fly) && $("frames");
   const framesFade = frames && frames.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700 / portalPace, delay: 300 / portalPace, fill: "forwards" });
   // When each card starts falling in, and when it's gone (seconds).

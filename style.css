@@ -86,6 +86,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   border-radius: 7px;
   overflow: hidden;
 }
+/* The pictures are cropped to their black outline, so behind one the face is
+   dark: no cream rim where the rounded corners blend. */
+.cface:has(img) { background: #1a1714; }
 .cface img {
   width: 100%;
   height: 100%;
@@ -432,7 +435,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   z-index: 0;
 }
 #table > :not(.magic) { position: relative; z-index: 1; }
-/* The elemental frames sit above the cards, on their edges */
+/* The top magic layer sits above the cards */
 .magic.frames { z-index: 2; }
 
 
