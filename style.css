@@ -1161,6 +1161,20 @@ button { font: inherit; color: inherit; cursor: pointer; }
   font-size: 1.02rem;
 }
 
+/* A Major card's place in the Fool's journey */
+.journey-scene { font-style: italic; text-align: center; }
+.journey-ends {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(201, 169, 110, .18);
+}
+.journey-end { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+.journey-end .related-card { width: 72px; }
+.journey-text { margin: 0; font-size: .92rem; line-height: 1.45; color: var(--muted); }
+
 /* Your note */
 .note-box { width: 100%; margin: 18px 0 4px; text-align: center; }
 .note-preview {
@@ -1762,6 +1776,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .card-page .history-sum, .card-page .history-list li { font-family: var(--read); font-size: 1.08rem; }
   .card-page .related-title { font-size: 1.05rem; }
   .card-page .related-row { --rc: 92px; }
+  .card-page .journey-end .related-card { width: 92px; }
+  .card-page .details-text .journey-text { font-size: 1.05rem; line-height: 1.55; margin: 0; }
   .card-page .related-name { font-size: .9rem; }
 }
 

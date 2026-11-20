@@ -313,6 +313,14 @@ function placeLine(entry, place, i, label) {
   return form.includes("{g}") ? withAdvice(line) : line;
 }
 
+// One card read in its themed place, for a one-card reading's page:
+// { title, text }, or null when the card has no theme place.
+function themedReading(item, title) {
+  if (!item.label || item.label === "Your card") return null;
+  const t = placeLine(item, placeOf(item.label) || "own", 0, item.label).replace(/^[^:]+:\s*/, "");
+  return { title: title || "The reading", text: cap(t) };
+}
+
 const placeName = (lens, i, entry) => (lens.own ? (lens.labels ? lens.labels[i] : entry.label) : PLACES[lens.places[i]][0]);
 
 const numberOf = (card) => (card.court ? null : +((card.correspondences || {}).number || NaN));

@@ -1272,6 +1272,7 @@ startSky();
 $("backBtn").addEventListener("click", showHome);
 $("newBtn").addEventListener("click", showHome);
 $("summaryBtn").addEventListener("click", () => {
+  if (S.n === 1) { openReadingCard(0); return; }   // one card: its page, not a summary
   const entries = tableEntries(), title = S.title || S.spread.name, reading = S;
   summonSummary((magic) => openSummary(entries, title, magic, reading.readingId && {
     id: reading.readingId,

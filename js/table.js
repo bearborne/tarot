@@ -454,6 +454,7 @@ async function turn(slot) {
     if (last) {
       setHint("");
       showReadingTitle();
+      $("summaryBtn").textContent = S.n === 1 ? "✦ Read the card" : "✦ Reading summary";
       $("summaryBtn").hidden = false;
       $("endActions").hidden = false;
       $("endActions").animate([{ opacity: 0 }, { opacity: 1 }], 400);

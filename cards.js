@@ -26,6 +26,9 @@
 //    reversedIdeas, reversedNuances – the same, for the card reversed
 //    questions – questions the card asks you, one per line
 //    line    – a short line to carry with you, shown on the card's page
+//    story   – the card's scene in its journey (the Fool's journey for the
+//              Majors; Ace to King for each suit), with what it comes from
+//              (the card before) and leads to (the next)
 //    picture – what's in the picture: "The thing: what it means", one per line
 //    details – the longer page, shown under "More about this card".
 //              Leave an empty line between paragraphs.
@@ -55,6 +58,11 @@ const CARDS = [
       `What are you ready to begin?`,
     ],
     line: `I can begin before I know the whole way.`,
+    story: {
+      from: `Nothing comes before the Fool: the journey starts here, with everything packed and nothing yet unpacked.`,
+      scene: `The traveller carries all he owns in one small pack, eyes on the sky, full of visions. He doesn't see the cliff ahead, but the little dog at his heel does, and barks.`,
+      to: `He hands his pack to the Magician, who lays out what was in it all along.`,
+    },
     picture: [
       `The white rose: a pure, open intention with nothing to hide.`,
       `The cliff edge: the unknown, met with trust rather than fear.`,
@@ -67,6 +75,7 @@ const CARDS = [
       `Getting ready for a journey; hope and faith in what's ahead`,
       `New starts in love or work`,
       `Beginner's luck; improvising`,
+      `Everything you need is already in your pack`,
     ],
     nuances: [
       `Taking a leap, accepting it may or may not work`,
@@ -75,6 +84,9 @@ const CARDS = [
     reversedNuances: [
       `Holding back; cautious about risks`,
       `Not ready to commit`,
+    ],
+    reversedIdeas: [
+      `Stones in your shoes: rest, then start again`,
     ],
     inReading: {
       upright: `a fresh start taken with an open heart`,
@@ -105,6 +117,11 @@ const CARDS = [
       `What idea is ready to become real?`,
     ],
     line: `I already hold what I need to begin.`,
+    story: {
+      from: `The Fool's pack, handed over and unfolded on the table.`,
+      scene: `With a word, the Magician lays out four tools: wand, cup, sword and coin. Did he make them, or were they in the pack from the start? He smiles and won't say.`,
+      to: `An idea is on the table. What to do with it is the High Priestess's question.`,
+    },
     picture: [
       `The infinity sign above his head: limitless potential and the flow of life force.`,
       `One hand raised, one pointing down: as above, so below; drawing spirit into form.`,
@@ -117,6 +134,7 @@ const CARDS = [
       `Growth in an area you've been working on`,
       `Feeling whole in more than one part of life`,
       `Taking action`,
+      `The tools were yours all along; now you see them`,
     ],
     nuances: [
       `Mercury: thought, words and hands — what you can think, you can do`,
@@ -151,6 +169,11 @@ const CARDS = [
       `Where can you allow some things to stay unknown for now?`,
     ],
     line: `In stillness, I can hear what I already know.`,
+    story: {
+      from: `The Magician's tools, and no idea yet which to use.`,
+      scene: `Quiet where he was bold, she sits between two pillars by moonlight. The Fool lays the tools before her; she says nothing and hands him a scroll. A voice inside asks what his instincts say, and he finds he knows.`,
+      to: `Decision made, he hurries on to make it real, and meets the Empress.`,
+    },
     picture: [
       `The two pillars, B and J: the balance of opposites, with the way to deeper knowing between them.`,
       `The scroll marked TORA, half hidden: wisdom that is only partly revealed.`,
@@ -162,6 +185,7 @@ const CARDS = [
       `Moon cycles; sacred or hidden wisdom`,
       `Watching closely; observation as a skill`,
       `Divine feminine; spirituality`,
+      `Holding a decision until your inner voice speaks`,
     ],
     nuances: [
       `Mystery; things not yet revealed`,
@@ -196,6 +220,11 @@ const CARDS = [
       `What are you creating, and what does it need to grow?`,
     ],
     line: `I let myself grow at the pace of nature.`,
+    story: {
+      from: `A choice made in the High Priestess's quiet.`,
+      scene: `Impatient to see his idea fully grown, the Fool kneels in the Empress's garden. She tells him new things are fragile: they grow with patience, warmth and attention, not hurry.`,
+      to: `What grows needs looking after, so he goes to learn from the Emperor.`,
+    },
     picture: [
       `The ripening wheat: abundance that grows from patient care.`,
       `The Venus sign on her heart-shaped shield: love, beauty and creative power.`,
@@ -209,10 +238,11 @@ const CARDS = [
       `Peace, healing, relaxation, self-care`,
       `Divine feminine; purity of spirit`,
       `Respect`,
+      `Patience with new things: overwatering harms like neglect`,
     ],
     nuances: [
       `Venus: beauty, love, luxury`,
-      `Fertility; pregnancy (with a Page)`,
+      `Fertility of ideas; something growing`,
     ],
     reversedNuances: [
       `Needing more self-care`,
@@ -248,6 +278,11 @@ const CARDS = [
       `In what area are you ready to take the lead?`,
     ],
     line: `I can create the structure that lets me feel safe.`,
+    story: {
+      from: `Something growing, cared for by the Empress.`,
+      scene: `On a throne of stone, the Emperor runs his realm with a clear will and firm foundations. The Fool learns that what you build needs structure to last.`,
+      to: `With something built, a new fear comes: losing it. He takes it to the Hierophant.`,
+    },
     picture: [
       `The stone throne carved with rams' heads: steadiness and the drive of Aries.`,
       `The armour under his robe: strength held in readiness, not shown off.`,
@@ -261,6 +296,7 @@ const CARDS = [
       `Building progress; steady toward goals`,
       `Things under control`,
       `Strong foundations`,
+      `Leading yourself: a clear will, steady foundations`,
     ],
     nuances: [
       `Father figure; divine masculine`,
@@ -298,8 +334,14 @@ const CARDS = [
       `Which teachings or traditions have shaped who you are?`,
       `Who could you learn from right now?`,
       `What values do you want to stand on?`,
+      `What would you still have, even if you lost what you fear losing?`,
     ],
     line: `I honour what I have learned, and keep learning.`,
+    story: {
+      from: `Something solid, built with the Emperor, and the fear of losing it.`,
+      scene: `In the temple the Hierophant offers two ways through fear: let go of what you're afraid to lose, or notice what you'd still have if you lost it. Shared values, he says, outlast any parting.`,
+      to: `Steadied, the Fool walks on and reaches a crossroads: the Lovers.`,
+    },
     picture: [
       `The two crossed keys: the seen and the unseen, and access to deeper teaching.`,
       `The two followers before him: wisdom passed from one generation to the next.`,
@@ -309,6 +351,7 @@ const CARDS = [
       `A wise teacher or mentor figure`,
       `Values, ethics, shared traditions and community`,
       `A counsellor or guide`,
+      `Shared values that steady you in frightening times`,
     ],
     nuances: [
       `Institutions, schools, structured learning`,
@@ -349,6 +392,11 @@ const CARDS = [
       `Where do your values and your actions meet?`,
     ],
     line: `I choose what is true to my heart.`,
+    story: {
+      from: `The Hierophant's shared values, and a plan to follow.`,
+      scene: `At a crossroads, someone by the fruit tree on the other path stops the Fool in his tracks. It feels like recognition, like meeting a missing half. He leaves his plan and chooses the new road.`,
+      to: `A choice of the heart needs drive behind it: the Chariot.`,
+    },
     picture: [
       `The angel above: a higher blessing and the guidance of the heart.`,
       `The fruit tree with the serpent: desire, temptation and the choices they bring.`,
@@ -361,6 +409,7 @@ const CARDS = [
       `A meaningful choice made from the heart`,
       `Loving romance`,
       `Cooperation and progress`,
+      `A recognition: a person or path that feels meant for you`,
     ],
     nuances: [
       `Past-life connections`,
@@ -396,6 +445,11 @@ const CARDS = [
       `What keeps you moving when the road is long?`,
     ],
     line: `My direction comes from within.`,
+    story: {
+      from: `A path chosen in the Lovers, and many forces tugging at it.`,
+      scene: `Nearly there but stuck, the Fool asks a charioteer for help. Set one clear goal, he's told, and keep your dark and light horses pulling together. And remember: winning is a beginning.`,
+      to: `Proud of his victory and hot with feeling, he meets a gentler power: Strength.`,
+    },
     picture: [
       `The black and white sphinxes: opposite forces that move together when guided.`,
       `No reins in his hands: control that comes from will, not force.`,
@@ -409,9 +463,10 @@ const CARDS = [
       `Things under control`,
       `Opposites working together`,
       `Momentum building`,
+      `Mixed feelings brought to pull one way`,
     ],
     nuances: [
-      `Travel and transport`,
+      `On the move; leaving the starting line`,
       `Cancer: hard-working, moving forward`,
     ],
     reversedNuances: [
@@ -443,6 +498,11 @@ const CARDS = [
       `What gives you quiet courage?`,
     ],
     line: `Gentleness is a strength I can trust.`,
+    story: {
+      from: `The Chariot's victory, and passions running hot.`,
+      scene: `The Fool sees a woman calmly close a lion's jaws; it obeys because she asked. Wild energy, she says, can be banked like a hearth fire: guided, not chained, and still enjoyed.`,
+      to: `Calmer now, he's ready to turn inward, and becomes the Hermit.`,
+    },
     picture: [
       `The infinity sign over her head: endless patience and spiritual strength.`,
       `Her hands at the lion's jaw: instinct guided with gentleness, not fear.`,
@@ -454,10 +514,11 @@ const CARDS = [
       `Self-love and self-respect`,
       `Love and compassion`,
       `Limitless willpower`,
-      `Recovery from illness or guilt`,
+      `Recovering from a hard time; forgiving yourself`,
       `Balance; calm authority`,
       `Mastery and learning`,
       `Respect from others and yourself`,
+      `Wild energy banked like a hearth fire, not chained`,
     ],
     nuances: [
       `Leo: leadership, fire`,
@@ -465,6 +526,7 @@ const CARDS = [
     reversedIdeas: [
       `Restore your energy`,
       `Letting go of pride`,
+      `Strength held back by politeness or pressure`,
     ],
     reversedNuances: [
       `Not yet using your inner strength`,
@@ -499,6 +561,11 @@ const CARDS = [
       `Whose path could your own light help illuminate?`,
     ],
     line: `My own light is enough for the next step.`,
+    story: {
+      from: `Strength's calm, and a full life asking for quiet.`,
+      scene: `He withdraws to a small house in the woods. Each dusk he walks out with only a staff and a lantern, and its light shows him night creatures and flowers he never noticed before. Lighting the world, he lights his own mind.`,
+      to: `Lit from within, he steps back into the sun as the Wheel turns.`,
+    },
     picture: [
       `The lantern with a six-pointed star: inner wisdom that lights only the next step.`,
       `The staff: support, and the experience gathered along the way.`,
@@ -512,6 +579,7 @@ const CARDS = [
       `Alone time to think`,
       `Self-inspiration`,
       `Rest and a break`,
+      `A light carried inward shows what you'd never noticed`,
     ],
     nuances: [
       `Virgo: logical, analytical`,
@@ -519,6 +587,7 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Healing old trauma and emotion`,
+      `A shuttered lantern can be relit`,
     ],
     reversedNuances: [
       `Not taking the alone time you need`,
@@ -548,6 +617,11 @@ const CARDS = [
       `What opportunity might this moment be offering?`,
     ],
     line: `I move with the turning of my life.`,
+    story: {
+      from: `The Hermit's long quiet, and a light found within.`,
+      scene: `As he comes out of hiding, the wheel lifts him. Gifts arrive one after another, as if every good thing he'd done were coming back to him. It's time for change.`,
+      to: `Turning with the wheel, he sees how much of life is outer things, and seeks balance with Justice.`,
+    },
     picture: [
       `The sphinx at the top: wisdom that stays steady while everything turns.`,
       `The four winged figures reading in the corners: calm study through every change.`,
@@ -558,6 +632,7 @@ const CARDS = [
       `Cycles turning or completing; renewal`,
       `Opportunities; Jupiter = expansion and luck`,
       `Trusting there's a bigger plan and going with the flow`,
+      `Rising and falling with what you can't control`,
     ],
     nuances: [
       `Unexpected change; destiny and balance`,
@@ -566,6 +641,7 @@ const CARDS = [
     reversedIdeas: [
       `Time to ask for help`,
       `Accept both ups and downs`,
+      `A stuck wheel; you can choose to step away`,
     ],
     reversedNuances: [
       `Delays; waiting for change`,
@@ -595,6 +671,11 @@ const CARDS = [
       `Where is balance needed?`,
     ],
     line: `I meet the truth with honesty and grace.`,
+    story: {
+      from: `The Wheel's turn of fortune, and a life spent on outer goals.`,
+      scene: `The Fool watches a wise woman divide an inheritance fairly between two brothers. Neither is happy, yet both are better off. He sees he has fed his ambitions and starved his spirit, and sets out to rebalance.`,
+      to: `Turning inward for real, he hangs upside down as the Hanged Man.`,
+    },
     picture: [
       `The scales: the weighing of truth, and the balance of cause and effect.`,
       `The upright double-edged sword: clear decisions that cut both ways.`,
@@ -608,9 +689,10 @@ const CARDS = [
       `Cause and effect; what goes around comes around`,
       `Clear thinking; not swayed by others`,
       `Order, reason, equality`,
+      `Adjustment, not punishment`,
     ],
     nuances: [
-      `Contracts, marriage, legal matters`,
+      `Agreements and commitments, weighed fairly`,
       `Libra: balance and compromise`,
     ],
     reversedNuances: [
@@ -642,6 +724,11 @@ const CARDS = [
       `What are you ready to release so something new can come in?`,
     ],
     line: `When I pause, I see things anew.`,
+    story: {
+      from: `Justice's call to rebalance, toward the inner life.`,
+      scene: `He keeps still beneath a tree, then hangs from a branch, upside down. For a moment he lets go of everything, and the coins falling from his pockets look like plain metal. The world looks different now.`,
+      to: `He climbs down changed, and must let the old self go: Death.`,
+    },
     picture: [
       `Hanging calmly by one foot: a chosen surrender, not a punishment.`,
       `The halo around his head: insight that arrives when you let go.`,
@@ -655,9 +742,10 @@ const CARDS = [
       `Wisdom and higher learning`,
       `Spiritual growth; enlightenment`,
       `Don't make rash moves; stay still`,
+      `Seen upside down, old values look different`,
     ],
     nuances: [
-      `Intuition, psychic gifts (Neptune)`,
+      `Intuition (Neptune)`,
       `Sacrifice for a greater good`,
     ],
     reversedIdeas: [
@@ -693,6 +781,11 @@ const CARDS = [
       `Who are you becoming through this change?`,
     ],
     line: `I let what is complete come to an end.`,
+    story: {
+      from: `The Hanged Man's new view, and an old self left behind.`,
+      scene: `Crossing a bare winter field, the Fool feels he's lost something. Death rides up at sunrise and says yes, the old self is gone. Mourning is natural, Death tells him: old leaves fall so new ones can grow.`,
+      to: `Bare and healing, he looks for balance again, and meets Temperance.`,
+    },
     picture: [
       `The white rose on the black flag: purity and new life within every ending.`,
       `The sun rising between two towers: the dawn that follows transformation.`,
@@ -704,6 +797,7 @@ const CARDS = [
       `An ending that opens a beginning; rebirth`,
       `Growing self-awareness; deep inner change`,
       `Opening up to possibilities; purification, beauty`,
+      `Mourning first; then new leaves grow`,
     ],
     nuances: [
       `Scorpio: depth, transformation, the hidden self`,
@@ -718,7 +812,7 @@ const CARDS = [
     ],
     reversedNuances: [
       `Change coming more slowly`,
-      `Changes in work, love, friends, money`,
+      `Change reaching into many parts of life`,
     ],
     inReading: {
       upright: `a deep ending that makes room for renewal`,
@@ -744,6 +838,11 @@ const CARDS = [
       `How can you bring different parts of yourself together?`,
     ],
     line: `I find my balance, one gentle adjustment at a time.`,
+    story: {
+      from: `Death's bare ground, and a heart still healing.`,
+      scene: `An angel stands with one foot in water and one on land, pouring between two cups until they blend into something new. Opposites can mix, the angel says, with the right amounts and patience. The Fool sees he has kept his own worlds apart.`,
+      to: `Whole enough to face his desires, he climbs to the Devil.`,
+    },
     picture: [
       `Water poured between two cups: the patient blending of opposites.`,
       `One foot on land, one in water: balance between the practical and the emotional.`,
@@ -751,12 +850,13 @@ const CARDS = [
     ],
     ideas: [
       `Balance, moderation, patience`,
-      `Healing and health`,
+      `Healing; coming back into balance`,
       `Divine timing; staying calm`,
       `Grounded and in flow; true to your purpose`,
       `Harmony and cooperation; seeing every side`,
       `Blending things well (alchemy)`,
       `Gently managing emotions`,
+      `Neither side given up; blended until it's right`,
     ],
     nuances: [
       `Sagittarius: optimism, freedom, adventure`,
@@ -766,6 +866,7 @@ const CARDS = [
       `Recovery and rest`,
       `Holistic or energy healing`,
       `Check your priorities`,
+      `Not mixing yet: one ingredient is still missing`,
     ],
     reversedNuances: [
       `Impatience; going to extremes`,
@@ -794,10 +895,18 @@ const CARDS = [
       `What would freedom feel like here?`,
     ],
     line: `Seeing clearly is the first step to freedom.`,
+    story: {
+      from: `Temperance's balance, now tested by desire.`,
+      scene: `On a dark mountain, the Fool feels his own wants rise. The horned figure says it only shows what's already there, nothing to be ashamed of. The collars on the chained people are loose: they stay by choice. Others use the same fire to climb to the peak.`,
+      to: `Seeing his old pride clearly, he comes to a tower he once helped build: the Tower.`,
+    },
     picture: [
       `The loose chains around their necks: ties that could be lifted off at any moment.`,
       `The inverted star on his brow: matter placed above spirit, asking to be rebalanced.`,
       `The small horns and tails on the couple: how habits can slowly shape us.`,
+    ],
+    ideas: [
+      `Chains held only in the mind`,
     ],
     inReading: {
       upright: `honest awareness of attachments and habits`,
@@ -823,6 +932,11 @@ const CARDS = [
       `What could you build on firmer ground?`,
     ],
     line: `What is true in me cannot fall.`,
+    story: {
+      from: `The Devil's honesty about what holds him.`,
+      scene: `He finds the tower he once built to prove he was better than others, and sees that old self is still in him. Lightning strikes and it falls. Through the fear comes a strange clarity: the false parts are gone, and the true foundation still stands.`,
+      to: `Sitting in the rubble, he wishes for a guide, and the Star appears.`,
+    },
     picture: [
       `The lightning bolt: sudden insight that breaks through.`,
       `The crown knocked from the top: false certainties falling away.`,
@@ -833,6 +947,7 @@ const CARDS = [
       `Change that serves your highest good`,
       `A chance to rebuild on stronger ground`,
       `Spiritual awakening; unexpected help`,
+      `A false belief falls so something true can stand`,
     ],
     nuances: [
       `Sudden shifts; unforeseen change`,
@@ -876,8 +991,14 @@ const CARDS = [
       `What gives you hope right now?`,
       `Where are you being invited to heal and recover?`,
       `What guiding star would you like to follow?`,
+      `What do you want enough to go the distance for?`,
     ],
     line: `I am always being renewed.`,
+    story: {
+      from: `The Tower's fall, and a heart in need of hope.`,
+      scene: `A woman with two jars refills a pool and waters the dry earth. The Fool drinks, eats, and his heart begins to heal. She fades, and her light rises into the sky: follow your star.`,
+      to: `With a light to steer by, he walks into the night of the Moon.`,
+    },
     picture: [
       `Water poured onto the land and into the pool: renewal for both body and soul.`,
       `The great eight-pointed star: hope and guidance after the storm.`,
@@ -894,6 +1015,7 @@ const CARDS = [
       `Blessings from the universe`,
       `Life purpose and inner calling`,
       `Overcoming obstacles`,
+      `Help from unexpected places: a friend, a book, music`,
     ],
     nuances: [
       `Aquarius: progress, optimism, independence`,
@@ -905,6 +1027,7 @@ const CARDS = [
       `Positive affirmations`,
       `Reconnect with nature and water`,
       `Cleanse your energy`,
+      `Hope behind cloud, not gone`,
     ],
     inReading: {
       upright: `quiet healing and renewed hope`,
@@ -930,6 +1053,11 @@ const CARDS = [
       `What would you see if you looked a little closer?`,
     ],
     line: `I can trust my way through the night.`,
+    story: {
+      from: `The Star's hope, carried into the dark.`,
+      scene: `By moonlight he passes between two pillars, behind the veil the High Priestess kept closed. Strange creatures howl. A boat waits with no oar: he can wander, or trust the river. He trusts it, and dreams and visions come.`,
+      to: `The river carries him through the night to the morning of the Sun.`,
+    },
     picture: [
       `The winding path to the mountains: the journey through the unknown.`,
       `The dog and the wolf: the tame and the wild in your own nature.`,
@@ -941,6 +1069,7 @@ const CARDS = [
       `Emotions surfacing so they can heal`,
       `Shadow work; the subconscious`,
       `Moon cycles; dreams, creativity, spirituality (Pisces)`,
+      `Trusting the current when the path is unclear`,
     ],
     nuances: [
       `Hidden things; illusions; mystery`,
@@ -985,6 +1114,11 @@ const CARDS = [
       `What would you celebrate today?`,
     ],
     line: `I let myself be seen as I am.`,
+    story: {
+      from: `The Moon's long night, and the river that carried him.`,
+      scene: `He wakes in a walled garden. A laughing child on a white pony shows him seeds, insects and light on the water, and asks simple, deep questions. The child, he realises, is his own new self.`,
+      to: `Bright and whole, he has one last step, and hears the trumpet of Judgement.`,
+    },
     picture: [
       `The child on the white horse: innocence and freedom, unguarded.`,
       `The sunflowers behind the wall: growth that turns toward the light.`,
@@ -997,7 +1131,8 @@ const CARDS = [
       `Confidence, courage, strength`,
       `Safety, trust, stability`,
       `Playfulness; the inner child`,
-      `Good health and growth`,
+      `Vitality and growth`,
+      `Meeting your inner child; seeing the world anew`,
     ],
     nuances: [
       `Ego and life purpose`,
@@ -1005,7 +1140,8 @@ const CARDS = [
     reversedIdeas: [
       `An opportunity on the horizon`,
       `Looking forward to a celebration`,
-      `Abundance — money and emotions`,
+      `Abundance of warmth and feeling`,
+      `An eclipse passes; the light comes back`,
     ],
     reversedNuances: [
       `Temporary low mood; confidence dipping`,
@@ -1041,6 +1177,11 @@ const CARDS = [
       `Who are you ready to become?`,
     ],
     line: `I answer the call of who I am becoming.`,
+    story: {
+      from: `The Sun's joy, and one step left to take.`,
+      scene: `An angel tells him he must make peace with his past first. He blows the trumpet and his past selves rise, even the ones he tried to forget. He forgives them, they forgive him, and they drift away as memories with no hold on him.`,
+      to: `Free of the past, he takes the final step into the World.`,
+    },
     picture: [
       `The angel's trumpet: a calling that wakes the soul.`,
       `The figures rising from their coffins: renewal and release from the past.`,
@@ -1053,6 +1194,7 @@ const CARDS = [
       `Moving past obstacles; deciding to move forward`,
       `Learning from the past; releasing regrets`,
       `Truth coming out`,
+      `Forgiving your past selves, and being forgiven`,
     ],
     nuances: [
       `Pluto: rebirth, power, evolution`,
@@ -1062,6 +1204,7 @@ const CARDS = [
       `Work on forgiveness and self-acceptance`,
       `Meditation and reflection help`,
       `Discipline and affirmations help`,
+      `Something returning, to be laid to rest kindly`,
     ],
     reversedNuances: [
       `Time to look honestly at yourself`,
@@ -1097,6 +1240,11 @@ const CARDS = [
       `What new cycle is waiting to begin?`,
     ],
     line: `I am whole, and ready for what comes next.`,
+    story: {
+      from: `Judgement's peace with the past, and the last step.`,
+      scene: `His last step brings him back to the very cliff the Fool nearly walked off, and now he sees it truly. He steps off smiling and dances in a ring of stars, at one with everything.`,
+      to: `The circle closes, and the journey begins again with the Fool.`,
+    },
     picture: [
       `The dancer inside the wreath: wholeness, and the freedom to move within it.`,
       `The two wands she holds: balance held lightly, without effort.`,
@@ -1111,9 +1259,10 @@ const CARDS = [
       `Beginning the next journey`,
       `Freedom, purity, trust`,
       `Harvest and abundance`,
+      `Ending where you began, and seeing it for the first time`,
     ],
     nuances: [
-      `Travel; other cultures`,
+      `Feeling at home in the wider world`,
       `Saturn: discipline, structure, order`,
       `Milestones: marriage, children, career`,
     ],
@@ -1155,6 +1304,11 @@ const CARDS = [
       `What would you start if you trusted your enthusiasm?`,
     ],
     line: `I welcome the spark that wants to grow in me.`,
+    story: {
+      from: `Nothing comes before the Ace: the journey of Wands starts with a single spark.`,
+      scene: `A hand reaches out of a cloud holding a living branch. Leaves are already springing from it, and the castle on the hill shows what it might one day build. All it asks is to be picked up.`,
+      to: `Holding the spark, the traveller must choose where to point it: the Two.`,
+    },
     picture: [
       `The hand from the cloud: a gift of energy from beyond yourself.`,
       `The sprouting leaves: life force eager to grow.`,
@@ -1168,17 +1322,18 @@ const CARDS = [
       `Inspiration and new ideas`,
       `Confident, daring, spontaneous`,
       `Taking the lead; time to act`,
-      `New career paths; good money flow`,
+      `A new path that excites you`,
       `More passion in love`,
+      `Picking up the wand and starting to walk`,
     ],
     nuances: [
-      `Possible travel or pregnancy (with other cards)`,
+      `A creative spark ready to grow`,
     ],
     reversedIdeas: [
       `Time to find a new hobby or interest`,
     ],
     reversedNuances: [
-      `Delays in travel or change`,
+      `A change that needs a little longer`,
       `Too much on your plate`,
       `Low on direction or goals`,
     ],
@@ -1211,6 +1366,11 @@ const CARDS = [
       `What first step would turn this plan into motion?`,
     ],
     line: `My world is wider than where I stand.`,
+    story: {
+      from: `The Ace's spark, newly in hand.`,
+      scene: `On a castle wall, he holds a globe and one wand; the other is fixed to the stone. Two good roads lie ahead, and passion can't follow both. Part of him already leans one way.`,
+      to: `Having chosen, he sends his ships out and waits: the Three.`,
+    },
     picture: [
       `The globe in his hand: the world held as possibility.`,
       `The rose and lily cross on the wall: desire and pure thought joined.`,
@@ -1223,17 +1383,21 @@ const CARDS = [
       `Strong intuition — listen to it`,
       `Knowing what's best for you`,
       `Partnerships; possibilities; progress`,
+      `Passion needs one focus; trust the way you already lean`,
     ],
     nuances: [
       `Weighing options: stay or go?`,
       `Needing courage; aware of the risks`,
-      `Possible travel; investment decisions`,
+      `Weighing where to put your energy`,
     ],
     reversedNuances: [
       `Two paths; choosing one goal over another`,
       `Inner decisions and changes`,
       `Not ready for change yet`,
       `Overthinking the future`,
+    ],
+    reversedIdeas: [
+      `Options look alike for now: rest, then look again`,
     ],
     inReading: {
       upright: `a wider view and a first choice of direction`,
@@ -1264,6 +1428,11 @@ const CARDS = [
       `What new territory are you ready to explore?`,
     ],
     line: `I trust what I have set in motion.`,
+    story: {
+      from: `A choice made on the Two's castle wall.`,
+      scene: `From a cliff, a figure watches ships cross a golden sea. The work is launched, and the first signs say the dream is real. Pride is fine; patience is wiser until every ship is home.`,
+      to: `The first ships arrive, and there's something to celebrate: the Four.`,
+    },
     picture: [
       `The ships on the sea: efforts already sent out into the world.`,
       `The figure seen from behind: looking forward, not back.`,
@@ -1274,14 +1443,15 @@ const CARDS = [
       `Opportunities on the horizon; expansion`,
       `Celebrating how far you've come`,
       `Confidence and looking ahead`,
-      `Teamwork; travel or exploring`,
+      `Teamwork; exploring wider horizons`,
       `Leaving the past behind to move on`,
+      `Waiting for your ships: the first sign the dream is real`,
     ],
     nuances: [
       `A lesson in patience; waiting and going with the flow`,
     ],
     reversedNuances: [
-      `Coming home from travel`,
+      `Coming back to what grounds you`,
       `Slow early stages of a project`,
       `More climbing than expected; delays in rewards`,
       `Tired; needs rest`,
@@ -1315,6 +1485,11 @@ const CARDS = [
       `Who would you like to share your joy with?`,
     ],
     line: `I am allowed to rest in what I have built.`,
+    story: {
+      from: `The Three's ships, coming home.`,
+      scene: `Four wands hold up a garland, and people dance beneath it with flowers raised. A first stage is finished and worth celebrating. It's a foundation, not yet the whole house.`,
+      to: `Building higher brings bigger rivals: the Five.`,
+    },
     picture: [
       `The garland across four wands: a shelter made of celebration.`,
       `The two figures raising flowers: joy shared and welcomed.`,
@@ -1324,16 +1499,20 @@ const CARDS = [
       `Celebration, joyful events, gatherings`,
       `Stable foundations; home and belonging`,
       `Happy family, reunions, homecomings`,
-      `Engagements, weddings, moving in together`,
+      `Celebrating a bond or a milestone`,
       `New family members (children, pets)`,
       `Making your home beautiful`,
       `Music, dance, art, community`,
       `Closer, warmer relationships`,
+      `A first stage finished: celebrate, then build on it`,
     ],
     reversedNuances: [
       `A short, passing phase`,
       `Moving out; working from home`,
       `Feeling like an outsider`,
+    ],
+    reversedIdeas: [
+      `The cement is still wet; give the foundation time`,
     ],
     inReading: {
       upright: `a moment of arrival, belonging and celebration`,
@@ -1364,6 +1543,11 @@ const CARDS = [
       `What could come from these ideas working together?`,
     ],
     line: `Friction can show me what I care about.`,
+    story: {
+      from: `The Four's foundation, and the wish to build higher.`,
+      scene: `Five young people swing their staffs, more sparring than fighting. A bigger stage brings bigger rivals, and the clash sharpens everyone's skill. The way through is to be bold.`,
+      to: `One of them rides out of the scuffle to cheers: the Six.`,
+    },
     picture: [
       `Five figures with crossed wands: many voices, none yet in charge.`,
       `No one is hurt: the struggle is practice and play, not harm.`,
@@ -1371,6 +1555,7 @@ const CARDS = [
     ],
     ideas: [
       `Stepping back from drama`,
+      `Competition that sharpens your skill`,
     ],
     nuances: [
       `Competition; climbing toward a goal`,
@@ -1417,6 +1602,11 @@ const CARDS = [
       `What victory, big or small, can you acknowledge?`,
     ],
     line: `I can receive recognition with an open heart.`,
+    story: {
+      from: `The Five's contest, won.`,
+      scene: `A rider crowned with laurel comes home through a cheering crowd. The applause lifts the rider, and the rider lifts the crowd. Enjoy it, without coming to need it.`,
+      to: `Success draws challengers, and the hill must be held: the Seven.`,
+    },
     picture: [
       `The laurel wreaths on his head and wand: an achievement honoured.`,
       `The white horse: success carried with dignity.`,
@@ -1431,6 +1621,7 @@ const CARDS = [
       `Celebrate your efforts`,
       `Finding your place in the world; feeling welcomed`,
       `Partners with shared goals`,
+      `Hero and crowd lifting each other`,
     ],
     nuances: [
       `Fame, popularity, pride`,
@@ -1472,6 +1663,11 @@ const CARDS = [
       `What would courage look like here?`,
     ],
     line: `I can stand for what I value.`,
+    story: {
+      from: `The Six's success, which others now want to test.`,
+      scene: `On high ground, one figure holds a staff against six rising from below. The energy that created something now protects it. Steady footing matters more than winning every blow.`,
+      to: `The ground held, the way clears and everything starts moving fast: the Eight.`,
+    },
     picture: [
       `The higher ground: the vantage point of conviction.`,
       `The mismatched shoes: standing firm even when not fully prepared.`,
@@ -1483,6 +1679,7 @@ const CARDS = [
       `Be your most honest, authentic self`,
       `Healthy boundaries and protection`,
       `Make sure your voice is heard`,
+      `The energy that created something now defends it`,
     ],
     nuances: [
       `Competition; facing challenges`,
@@ -1524,6 +1721,11 @@ const CARDS = [
       `What message are you waiting for or ready to send?`,
     ],
     line: `I can let things move when the time is right.`,
+    story: {
+      from: `The Seven's hill, held.`,
+      scene: `Eight wands fly through open sky, about to land. Things move quickly now. Energy well spent, speeding up and slowing down at the right times, leaves some to spare.`,
+      to: `Near the end of the flight, one last push is needed: the Nine.`,
+    },
     picture: [
       `The eight wands in flight: energy released and moving swiftly.`,
       `The open sky: nothing standing in the way.`,
@@ -1532,12 +1734,13 @@ const CARDS = [
     ideas: [
       `Fast progress; things falling into place`,
       `Obstacles cleared; goals come easily`,
-      `Travel, holidays, excitement`,
+      `Movement and excitement`,
       `Messages and news flow easily`,
       `Freedom and space`,
       `Quick recovery from setbacks`,
-      `Success in work, money, love; attracting success`,
+      `Momentum in what you care about`,
       `Celebrations and events`,
+      `Knowing when to speed up and when to slow down`,
     ],
     nuances: [
       `Romance that moves fast`,
@@ -1545,6 +1748,7 @@ const CARDS = [
     reversedIdeas: [
       `Slow down, plan the next step`,
       `Be still; meditate and reflect`,
+      `Tiredness asking for rest, not a lost spark`,
     ],
     reversedNuances: [
       `Things moving slower than expected; delays`,
@@ -1579,6 +1783,11 @@ const CARDS = [
       `What support would help you complete this?`,
     ],
     line: `My strength has carried me this far.`,
+    story: {
+      from: `The Eight's rush, nearly landed.`,
+      scene: `A bandaged figure leans on a staff, eight more standing behind like a fence. Tired and wary, they're closer to the end than it feels. There is one more reserve of strength.`,
+      to: `Finishing brings its own weight to carry: the Ten.`,
+    },
     picture: [
       `The bandaged head: wounds from experience, worn with dignity.`,
       `The wands behind him like a fence: boundaries built from what he has learned.`,
@@ -1591,6 +1800,7 @@ const CARDS = [
       `Learn from what worked before`,
       `Heal first, then take on new challenges`,
       `Don't give up`,
+      `One last reserve of energy; you're nearly there`,
     ],
     nuances: [
       `Tired; heavy workload`,
@@ -1625,8 +1835,14 @@ const CARDS = [
       `What are you carrying right now?`,
       `Which loads are truly yours to hold?`,
       `How could the journey feel lighter?`,
+      `Why did you start?`,
     ],
     line: `I can choose what is mine to carry.`,
+    story: {
+      from: `The Nine's last push, completed.`,
+      scene: `Someone carries ten heavy wands toward a town, bent under the load. Success has grown into a burden. Which wands could be set down, and why did they start carrying them at all?`,
+      to: `With the load set down, the spark returns in fresh, young form: the Page.`,
+    },
     picture: [
       `The bundle held in front of his face: a load that blocks the view.`,
       `The town ahead: the goal close by.`,
@@ -1637,6 +1853,7 @@ const CARDS = [
       `Ask for and accept help`,
       `There are easier ways to reach your goal`,
       `Taking responsibility`,
+      `Remembering why you started`,
     ],
     nuances: [
       `Carrying too much; others' burdens and dramas`,
@@ -1682,6 +1899,11 @@ const CARDS = [
       `How could you follow your enthusiasm?`,
     ],
     line: `I let curiosity lead me somewhere new.`,
+    story: {
+      from: `The Ten's burden, set down.`,
+      scene: `A young figure in the desert holds a sprouting wand and looks at it with wonder. Everything is new again: something to learn, discover, start. Excitement comes before expertise.`,
+      to: `Excitement wants to move, and soon it gallops: the Knight.`,
+    },
     picture: [
       `The salamanders on his tunic: fire, transformation and creativity.`,
       `The sprouting wand he studies: curiosity meeting something new.`,
@@ -1692,7 +1914,8 @@ const CARDS = [
       `Confident, fearless, adventurous`,
       `Good news; a new perspective`,
       `Taking action to grow`,
-      `Wider horizons; possibly travel`,
+      `Wider horizons; curiosity about the world`,
+      `Childlike excitement to learn and discover`,
     ],
     nuances: [
       `Impulsive; needs stimulation and movement`,
@@ -1735,6 +1958,11 @@ const CARDS = [
       `Where would a bold move serve you?`,
     ],
     line: `My passion moves best with a purpose.`,
+    story: {
+      from: `The Page's curiosity, ready to move.`,
+      scene: `A knight on a rearing horse charges across the desert, his tunic patterned with salamanders. Fast, bold and loyal to his passion. Change comes quickly and wildly.`,
+      to: `Fire that has learned to settle becomes warmth: the Queen.`,
+    },
     picture: [
       `The rearing horse: energy eager to move.`,
       `The salamanders on his tunic: creative fire at work.`,
@@ -1745,13 +1973,14 @@ const CARDS = [
       `Bold, daring, adventurous; loves a challenge`,
       `Get it done and keep momentum`,
       `Something good, maybe long-awaited`,
-      `Love found while travelling`,
+      `Love found while following your passion`,
+      `Fiercely loyal to friends and to their passion`,
     ],
     nuances: [
       `Fast, fiery, seductive; enjoys the chase`,
     ],
     reversedNuances: [
-      `Plans or travel put on hold`,
+      `Plans put on hold`,
       `Energy scattered; needs a clear focus`,
       `Impatience; rushing`,
       `Still searching for a passion or career drive`,
@@ -1786,6 +2015,11 @@ const CARDS = [
       `How can your warmth inspire others?`,
     ],
     line: `I can shine without asking permission.`,
+    story: {
+      from: `The Knight's wild charge, now settled.`,
+      scene: `A queen sits with a sunflower in one hand and a black cat at her feet. Her warmth fills the room and gets things done. She knows her own light and lets others share it.`,
+      to: `Warmth that leads others becomes the King.`,
+    },
     picture: [
       `The sunflower in her hand: warmth, life and joy.`,
       `The black cat at her feet: intuition, and the quieter side of confidence.`,
@@ -1798,6 +2032,7 @@ const CARDS = [
       `Acts rather than just dreams`,
       `Intuitive, especially in nature`,
       `Big, warm presence`,
+      `Warmth that lights up a room`,
     ],
     nuances: [
       `Impatient; can think her way is the only way`,
@@ -1842,6 +2077,11 @@ const CARDS = [
       `What bold idea deserves your full commitment?`,
     ],
     line: `I hold my vision steadily and share it generously.`,
+    story: {
+      from: `The Queen's warmth, turned to leading.`,
+      scene: `A king leans forward on a throne carved with lions and salamanders, wand in hand. He sees the grand idea and inspires others toward it, by conviction rather than force.`,
+      to: `Every vision needs a new spark, and the journey begins again with the Ace.`,
+    },
     picture: [
       `The salamander biting its own tail: the endless cycle of creation.`,
       `The flowering staff: a vision that is alive and growing.`,
@@ -1854,6 +2094,7 @@ const CARDS = [
       `Protector and provider; strong integrity`,
       `Open with feelings; good with people and teams`,
       `Focus and perseverance; finishing what you start`,
+      `Taking command of a grand idea`,
     ],
     nuances: [
       `Strong-willed; impatient with others who are slow to act`,
@@ -1896,6 +2137,11 @@ const CARDS = [
       `Where could you share your love more freely?`,
     ],
     line: `My heart is open to give and to receive.`,
+    story: {
+      from: `Nothing comes before the Ace: the journey of Cups starts with a heart filling up.`,
+      scene: `A hand from the cloud offers an overflowing cup; five streams pour into a pond of lilies as a dove descends. Feeling wells up before it has a name. The cup is lifted, ready to be drunk.`,
+      to: `Feeling looks for someone to share it with: the Two.`,
+    },
     picture: [
       `The dove with the wafer: spirit descending into feeling.`,
       `The five streams of water: the senses overflowing with love.`,
@@ -1910,9 +2156,10 @@ const CARDS = [
       `Peace, calm, feeling emotionally safe`,
       `Abundance and emotional wellbeing`,
       `Growing intuition and spirituality`,
+      `Feeling welling up before it has a name`,
     ],
     nuances: [
-      `Proposals, marriage, possibly pregnancy (with other cards)`,
+      `Love offered and received; a new emotional beginning`,
     ],
     reversedIdeas: [
       `Self-love and self-care are needed`,
@@ -1946,6 +2193,11 @@ const CARDS = [
       `Where could you reach out to someone?`,
     ],
     line: `I meet others, and myself, as an equal.`,
+    story: {
+      from: `The Ace's overflowing feeling.`,
+      scene: `Two people raise their cups to each other beneath a winged lion's head. A spark of recognition: a friend, a kindred soul. Whether it grows is up to them both.`,
+      to: `Two become a circle of friends: the Three.`,
+    },
     picture: [
       `The winged lion over the staff of serpents: the healing that comes from union.`,
       `The exchanged cups: a meeting as equals.`,
@@ -1960,6 +2212,7 @@ const CARDS = [
       `Honesty, loyalty, agreements`,
       `Shared interests and values`,
       `Proposals and unions; good business partners`,
+      `A spark of recognition; you choose whether to tend it`,
     ],
     reversedNuances: [
       `Going separate ways`,
@@ -1994,6 +2247,11 @@ const CARDS = [
       `Where do you feel a sense of belonging?`,
     ],
     line: `Joy grows when it is shared.`,
+    story: {
+      from: `The Two's bond, widening.`,
+      scene: `Three friends raise their cups among ripe fruit and flowers. A harvest celebration: joy to carry through leaner days, with friends who feel like family.`,
+      to: `After the feast comes a quiet, restless mood: the Four.`,
+    },
     picture: [
       `The cups raised high: shared joy and celebration.`,
       `The harvest at their feet: abundance enjoyed together.`,
@@ -2004,11 +2262,12 @@ const CARDS = [
       `Gatherings, festivals, parties`,
       `Lifting each other up; support`,
       `Creative collaboration; group projects`,
-      `Happiness, health, abundance`,
-      `Birthdays, weddings, holidays`,
+      `Happiness and abundance, shared`,
+      `Celebrations with the people you love`,
       `Old friends visiting`,
       `A time of harvest and growth`,
       `Body, mind and spirit in harmony`,
+      `A harvest celebration to carry you through leaner times`,
     ],
     nuances: [
       `A new arrival (with other cards)`,
@@ -2042,8 +2301,14 @@ const CARDS = [
       `What might you be overlooking right now?`,
       `What does your heart truly want?`,
       `What new offer could be waiting for your attention?`,
+      `What have you stopped noticing that once delighted you?`,
     ],
     line: `Turning inward helps me know what I want.`,
+    story: {
+      from: `The Three's party, over.`,
+      scene: `Under a tree, someone sits with arms crossed before three cups, while a fourth is offered from a cloud, unseen. What once delighted now feels ordinary. The gift waits for them to look up.`,
+      to: `Not looking up, they lose what they had: the Five.`,
+    },
     picture: [
       `The crossed arms: turning inward, closed for now.`,
       `The cup offered from the cloud: a gift waiting to be noticed.`,
@@ -2053,6 +2318,7 @@ const CARDS = [
       `Focus on what's working; things will shift`,
       `A time for gratitude`,
       `Maybe pick up a new hobby`,
+      `Taking for granted what once felt wonderful`,
     ],
     nuances: [
       `Things moving slower than you'd like`,
@@ -2093,6 +2359,11 @@ const CARDS = [
       `What would help you cross the bridge toward healing?`,
     ],
     line: `I can grieve and still find what remains.`,
+    story: {
+      from: `The Four's sulk, and the cups it overlooked.`,
+      scene: `A cloaked figure mourns three spilled cups. Behind them two still stand, and a bridge leads home. The grief is real, and so is what's left.`,
+      to: `Turning round, they find old joys waiting: the Six.`,
+    },
     picture: [
       `The three spilled cups: what has been lost and is being mourned.`,
       `The two standing cups behind: what still remains.`,
@@ -2104,6 +2375,7 @@ const CARDS = [
       `Change comes when you're ready to let go`,
       `Allow yourself to grieve`,
       `Partial recovery; a bridge over troubled water`,
+      `Two cups still standing, waiting to be seen`,
     ],
     nuances: [
       `Emotional change`,
@@ -2116,7 +2388,7 @@ const CARDS = [
       `Emotions flowing again`,
       `Finding strength to move forward`,
       `Seeing hidden opportunities`,
-      `Recovery in love, work and money`,
+      `Recovering, little by little`,
       `Learning from mistakes; a new perspective`,
     ],
     inReading: {
@@ -2146,8 +2418,14 @@ const CARDS = [
       `What memory brings you warmth?`,
       `What did you love as a child that you could return to?`,
       `How could you offer simple kindness today?`,
+      `What reliably brings you joy?`,
     ],
     line: `I carry the gifts of my past with tenderness.`,
+    story: {
+      from: `The Five's grief, and the two cups still standing.`,
+      scene: `In a sunny courtyard, one child hands another a cup full of flowers. Known joys: the people and comforts that always bring you back to yourself.`,
+      to: `Comforted, the heart begins to dream of more: the Seven.`,
+    },
     picture: [
       `The cups filled with white flowers: innocent gifts from the heart.`,
       `The child offering a cup: kindness given freely.`,
@@ -2161,6 +2439,7 @@ const CARDS = [
       `Comfort, safety, stability`,
       `Hope and new beginnings`,
       `Caring work: teaching, nursing, healing`,
+      `Known joys: what reliably makes you happy`,
     ],
     nuances: [
       `Past influences; good as long as you don't get stuck`,
@@ -2194,6 +2473,11 @@ const CARDS = [
       `What do you truly desire beneath it all?`,
     ],
     line: `I can tell my true dreams from passing wishes.`,
+    story: {
+      from: `The Six's comfort, and new dreams stirring.`,
+      scene: `Seven cups float in the clouds, each holding a different vision: a castle, jewels, a wreath, a dragon. Dreams pull every way at once. Choosing soberly makes one of them real.`,
+      to: `Choosing one dream means leaving the rest behind: the Eight.`,
+    },
     picture: [
       `The seven visions in the clouds: dreams, desires and illusions.`,
       `The figure in shadow: the dreamer before the choice.`,
@@ -2204,6 +2488,7 @@ const CARDS = [
       `Decide from the heart`,
       `Research and plan before choosing`,
       `Don't let others pressure your choice`,
+      `Choosing soberly among dreams; staying with what's real`,
     ],
     nuances: [
       `Many options; dreams and imagination`,
@@ -2245,6 +2530,11 @@ const CARDS = [
       `Where is your heart asking to go?`,
     ],
     line: `I can walk toward what truly nourishes me.`,
+    story: {
+      from: `The Seven's choice, made.`,
+      scene: `Under a waning moon, a figure walks away from eight stacked cups toward the mountains. Leaving the familiar takes courage when a dream has been calling for a long time.`,
+      to: `What the heart went looking for, it finds: the Nine.`,
+    },
     picture: [
       `The eight cups left neatly behind: something complete, yet no longer enough.`,
       `The moon above: an inner cycle coming to its close.`,
@@ -2257,7 +2547,8 @@ const CARDS = [
       `Walking toward discovery; being set free`,
       `Making an intuitive choice`,
       `Strength and wisdom`,
-      `Emotional rest; retreats, travel, nature`,
+      `Emotional rest; time away in nature`,
+      `Leaving the familiar for a dream that has long been calling`,
     ],
     nuances: [
       `Withdrawing for a while; stepping back from a situation`,
@@ -2295,6 +2586,11 @@ const CARDS = [
       `How can you allow yourself to enjoy what you have?`,
     ],
     line: `I let myself enjoy what I have.`,
+    story: {
+      from: `The Eight's long walk, ended.`,
+      scene: `A contented figure sits before nine cups set out on a curved shelf. The wish card: emotional fulfilment, not a windfall. Love given comes back multiplied.`,
+      to: `Joy shared becomes a home: the Ten.`,
+    },
     picture: [
       `The crossed arms and content smile: satisfaction and self-assurance.`,
       `The cups arranged in an arc behind him: wishes gathered and displayed.`,
@@ -2309,6 +2605,7 @@ const CARDS = [
       `Happy relationships and situations`,
       `Recognition and respect`,
       `Lucky for work and business`,
+      `Love given out comes back multiplied`,
     ],
     nuances: [
       `Pleasure, luxury, enjoyment`,
@@ -2347,6 +2644,11 @@ const CARDS = [
       `How could you nurture harmony in your relationships?`,
     ],
     line: `Love feels like home when I can be myself.`,
+    story: {
+      from: `The Nine's fulfilment, shared.`,
+      scene: `A couple raise their arms to a rainbow of ten cups while their children dance. Mature, steady love, and a reminder of what first brought them together.`,
+      to: `The heart starts over, young and dreamy: the Page.`,
+    },
     picture: [
       `The rainbow of cups: emotional fulfilment and promise.`,
       `The couple with arms raised: gratitude shared.`,
@@ -2357,11 +2659,12 @@ const CARDS = [
       `Emotional fulfilment and abundance`,
       `Dreams coming true`,
       `Safety, stability, happiness at home`,
-      `Long-term commitment; marriage, family`,
+      `Long-term commitment; a sense of family`,
       `Community and togetherness`,
       `Accepting differences`,
       `Playfulness, holidays, small gatherings`,
       `Healthy emotional flow and creativity`,
+      `Remembering what first brought you together`,
     ],
     nuances: [
       `Moving home; next steps; children (with other cards)`,
@@ -2395,6 +2698,11 @@ const CARDS = [
       `What is your intuition whispering?`,
     ],
     line: `I stay open to what my heart surprises me with.`,
+    story: {
+      from: `The Ten's full home, and a heart ready to begin again.`,
+      scene: `By the sea, a young figure looks in wonder at a fish peeking out of their cup. A gentle, imaginative heart, surprised by its own feelings.`,
+      to: `Feeling wants to be offered, and rides out: the Knight.`,
+    },
     picture: [
       `The fish rising from the cup: an unexpected message from deep within.`,
       `The lotus pattern on his tunic: a heart opening like a flower.`,
@@ -2410,6 +2718,7 @@ const CARDS = [
       `Offers that open your heart`,
       `Growth, beauty, spirituality`,
       `Good news in love, creativity, spirit`,
+      `A gentle, poet-souled heart`,
     ],
     reversedIdeas: [
       `Inner-child healing needed`,
@@ -2449,6 +2758,11 @@ const CARDS = [
       `What ideal are you moving toward?`,
     ],
     line: `I follow what moves me, with grace.`,
+    story: {
+      from: `The Page's tender feeling, ready to be offered.`,
+      scene: `A knight on a calm white horse holds out a cup like a gift. Wholehearted, romantic and loyal: love carried slowly and with care.`,
+      to: `Feeling that has learned to listen becomes the Queen.`,
+    },
     picture: [
       `The winged helmet and heels: imagination and the messenger's grace.`,
       `The slowly walking horse: feeling that moves at a gentle pace.`,
@@ -2462,6 +2776,7 @@ const CARDS = [
       `Hope and faith for the future`,
       `A creative offer that helps you move on`,
       `No rush needed`,
+      `Fiercely loyal to the people they love`,
     ],
     nuances: [
       `A refreshing, short-lived romance`,
@@ -2496,6 +2811,11 @@ const CARDS = [
       `Who could use your compassion right now?`,
     ],
     line: `I hold my own feelings as gently as I hold others'.`,
+    story: {
+      from: `The Knight's offered heart, deepened.`,
+      scene: `At the water's edge, a queen gazes into an ornate, closed cup. She senses what's wrong before a word is said, and holds others' feelings with care.`,
+      to: `Empathy steadied into calm leadership becomes the King.`,
+    },
     picture: [
       `The closed, ornate cup: feelings held with care and privacy.`,
       `The water reaching her throne: a deep bond with the emotional world.`,
@@ -2510,6 +2830,7 @@ const CARDS = [
       `Forgiving; loving mother energy`,
       `Romantic; in flow`,
       `Lead with the heart`,
+      `Knowing what's wrong before a word is said`,
     ],
     reversedIdeas: [
       `Self-care and self-love are needed`,
@@ -2545,6 +2866,11 @@ const CARDS = [
       `How can you lead with both heart and head?`,
     ],
     line: `I can feel deeply and stay steady.`,
+    story: {
+      from: `The Queen's empathy, steadied.`,
+      scene: `A king sits on a throne floating on a rough sea, calm and upright, cup in hand. He feels everything fully, and isn't swept away.`,
+      to: `A steady heart can open again, and the journey begins anew with the Ace.`,
+    },
     picture: [
       `The throne floating on a rough sea: calm amid emotional waves.`,
       `The fish amulet on his chest: feeling and creativity, worn close to the heart.`,
@@ -2558,6 +2884,7 @@ const CARDS = [
       `Avoids drama; calm presence`,
       `Romance; small gestures of love`,
       `Creative discipline; finding your community`,
+      `Fairness that puts itself in others' shoes`,
     ],
     nuances: [
       `Fatherly energy`,
@@ -2603,6 +2930,11 @@ const CARDS = [
       `Which idea deserves your full focus?`,
     ],
     line: `Clarity comes when I am honest.`,
+    story: {
+      from: `Nothing comes before the Ace: the journey of Swords starts with a mind waking up.`,
+      scene: `A hand from the cloud raises a crowned sword above the mountains. The mind wakes, clear and sharp, like a fledgling testing its wings. A truth wants to be spoken.`,
+      to: `A clear mind soon meets two sides at once: the Two.`,
+    },
     picture: [
       `The crown on the sword: the triumph of clear thought.`,
       `The olive and palm branches: peace and victory.`,
@@ -2618,6 +2950,7 @@ const CARDS = [
       `Sharp, quick, witty mind; vision`,
       `Mental strength and resilience`,
       `Plan and write things down`,
+      `A fledgling testing new wings: a mind waking up`,
     ],
     nuances: [
       `Marketing, media, messages`,
@@ -2654,6 +2987,11 @@ const CARDS = [
       `What does your inner sense say?`,
     ],
     line: `Inner stillness helps me choose.`,
+    story: {
+      from: `The Ace's clarity, now facing a choice.`,
+      scene: `Blindfolded by the sea, a figure holds two crossed swords against their chest. Holding both sides apart keeps the peace for a while. A truce is a pause, not a decision.`,
+      to: `When the truce ends, a truth comes out: the Three.`,
+    },
     picture: [
       `The blindfold: shutting out distraction to listen within.`,
       `The crossed swords over her heart: protecting a fragile peace.`,
@@ -2677,6 +3015,9 @@ const CARDS = [
     reversedNuances: [
       `Brief withdrawal to sort out feelings`,
       `Hidden truths come out`,
+    ],
+    ideas: [
+      `A truce is a pause, not a solution`,
     ],
     inReading: {
       upright: `a still point before a decision`,
@@ -2702,6 +3043,11 @@ const CARDS = [
       `What would help your heart heal?`,
     ],
     line: `My heart can hold this, and heal.`,
+    story: {
+      from: `The Two's truce, ended.`,
+      scene: `Three swords pierce a heart under storm clouds. It hurts, and words often made the wound. But once the truth is out the not-knowing ends, and healing can begin.`,
+      to: `The heart needs rest to recover: the Four.`,
+    },
     picture: [
       `Three swords through the heart: pain that comes with truth.`,
       `The storm clouds and rain: grief moving through and clearing the air.`,
@@ -2713,13 +3059,14 @@ const CARDS = [
       `Emotional release`,
       `This will pass; the storm is temporary`,
       `Focusing on recovery`,
+      `Once the truth is out, healing can begin`,
     ],
     nuances: [
       `Taking things to heart; hard experiences`,
     ],
     reversedIdeas: [
       `The storm is clearing`,
-      `Healing from pain; recovering health, mind or money`,
+      `Healing from pain; finding your footing again`,
       `Forgiving others and yourself`,
       `Reconciliation`,
       `Accepting the truth; learning and moving on`,
@@ -2750,6 +3097,11 @@ const CARDS = [
       `What could become clearer after a pause?`,
     ],
     line: `Rest is part of my strength.`,
+    story: {
+      from: `The Three's wound.`,
+      scene: `A knight lies still in a chapel, hands folded, swords put away. Rest, so that wounds made by words can heal, and a way back to yourself.`,
+      to: `Rested, the mind goes back into the world: the Five.`,
+    },
     picture: [
       `The figure lying still: deep rest and retreat.`,
       `The hands joined in prayer: contemplation and surrender.`,
@@ -2763,6 +3115,7 @@ const CARDS = [
       `Find a safe space; protect your energy`,
       `Grounding and rebalancing`,
       `Asking for support (therapy, guides)`,
+      `Putting down swords so word-wounds can heal`,
     ],
     nuances: [
       `A break from work or relationships; stepping away from conflict`,
@@ -2799,8 +3152,14 @@ const CARDS = [
       `Which conflicts are truly worth your energy?`,
       `What would a resolution with integrity look like?`,
       `What have you learned from recent tensions?`,
+      `Which battle could you walk away from?`,
     ],
     line: `I choose my battles with care.`,
+    story: {
+      from: `The Four's rest, ended.`,
+      scene: `Under jagged clouds, one figure gathers swords while two others walk away. Some battles cost more than they win. Knowing your limits, and when to walk away, is a strength.`,
+      to: `Walking away, they find a boat to the other shore: the Six.`,
+    },
     picture: [
       `The figure gathering swords: a victory that may cost connection.`,
       `The two figures walking away: the price of being right.`,
@@ -2809,6 +3168,7 @@ const CARDS = [
     ideas: [
       `Choose your battles wisely`,
       `Try to see other perspectives`,
+      `Knowing your limits; walking away is the harder strength`,
     ],
     nuances: [
       `Picking up the pieces`,
@@ -2851,6 +3211,11 @@ const CARDS = [
       `Who or what is helping you along the way?`,
     ],
     line: `I am moving toward calmer waters.`,
+    story: {
+      from: `The Five's quarrel, left behind.`,
+      scene: `A ferryman poles a boat carrying a cloaked figure and a child toward calmer water. Help arrives: a book, a friend, a listener. The mind starts to work again.`,
+      to: `On the new shore, they learn to keep their own counsel: the Seven.`,
+    },
     picture: [
       `The boat crossing: a passage from one state of mind to another.`,
       `The swords standing in the boat: the past carried along, held steady.`,
@@ -2865,12 +3230,13 @@ const CARDS = [
       `Heading toward safety, comfort and stability`,
       `Rest after exhaustion; balance returning`,
       `A heavy weight lifted; growth revealed`,
+      `A helper ferries you across: a book, a friend, a listener`,
     ],
     reversedNuances: [
       `Waiting it out a bit longer`,
       `Quietly leaving`,
       `Unexpected transitions`,
-      `Delays in a journey`,
+      `A transition taking longer than hoped`,
     ],
     inReading: {
       upright: `a passage toward calmer waters`,
@@ -2896,6 +3262,11 @@ const CARDS = [
       `What are your true motives?`,
     ],
     line: `I can be clever and honest at the same time.`,
+    story: {
+      from: `The Six's crossing, complete.`,
+      scene: `Someone tiptoes away from a camp with five swords, glancing back. Quiet cleverness, and ideas kept safe. Not everyone needs to know everything.`,
+      to: `Too much caution can turn into a cage: the Eight.`,
+    },
     picture: [
       `Tiptoeing away with five swords: strategy and secrecy.`,
       `The two swords left behind: what can't be taken along.`,
@@ -2903,6 +3274,7 @@ const CARDS = [
     ],
     ideas: [
       `Use your intuition wisely`,
+      `Protecting your ideas; not everyone needs to know`,
     ],
     nuances: [
       `There's more going on than what's said`,
@@ -2942,6 +3314,11 @@ const CARDS = [
       `What would one small step toward freedom look like?`,
     ],
     line: `I can step out of the story that holds me.`,
+    story: {
+      from: `The Seven's caution, turned inward.`,
+      scene: `Bound and blindfolded, a figure stands in shallow water among eight swords. The ropes are loose and the way behind is open. Fear holds them more than the swords do.`,
+      to: `Fears left unspoken come back at night: the Nine.`,
+    },
     picture: [
       `The loose bindings: restrictions not as tight as they seem.`,
       `The blindfold: seeing only the thoughts, not the open path.`,
@@ -2949,6 +3326,7 @@ const CARDS = [
     ],
     ideas: [
       `You have more power to break free than you think`,
+      `The ropes are your own fears; speaking up loosens them`,
     ],
     nuances: [
       `Feeling stuck in a job, relationship or situation`,
@@ -2961,6 +3339,7 @@ const CARDS = [
       `A new perspective; finding solutions`,
       `Speaking up for yourself`,
       `Strength and courage returning`,
+      `The isolation may be self-made; others may wish you well`,
     ],
     inReading: {
       upright: `bindings looser than they feel`,
@@ -2986,6 +3365,11 @@ const CARDS = [
       `What comforts you when your mind is busy?`,
     ],
     line: `My fears grow smaller in the light.`,
+    story: {
+      from: `The Eight's unspoken fears.`,
+      scene: `Someone sits up in bed at night, face in hands, nine swords on the dark wall. Worries grow in the dark; morning shows most are smaller than they seemed.`,
+      to: `When it can't get any worse, it ends: the Ten.`,
+    },
     picture: [
       `The hands over the face: the weight of fears in the night.`,
       `The quilt of roses and zodiac signs: comfort and larger cycles, still present.`,
@@ -2996,6 +3380,7 @@ const CARDS = [
       `Be objective and realistic`,
       `Rest; spend time in nature`,
       `Ask for support and guidance`,
+      `Worries grow at night and shrink by day`,
     ],
     nuances: [
       `Dreams worth noting`,
@@ -3006,8 +3391,9 @@ const CARDS = [
       `Letting go of worries, fears and old habits`,
       `Finally getting good rest`,
       `Seeing fears as illusions`,
-      `Recovering and coping; clarity about money`,
+      `Recovering and coping; clarity returning`,
       `Releasing shame and guilt`,
+      `Worries bigger in your head than in life`,
     ],
     reversedNuances: [
       `Needing support but not yet asking`,
@@ -3036,6 +3422,11 @@ const CARDS = [
       `What can only rise once this is over?`,
     ],
     line: `Every ending carries the light of a new day.`,
+    story: {
+      from: `The Nine's long night.`,
+      scene: `A figure lies beneath ten swords as dawn breaks gold on the horizon. The worst is over. An old story can end, and the day begins.`,
+      to: `After the ending, a curious young mind starts fresh: the Page.`,
+    },
     picture: [
       `The ten swords: a full and complete ending.`,
       `The dawn on the horizon: a new day coming, without fail.`,
@@ -3048,6 +3439,7 @@ const CARDS = [
       `An ending that brings peace and calm`,
       `Time to heal and recover`,
       `A chance to start again`,
+      `Letting an old argument end at last`,
     ],
     nuances: [
       `Cutting ties in love or work`,
@@ -3094,6 +3486,11 @@ const CARDS = [
       `How could you express your ideas clearly?`,
     ],
     line: `My curiosity can be gentle and clear.`,
+    story: {
+      from: `The Ten's dawn.`,
+      scene: `On a windy hill, a young figure holds up a sword and looks around, alert. A quick, curious mind, eager to learn, that checks its words before passing them on.`,
+      to: `Curiosity sharpens into speed: the Knight.`,
+    },
     picture: [
       `The windswept hill and clouds: a quick, restless mind.`,
       `The sword held up: alertness and readiness to learn.`,
@@ -3107,6 +3504,7 @@ const CARDS = [
       `Sharp observer; reads between the lines`,
       `New perspectives`,
       `Write it down and plan it`,
+      `Checking words before passing them on`,
     ],
     nuances: [
       `Needs grounding to turn ideas into action`,
@@ -3147,6 +3545,11 @@ const CARDS = [
       `Where would decisive action help?`,
     ],
     line: `I let clarity guide my speed.`,
+    story: {
+      from: `The Page's curiosity, sharpened.`,
+      scene: `A knight charges into the wind, sword raised, horse at full gallop. Ideas come fast, and so do solutions: brave for the truth, with a pause now and then to think.`,
+      to: `A mind that has learned from its wounds becomes the Queen.`,
+    },
     picture: [
       `The charging horse: thought turned into speed.`,
       `The windblown trees: the force of an idea in motion.`,
@@ -3158,6 +3561,7 @@ const CARDS = [
       `Ambitious and action-focused; forward-thinking`,
       `Clear, focused mind (helped by meditation)`,
       `Stimulating; makes you think`,
+      `Problems that appear and are solved fast`,
     ],
     nuances: [
       `Time for quick action`,
@@ -3196,6 +3600,11 @@ const CARDS = [
       `What boundaries protect your clarity?`,
     ],
     line: `I can speak the truth with kindness.`,
+    story: {
+      from: `The Knight's rush, slowed by experience.`,
+      scene: `A queen sits high above the clouds, sword upright, one hand held open. Clear-sighted and honest, she gives what she knows freely, and her open hand welcomes the truth.`,
+      to: `Clarity that judges fairly becomes the King.`,
+    },
     picture: [
       `The upright sword: clear, honest perception.`,
       `The open hand: a welcome offered after the truth.`,
@@ -3208,6 +3617,7 @@ const CARDS = [
       `Solves problems; gives sound advice`,
       `Letting go of the past; freeing yourself from fear`,
       `Focused and disciplined; attention to detail`,
+      `Knowledge gathered and given freely`,
     ],
     nuances: [
       `Careful in love; won't rush; needs a mental match`,
@@ -3249,6 +3659,11 @@ const CARDS = [
       `How can your reasoning serve others?`,
     ],
     line: `My mind serves best when my heart is listening.`,
+    story: {
+      from: `The Queen's clear sight, turned to judgement.`,
+      scene: `A king sits facing forward, sword upright, butterflies carved on his throne. Fair, clear judgement that sees both sides and many moves ahead.`,
+      to: `A clear mind is ready for a new idea, and the journey begins again with the Ace.`,
+    },
     picture: [
       `The sword held upright: judgement that weighs before it cuts.`,
       `The butterflies on his throne: the transformation of thought.`,
@@ -3260,6 +3675,7 @@ const CARDS = [
       `Truth, fairness, ethics, authority`,
       `Careful planning and analysis`,
       `Loves a mental challenge`,
+      `Seeing both sides and many moves ahead`,
     ],
     nuances: [
       `Think before you act`,
@@ -3267,6 +3683,9 @@ const CARDS = [
     reversedNuances: [
       `Quiet thinking`,
       `Strong opinions; changing views quickly`,
+    ],
+    reversedIdeas: [
+      `A truth held back that is ready to be said`,
     ],
     inReading: {
       upright: `clear thinking and fair judgement`,
@@ -3300,6 +3719,11 @@ const CARDS = [
       `What would a solid foundation look like for you?`,
     ],
     line: `I can plant something real today.`,
+    story: {
+      from: `Nothing comes before the Ace: the journey of Pentacles starts with a seed.`,
+      scene: `A hand from the cloud offers a golden coin above a garden, where a path leads through an arch of roses toward the mountains. A seed putting down roots: the wish to make, build and touch something real.`,
+      to: `Something real has to be balanced with everything else: the Two.`,
+    },
     picture: [
       `The hand from the cloud: a material gift with spiritual meaning.`,
       `The garden of lilies: a fertile place to grow.`,
@@ -3307,16 +3731,17 @@ const CARDS = [
     ],
     ideas: [
       `Planting seeds for growth; good foundations`,
-      `New job or career opportunities`,
+      `A new chance to build something real`,
       `Success in money and business`,
-      `Promotions, pay rises, extra income`,
+      `Effort starting to bear fruit`,
       `New security in relationships`,
       `Manifestation; receiving rewards`,
       `Investing in yourself or your career`,
       `Rebirth and purity; gardens and growth`,
+      `A seed putting down roots: make, build, touch`,
     ],
     nuances: [
-      `Love through work; fertility (with other cards); inheritance`,
+      `Love shown through practical care`,
     ],
     reversedNuances: [
       `Slow progress; delays`,
@@ -3347,6 +3772,11 @@ const CARDS = [
       `What matters most among your priorities?`,
     ],
     line: `I can stay light while life keeps moving.`,
+    story: {
+      from: `The Ace's seed, planted among other things to tend.`,
+      scene: `A figure dances while juggling two coins in a looping ribbon; ships ride high waves behind. Keeping things in balance, lightly. It needn't last forever, only until things settle.`,
+      to: `With balance found, the craft can grow: the Three.`,
+    },
     picture: [
       `The endless loop around the pentacles: the constant flow of everyday balance.`,
       `The ships on the waves: the ups and downs of life.`,
@@ -3358,6 +3788,7 @@ const CARDS = [
       `Flexible priorities; good time management`,
       `Having the resources to keep things in balance`,
       `Working hard, staying on your feet`,
+      `Juggling keeps both alive; it needn't last forever`,
     ],
     nuances: [
       `Juggling several commitments or incomes`,
@@ -3400,6 +3831,11 @@ const CARDS = [
       `How could you share your expertise?`,
     ],
     line: `Together, we can build something that matters.`,
+    story: {
+      from: `The Two's balance, freeing time for the craft.`,
+      scene: `In a cathedral, a craftsman on a bench shows his work to two people holding plans. Work done so well that it draws support: skill shared, and valued.`,
+      to: `Having earned support, he begins to hold on tight: the Four.`,
+    },
     picture: [
       `The cathedral: work that serves something greater.`,
       `The craftsman on the bench: skill being shared.`,
@@ -3414,6 +3850,7 @@ const CARDS = [
       `Growth through dedication`,
       `Teaching others; learning from a mentor`,
       `Building your future step by step`,
+      `Work done so well it draws support`,
     ],
     nuances: [
       `Advice from people you trust`,
@@ -3447,6 +3884,11 @@ const CARDS = [
       `Where could a little more openness bring you something new?`,
     ],
     line: `Security can grow from trust as well as holding.`,
+    story: {
+      from: `The Three's rewards.`,
+      scene: `A figure hugs one coin to their chest, with one on their crown and two beneath their feet, a city behind. Holding on for fear of losing. Enjoying what you have is how the grip loosens.`,
+      to: `Holding too tight, he loses his footing: the Five.`,
+    },
     picture: [
       `The pentacle held to his chest: holding on to feel safe.`,
       `Pentacles under his feet and on his crown: security sought in every part of life.`,
@@ -3460,6 +3902,7 @@ const CARDS = [
       `Grounded and safe`,
       `Good foundations in relationships`,
       `Respected for your achievements`,
+      `Holding tight out of fear; enjoying what you have`,
     ],
     nuances: [
       `Careful, conservative with money`,
@@ -3498,6 +3941,11 @@ const CARDS = [
       `What has helped you through difficult times before?`,
     ],
     line: `Help is closer than it seems.`,
+    story: {
+      from: `The Four's tight grip, lost.`,
+      scene: `Two figures make their way through the snow past a lit church window. Hard times, and help closer than it looks. Real friends show themselves.`,
+      to: `Help is offered and received: the Six.`,
+    },
     picture: [
       `The glowing church window: help and spiritual shelter, close by.`,
       `The snow: hard times, and the cold of feeling left out.`,
@@ -3507,17 +3955,18 @@ const CARDS = [
       `It's temporary — this will pass`,
       `Ask for help and support`,
       `Look within and to past lessons for a way forward`,
+      `Hard times show who your real friends are`,
     ],
     nuances: [
-      `Changes to money and stability`,
+      `Shifts in what feels secure`,
     ],
     reversedIdeas: [
       `Recovery; coming out of hard times`,
       `Hope, faith and support returning`,
       `Seeing a way out`,
       `One step at a time; slow improvements`,
-      `Healing from loss or illness`,
-      `Freedom from debt; stable home; new work`,
+      `Healing from loss`,
+      `Firmer ground returning`,
       `Overcoming loneliness`,
       `Relationships that last through everything`,
       `Forgiveness and acceptance; finding comfort in spirit`,
@@ -3546,6 +3995,11 @@ const CARDS = [
       `Is the flow of giving balanced in your life?`,
     ],
     line: `Giving and receiving flow through me.`,
+    story: {
+      from: `The Five's cold night.`,
+      scene: `A merchant weighs coins on a scale and gives to two kneeling people. Giving without feeling superior; receiving without shame.`,
+      to: `Back on his feet, he plants again and waits: the Seven.`,
+    },
     picture: [
       `The scales: balance in giving and receiving.`,
       `Coins given into open hands: generosity with dignity.`,
@@ -3560,6 +4014,7 @@ const CARDS = [
       `What you give comes back`,
       `Fair rewards; enough to cover your needs`,
       `Stability after hard times`,
+      `Receiving without shame, giving without superiority`,
     ],
     nuances: [
       `Small, steady savings; avoid big risks`,
@@ -3596,6 +4051,11 @@ const CARDS = [
       `Is your path still the right one for you?`,
     ],
     line: `What I tend with patience grows.`,
+    story: {
+      from: `The Six's help, received.`,
+      scene: `A farmer leans on his hoe, looking at seven coins growing on a bush. Patience before harvest: ripe fruit is worth waiting for.`,
+      to: `While it ripens, he starts again as an apprentice: the Eight.`,
+    },
     picture: [
       `The gardener leaning on his hoe: the pause to look at progress.`,
       `The pentacles on the vine: results ripening slowly.`,
@@ -3609,6 +4069,7 @@ const CARDS = [
       `Good time to save and build income`,
       `Self-made success`,
       `Growth also in relationships`,
+      `Telling ripe fruit from unripe`,
     ],
     nuances: [
       `Take stock: what worked, what didn't`,
@@ -3618,6 +4079,9 @@ const CARDS = [
       `Unexpected results`,
       `Delays and setbacks`,
       `Expectations may be unrealistic`,
+    ],
+    reversedIdeas: [
+      `Let the fruit ripen before you pick it`,
     ],
     inReading: {
       upright: `patience, and taking stock of what's growing`,
@@ -3648,6 +4112,11 @@ const CARDS = [
       `Where could attention to detail make a difference?`,
     ],
     line: `Each honest effort shapes my mastery.`,
+    story: {
+      from: `The Seven's waiting, put to good use.`,
+      scene: `At a workbench, an apprentice carves a coin, seven finished ones hanging beside him. Working for himself this time, with pride in the work itself.`,
+      to: `Patient work grows into a garden of one's own: the Nine.`,
+    },
     picture: [
       `The craftsman at work: focus and devotion.`,
       `The finished pentacles on display: mastery built one piece at a time.`,
@@ -3664,6 +4133,7 @@ const CARDS = [
       `Showing your work to the world`,
       `A new hobby; a healthy routine`,
       `Planning the next steps`,
+      `Pride in the work itself, noticed or not`,
     ],
     reversedIdeas: [
       `Working on your inner self`,
@@ -3701,6 +4171,11 @@ const CARDS = [
       `What makes you feel independent and at ease?`,
     ],
     line: `I enjoy the life I have cultivated.`,
+    story: {
+      from: `The Eight's work, paid off.`,
+      scene: `In a vineyard, an elegant figure stands among nine coins, a falcon resting on her gloved hand. A small paradise of her own, earned and enjoyed.`,
+      to: `What was built for one grows into something for many: the Ten.`,
+    },
     picture: [
       `The hooded falcon on her glove: discipline and refined instinct.`,
       `The ripe vines: the fruits of patient cultivation.`,
@@ -3715,9 +4190,10 @@ const CARDS = [
       `Self-disciplined, wise, resourceful`,
       `Healthy balance of money and love`,
       `Success in business and career`,
+      `A small paradise of your own`,
     ],
     nuances: [
-      `Nature and animal lover; property; possible pregnancy`,
+      `Nature and animal lover; a home of your own making`,
     ],
     reversedIdeas: [
       `Realising money can't buy everything`,
@@ -3751,13 +4227,18 @@ const CARDS = [
       `What gives you lasting security?`,
     ],
     line: `I am held by roots, and I plant them for others.`,
+    story: {
+      from: `The Nine's garden, shared.`,
+      scene: `Under an archway, an old man sits with two dogs while a family gathers around. Legacy: what you inherit, and what you pass on.`,
+      to: `The next generation starts to learn: the Page.`,
+    },
     picture: [
       `The old man with the dogs: wisdom and loyalty across generations.`,
       `The archway and the family: the shelter of lineage.`,
       `The pentacles in the shape of the Tree of Life: the spiritual within the material.`,
     ],
     ideas: [
-      `Lasting abundance in health and wealth`,
+      `Lasting abundance`,
       `Safety and stability in family`,
       `Long-term security; a solid future`,
       `Building a legacy; ancestry and tradition`,
@@ -3766,10 +4247,11 @@ const CARDS = [
       `Blessings, harmony, balance`,
       `Stable, secure relationship`,
       `Success and established status`,
+      `Using abundance to leave something behind`,
     ],
     nuances: [
-      `Inheritance, pensions, big contracts`,
-      `Children or pregnancy (with other cards)`,
+      `Legacy: what is built to last and passed on`,
+      `Family across the generations`,
     ],
     reversedNuances: [
       `Breaking with tradition`,
@@ -3806,6 +4288,11 @@ const CARDS = [
       `What first step could you take?`,
     ],
     line: `I learn by staying with it, step by step.`,
+    story: {
+      from: `The Ten's legacy, handed on.`,
+      scene: `In a green field, a young figure holds a coin up in both hands and studies it closely. Steady, careful learning, competing only with their own best.`,
+      to: `Learning becomes steady work: the Knight.`,
+    },
     picture: [
       `The pentacle held up in both hands: studying something with care.`,
       `The ploughed field: ground ready for learning to take root.`,
@@ -3813,16 +4300,17 @@ const CARDS = [
     ],
     ideas: [
       `Learning something new; building useful skills`,
-      `Good news about money or career`,
+      `Good beginnings in practical matters`,
       `New opportunities and ventures`,
       `Planning goals and career moves`,
       `Diligent, dependable, grounded`,
       `Manifesting abundance; long-term success`,
       `Steadier, more committed love`,
       `Loves nature and the outdoors`,
+      `Competing only with your own record`,
     ],
     nuances: [
-      `News about health; a natural saver`,
+      `Care for the body; a natural saver`,
     ],
     reversedIdeas: [
       `Practical routines are needed`,
@@ -3862,6 +4350,11 @@ const CARDS = [
       `How can you be someone others rely on?`,
     ],
     line: `Steady steps carry me far.`,
+    story: {
+      from: `The Page's study, put to work.`,
+      scene: `A knight sits still on a heavy black horse, looking at a coin above ploughed fields. Slow, reliable progress: change happening even when it doesn't look like it.`,
+      to: `Steady effort ripens into care: the Queen.`,
+    },
     picture: [
       `The still black horse: steadiness and endurance.`,
       `The ploughed field ahead: work that pays off slowly.`,
@@ -3874,6 +4367,7 @@ const CARDS = [
       `Building a career or a stable home`,
       `Studies to get ahead; mature and independent`,
       `Plans carefully, then acts`,
+      `Change happening even when it doesn't look like it`,
     ],
     nuances: [
       `Puts work or security ahead of romance`,
@@ -3908,6 +4402,11 @@ const CARDS = [
       `What helps you feel grounded at home?`,
     ],
     line: `I find the sacred in ordinary care.`,
+    story: {
+      from: `The Knight's patient work, grown into care.`,
+      scene: `A queen sits in a flowering garden, a coin in her lap and a rabbit at her feet. Practical nurture: patience and good sense that make dreams real.`,
+      to: `Care that provides for many becomes the King.`,
+    },
     picture: [
       `The pentacle in her lap: care held close.`,
       `The rabbit in the corner: fertility and the gifts of nature.`,
@@ -3922,6 +4421,7 @@ const CARDS = [
       `A mentor or advisor; solid advice`,
       `Quiet achievements; simple living`,
       `Committed, long-term love`,
+      `Patience and good sense that make dreams real`,
     ],
     reversedIdeas: [
       `Self-care is needed; nurture yourself`,
@@ -3961,6 +4461,11 @@ const CARDS = [
       `What does lasting success look like to you?`,
     ],
     line: `I hold what I have with care and generosity.`,
+    story: {
+      from: `The Queen's care, grown into abundance.`,
+      scene: `A king sits among vines heavy with grapes, a castle behind him and a coin on his knee. Self-reliant and generous: steady growth, and help given freely.`,
+      to: `Abundance plants new seeds, and the journey begins again with the Ace.`,
+    },
     picture: [
       `The grape vines on his robe: abundance woven into who he is.`,
       `The bulls' heads on his throne: the steady, grounded strength of Taurus.`,
@@ -3970,11 +4475,12 @@ const CARDS = [
       `Reliable, practical, grounded`,
       `Wealth and financial security`,
       `Good provider; strong family life`,
-      `Wise guidance; excellent money advice`,
+      `Wise, practical guidance`,
       `Principled, ethical leader`,
       `Discipline and structure in career`,
       `Realistic goals; slow and steady wins`,
       `Safety and security; respected`,
+      `Help given freely, and repaid quickly`,
     ],
     nuances: [
       `Think about saving`,
@@ -3983,6 +4489,9 @@ const CARDS = [
     reversedNuances: [
       `Overworking; heavy load`,
       `Needs grounding and balance`,
+    ],
+    reversedIdeas: [
+      `Letting go of a method that no longer works`,
     ],
     inReading: {
       upright: `mature stewardship and grounded stability`,

@@ -69,7 +69,10 @@ function openReadingCard(i) {
   const items = S.slots.map((s) => {
     const label = el("p"), question = el("p");
     showPosition(s.i, label, question);
-    return detailsItem(s.card, s.reversed, label.textContent, question.textContent);
+    const item = detailsItem(s.card, s.reversed, label.textContent, question.textContent);
+    // A one-card reading has no summary: its page carries the theme's reading.
+    if (S.n === 1 && S.theme) item.reading = themedReading(item, S.theme.name);
+    return item;
   });
   openDetails(items, i);
 }
@@ -252,6 +255,42 @@ function relatedCards(card) {
   return box;
 }
 
+// ── The journeys ────────────────────────────────────────
+// A card's scene in its journey, between the card it comes from and the
+// one it leads to. The Majors are the Fool's journey (the World leads back
+// to the Fool); each suit is its own, Ace to King (the King leads back to
+// the Ace). Tap either card to open its page.
+function journeyBox(card) {
+  const st = card.story;
+  const k = CARDS.indexOf(card);
+  if (!st || k < 0) return null;
+  const first = k < 22 ? 0 : 22 + Math.floor((k - 22) / 14) * 14;
+  const size = k < 22 ? 22 : 14;
+  const prev = k > first ? CARDS[k - 1] : null;
+  const next = CARDS[first + ((k - first + 1) % size)];
+  const box = el("div", "details-text journey");
+  box.append(el("p", "asks-title", k < 22 ? "The journey" : `The journey of ${card.name.split(" of ")[1]}`));
+  box.append(el("p", "journey-scene", st.scene));
+  const ends = el("div", "journey-ends");
+  [["From", prev, st.from], ["Toward", next, st.to]].forEach(([head, c, text]) => {
+    const side = el("div", "journey-end");
+    if (c) {
+      const b = el("button", "related-card");
+      const pic = el("div", "related-pic");
+      const face = cardFace(c, true);
+      face.style.height = "100%";
+      pic.append(face);
+      b.append(el("span", "related-label", head), pic, el("span", "related-name", c.name));
+      b.addEventListener("click", () => openDetails([detailsItem(c)]));
+      side.append(b);
+    } else side.append(el("span", "related-label", "The start"));
+    side.append(el("p", "journey-text", text));
+    ends.append(side);
+  });
+  box.append(ends);
+  return box;
+}
+
 // ── Your draws and your notes, on the card's page ───────
 
 function cardHistory(card) {
@@ -335,7 +374,7 @@ function detailsItem(card, reversed = false, label = "", question = "") {
 // On a wide screen the page has two columns: the card and what identifies
 // it on the left (staying in view), and its meanings and the rest on the
 // right. On a phone the two simply stack.
-function detailsBody({ card, reversed, label, question }) {
+function detailsBody({ card, reversed, label, question, reading }) {
   const body = el("div", "details-body two-col card-page");
   const side = el("div", "col-side"), main = el("div", "col-main");
   body.append(side, main);
@@ -365,6 +404,13 @@ function detailsBody({ card, reversed, label, question }) {
   if ((card.line || "").trim()) side.append(el("p", "carry-line", card.line.trim()));
   side.append(correspondences(card));
 
+  // A one-card reading with a theme: the card read in its place, first.
+  if (reading) {
+    const box = el("div", "details-text theme-reading");
+    box.append(el("p", "asks-title", reading.title));
+    box.append(el("p", "", reading.text));
+    main.append(box);
+  }
   // The meaning for the way the card is shown, upright or reversed.
   const meanings = el("div", "meanings");
   main.append(meanings);
@@ -400,7 +446,7 @@ function detailsBody({ card, reversed, label, question }) {
     fillText(text, card.details, "");
     main.append(text);
   }
-  [pictureGuide(card), cardHistory(card), relatedCards(card), notesBox(card)]
+  [pictureGuide(card), journeyBox(card), cardHistory(card), relatedCards(card), notesBox(card)]
     .forEach((part) => part && main.append(part));
   return body;
 }
