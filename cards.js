@@ -91,6 +91,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Stones in your shoes: rest, then start again`,
+      `Grounding your trust before you leap`,
+      `Looking first, then jumping with joy`,
+      `Your sense of wonder waiting to return`,
+      `Finding a safe place to begin from`,
     ],
     inReading: {
       upright: `a fresh start taken with an open heart`,
@@ -155,6 +159,13 @@ const CARDS = [
       `Missing a piece of the puzzle`,
       `Ungrounded; struggling to manifest`,
     ],
+    reversedIdeas: [
+      `Rediscovering the tools you already have`,
+      `One clear intention instead of many`,
+      `Realigning your will with what you truly want`,
+      `Untapped potential ready to be used`,
+      `Acting from alignment rather than effort`,
+    ],
     inReading: {
       upright: `focused will, with everything you need at hand`,
       reversed: `gifts that are waiting, not gone`,
@@ -211,6 +222,13 @@ const CARDS = [
     reversedNuances: [
       `Withdrawal and silence`,
       `Fear of the unknown`,
+    ],
+    reversedIdeas: [
+      `Making space to hear yourself again`,
+      `Your inner voice is quiet, not gone`,
+      `Being honest with yourself about what you know`,
+      `Stillness as a way back to intuition`,
+      `Trusting a knowing you have kept hidden`,
     ],
     inReading: {
       upright: `quiet inner knowing and patient intuition`,
@@ -270,6 +288,13 @@ const CARDS = [
       `Needing more self-care`,
       `Creativity feels blocked`,
       `Vulnerability; feelings held in`,
+    ],
+    reversedIdeas: [
+      `Turning your care toward yourself`,
+      `Rest as a way of nurturing`,
+      `Letting yourself receive`,
+      `Your own needs set the pace`,
+      `Creativity returning once you refill`,
     ],
     inReading: {
       upright: `abundance that grows from care and creativity`,
@@ -334,6 +359,13 @@ const CARDS = [
     reversedNuances: [
       `Lacking structure or discipline`,
       `Too carefree`,
+    ],
+    reversedIdeas: [
+      `Finding your own inner authority`,
+      `Structure that holds you rather than confines you`,
+      `Loosening a grip that has grown too tight`,
+      `Building gentle self-discipline`,
+      `Flexibility as a kind of strength`,
     ],
     inReading: {
       upright: `steady structure and clear boundaries`,
@@ -461,6 +493,13 @@ const CARDS = [
       `Indecision; fear of choosing wrong`,
       `Distance between what you value and what you do`,
     ],
+    reversedIdeas: [
+      `Coming back into harmony with yourself`,
+      `Letting your choices match your values`,
+      `Listening to your own heart, then speaking from it`,
+      `An honest conversation, starting within`,
+      `Choosing yourself as well as others`,
+    ],
     inReading: {
       upright: `a heartfelt connection and a choice led by your values`,
       reversed: `a bond asking for an honest conversation`,
@@ -519,6 +558,13 @@ const CARDS = [
       `Things moving slower than usual; delays`,
       `Unsure of the next step`,
       `Opposite forces not working together`,
+    ],
+    reversedIdeas: [
+      `Pausing to steer before pushing on`,
+      `Clarifying where you really want to go`,
+      `Bringing your inner forces back together`,
+      `Direction matters more than speed`,
+      `Self-control that comes from knowing your aim`,
     ],
     inReading: {
       upright: `determined movement with a clear direction`,
@@ -770,6 +816,13 @@ const CARDS = [
       `Pay attention to the details`,
       `Inner critic`,
     ],
+    reversedIdeas: [
+      `Restoring your own inner balance`,
+      `Owning your part, gently`,
+      `Softening a harsh judgement of yourself`,
+      `Looking deeper before you decide`,
+      `Honesty with yourself as the fairest path`,
+    ],
     inReading: {
       upright: `clarity, fairness and honest cause and effect`,
       reversed: `a gentle call for honesty with yourself`,
@@ -1001,6 +1054,28 @@ const CARDS = [
     ],
     ideas: [
       `Chains held only in the mind`,
+      `Seeing your habits and attachments clearly`,
+      `Owning your desires without shame`,
+      `The chains are loose; you can lift them off`,
+      `Your shadow as a source of energy and honesty`,
+      `Noticing what you give your power to`,
+      `Freedom begins with awareness`,
+    ],
+    nuances: [
+      `Feeling bound by a habit, craving or pattern`,
+      `Pleasure that has turned into need`,
+      `Capricorn: ambition, material ties`,
+    ],
+    reversedIdeas: [
+      `Loosening a habit's hold on you`,
+      `Seeing a pattern clearly, and choosing again`,
+      `Reclaiming your own power`,
+      `Meeting your shadow with kindness`,
+      `Release; a lighter way of being`,
+    ],
+    reversedNuances: [
+      `Facing a fear you have been avoiding`,
+      `Old pulls may still tug while you let go`,
     ],
     inReading: {
       upright: `honest awareness of attachments and habits`,
@@ -1402,6 +1477,13 @@ const CARDS = [
       `Still attached to the past`,
       `Moving on too fast or skipping steps`,
     ],
+    reversedIdeas: [
+      `Taking the last step to close the circle`,
+      `Integrating what this chapter taught you`,
+      `Celebrating how far you have come`,
+      `Tying up a loose end with care`,
+      `Entering the next chapter whole`,
+    ],
     inReading: {
       upright: `completion, wholeness and a cycle fulfilled`,
       reversed: `a circle one step from closing`,
@@ -1467,6 +1549,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Time to find a new hobby or interest`,
+      `A spark resting, ready to be tended`,
+      `Play as a way back to inspiration`,
+      `Nurturing an idea in private first`,
+      `Patience with your own creative timing`,
     ],
     reversedNuances: [
       `A change that needs a little longer`,
@@ -1540,6 +1626,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Options look alike for now: rest, then look again`,
+      `Trusting your gut for the next step only`,
+      `Clarifying what you truly want`,
+      `Stretching your comfort zone gently`,
+      `Planning from the inside out`,
     ],
     inReading: {
       upright: `a wider view and a first choice of direction`,
@@ -1604,6 +1694,13 @@ const CARDS = [
       `More climbing than expected; delays in rewards`,
       `Tired; needs rest`,
     ],
+    reversedIdeas: [
+      `Learning from the wait`,
+      `Adjusting the vision to fit who you are now`,
+      `Patience with slow returns`,
+      `Reviewing where you stand before sailing on`,
+      `Resting before the next push`,
+    ],
     inReading: {
       upright: `expansion, with plans already in motion`,
       reversed: `an unexpected turn that is still a place to steer from`,
@@ -1667,6 +1764,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `The cement is still wet; give the foundation time`,
+      `Feeling at home in yourself`,
+      `A quiet, private celebration`,
+      `Belonging that starts within`,
+      `Finding steadiness while things shift`,
     ],
     inReading: {
       upright: `a moment of arrival, belonging and celebration`,
@@ -1794,6 +1895,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Private, inner achievements count too`,
+      `Recognising your own progress`,
+      `Self-worth that doesn't need applause`,
+      `Quiet success still counts`,
+      `Letting feedback help you grow`,
     ],
     reversedNuances: [
       `Delays in success`,
@@ -2127,6 +2232,13 @@ const CARDS = [
       `Feeling boxed in`,
       `Low confidence; too playful to finish things`,
     ],
+    reversedIdeas: [
+      `Rediscovering what excites you`,
+      `Giving restless energy a playful outlet`,
+      `Exploring without needing to know where it leads`,
+      `Easing self-doubt by trying something small`,
+      `Curiosity coming back into focus`,
+    ],
     inReading: {
       upright: `curiosity and the spark of a new passion`,
       reversed: `restless energy looking for somewhere to go`,
@@ -2191,6 +2303,13 @@ const CARDS = [
       `Impatience; rushing`,
       `Still searching for a passion or career drive`,
     ],
+    reversedIdeas: [
+      `Channelling your energy with intention`,
+      `Slowing down to refuel`,
+      `Pacing yourself for the long road`,
+      `Letting passion carry you forward, not in circles`,
+      `Finding the cause that is truly yours`,
+    ],
     inReading: {
       upright: `passion in motion and bold adventure`,
       reversed: `a fire that needs refuelling and aim`,
@@ -2253,6 +2372,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `A call to be more assertive`,
+      `Bringing your warmth home to yourself`,
+      `Rebuilding confidence quietly`,
+      `Replenishing your own fire`,
+      `Asserting your needs calmly`,
     ],
     reversedNuances: [
       `Use logic to get clarity`,
@@ -2324,6 +2447,13 @@ const CARDS = [
       `Expecting too much of yourself or others`,
       `Comparing your achievements to others`,
       `Impulsive choices`,
+    ],
+    reversedIdeas: [
+      `Grounding a big vision in patient steps`,
+      `Leading yourself by inspiration, not pressure`,
+      `Letting go of an old grudge`,
+      `Expecting less perfection of yourself`,
+      `Steady confidence that doesn't need to prove itself`,
     ],
     inReading: {
       upright: `vision held with maturity, and inspiring leadership`,
@@ -2450,6 +2580,13 @@ const CARDS = [
       `Going separate ways`,
       `Needing a mentor`,
     ],
+    reversedIdeas: [
+      `Rebalancing the bond you keep with yourself`,
+      `Honest words with your own heart`,
+      `Respecting what you give and what you need`,
+      `Repair after a misunderstanding, starting within`,
+      `Learning from a parting of ways`,
+    ],
     inReading: {
       upright: `mutual connection and meeting as equals`,
       reversed: `a bond asking for balance`,
@@ -2512,6 +2649,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Finding where you belong`,
+      `Quiet time that refills you`,
+      `Noticing what truly lifts you`,
+      `Being good company for yourself`,
+      `Choosing connections that feel genuine`,
     ],
     reversedNuances: [
       `Working independently; time alone`,
@@ -2707,6 +2848,13 @@ const CARDS = [
       `Homesick; old memories stirring feelings`,
       `Not fully present`,
     ],
+    reversedIdeas: [
+      `Healing an old memory into strength`,
+      `Releasing a longing that keeps you looking back`,
+      `Living fully in the present`,
+      `Caring for your inner child as an adult`,
+      `Keeping the sweetness of the past without its pull`,
+    ],
     inReading: {
       upright: `warm memories and the gifts of the inner child`,
       reversed: `a past ready to become a source of strength`,
@@ -2827,6 +2975,13 @@ const CARDS = [
       `Staying a little longer to take care of things`,
       `Not ready to move on yet`,
     ],
+    reversedIdeas: [
+      `Staying by choice, not by fear`,
+      `Honest reflection on what you are searching for`,
+      `Taking time to know you are truly ready`,
+      `Finding what you need closer than you thought`,
+      `Giving one more try with open eyes`,
+    ],
     inReading: {
       upright: `walking away in search of deeper meaning`,
       reversed: `a choice to stay a little longer`,
@@ -2890,6 +3045,13 @@ const CARDS = [
       `Not seeing what you already have`,
       `Wishes not yet fulfilled; unrealistic dreams`,
       `Seeking others' approval`,
+    ],
+    reversedIdeas: [
+      `Contentment that comes from within`,
+      `Noticing what you already have`,
+      `Knowing what you truly desire`,
+      `Enough, without needing to prove it`,
+      `Approving of yourself first`,
     ],
     inReading: {
       upright: `contentment and gratitude for what you have`,
@@ -2955,6 +3117,13 @@ const CARDS = [
       `Home life needs a change`,
       `Dreams not yet reached`,
     ],
+    reversedIdeas: [
+      `Meeting love as it really is`,
+      `Softening expectations of yourself and home`,
+      `Tending your inner harmony`,
+      `One honest, kind step toward peace`,
+      `Seeing family patterns, and choosing your own`,
+    ],
     inReading: {
       upright: `emotional fulfilment and a sense of home`,
       reversed: `home harmony that wants tending`,
@@ -3011,6 +3180,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Inner-child healing needed`,
+      `Being gentle with what you feel`,
+      `Comforting your inner child`,
+      `Creating freely, without judgement`,
+      `Trusting your intuition again`,
     ],
     reversedNuances: [
       `Doubting your intuition`,
@@ -3082,6 +3255,13 @@ const CARDS = [
       `Moody; feelings change quickly`,
       `Avoiding confrontation; stuck emotions`,
     ],
+    reversedIdeas: [
+      `Grounding your ideals in reality`,
+      `Honesty about what you truly want`,
+      `Letting your actions match your words`,
+      `Emotional clarity after a time of mixed feelings`,
+      `Following your heart with your feet on the ground`,
+    ],
     inReading: {
       upright: `following the heart with grace and imagination`,
       reversed: `feelings shifting faster than actions`,
@@ -3137,6 +3317,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Self-care and self-love are needed`,
+      `Receiving the care you give so freely`,
+      `Compassion turned inward`,
+      `Knowing which feelings are yours`,
+      `Gentle boundaries around your heart`,
     ],
     reversedNuances: [
       `Inner feelings; holding emotions back`,
@@ -3274,6 +3458,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `A change of perspective is needed`,
+      `Clarity forming, given time`,
+      `Letting the mind settle before you decide`,
+      `Finding the courage to say what is true`,
+      `Writing it down to see it clearly`,
     ],
     reversedNuances: [
       `Write your plans down`,
@@ -3340,6 +3528,11 @@ const CARDS = [
     ],
     ideas: [
       `A truce is a pause, not a solution`,
+      `Giving yourself time before you choose`,
+      `Listening inward when the mind is split`,
+      `Shutting out noise to hear your own sense`,
+      `Holding both sides with care, for now`,
+      `Balance found in stillness`,
     ],
     inReading: {
       upright: `a still point before a decision`,
@@ -3585,6 +3778,13 @@ const CARDS = [
       `Quietly leaving`,
       `Unexpected transitions`,
       `A transition taking longer than hoped`,
+    ],
+    reversedIdeas: [
+      `Moving on at your own pace`,
+      `Acknowledging what you still carry`,
+      `Packing light: bringing only what you need`,
+      `Readiness arriving in its own time`,
+      `Calmer waters still ahead`,
     ],
     inReading: {
       upright: `a passage toward calmer waters`,
@@ -3895,6 +4095,13 @@ const CARDS = [
       `Ideas without a plan`,
       `Overthinking; hard to decide`,
     ],
+    reversedIdeas: [
+      `Listening to yourself before speaking`,
+      `Choosing your words with care`,
+      `Turning curiosity inward`,
+      `Slowing down to think clearly`,
+      `Letting your guard down a little`,
+    ],
     inReading: {
       upright: `a curious, alert mind eager to learn`,
       reversed: `a mind that needs to slow down`,
@@ -4023,6 +4230,13 @@ const CARDS = [
       `Struggling to find the words to express yourself`,
       `Holding past pain inside`,
     ],
+    reversedIdeas: [
+      `Softening a sharp edge, starting with yourself`,
+      `Finding your own voice`,
+      `Healing old pain so it no longer cuts`,
+      `Clarity and compassion in the same breath`,
+      `Telling yourself the truth, kindly`,
+    ],
     inReading: {
       upright: `clear perception and truth spoken kindly`,
       reversed: `an edge that wants softening, or a voice held back`,
@@ -4087,6 +4301,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `A truth held back that is ready to be said`,
+      `Letting logic hear the heart`,
+      `Flexible thinking; changing your mind well`,
+      `Fairness toward yourself as well as others`,
+      `Wisdom that listens`,
     ],
     inReading: {
       upright: `clear thinking and fair judgement`,
@@ -4155,6 +4373,13 @@ const CARDS = [
       `Short-term income`,
       `Needs better budgeting and planning`,
     ],
+    reversedIdeas: [
+      `Preparing the soil before you plant`,
+      `A simple, practical plan`,
+      `Patience with your own groundwork`,
+      `Small steps that make you ready`,
+      `Getting clear on what you value`,
+    ],
     inReading: {
       upright: `a real opportunity and a seed to plant`,
       reversed: `a seed not yet ready to plant`,
@@ -4211,6 +4436,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Time to reset priorities realistically`,
+      `Setting one ball down`,
+      `Simplifying to what matters most`,
+      `Letting go of what you can't hold right now`,
+      `Finding your own rhythm again`,
     ],
     reversedNuances: [
       `Neglecting one area for another`,
@@ -4279,6 +4508,13 @@ const CARDS = [
       `Working alone; feeling left out`,
       `Not yet recognised`,
       `A routine with little new to offer`,
+    ],
+    reversedIdeas: [
+      `Sharing your ideas clearly and kindly`,
+      `Getting your inner parts working together`,
+      `Valuing your own contribution`,
+      `Honest dialogue that brings harmony back`,
+      `Learning something new to refresh the routine`,
     ],
     inReading: {
       upright: `your skill, shared and valued`,
@@ -4461,6 +4697,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Take time to pamper yourself`,
+      `Your needs count too`,
+      `Learning to receive`,
+      `Giving to yourself what you give to others`,
+      `Rebalancing the flow of give and take`,
     ],
     reversedNuances: [
       `Giving too much without receiving`,
@@ -4527,6 +4767,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Let the fruit ripen before you pick it`,
+      `An honest review of your efforts`,
+      `Slow growth is still growth`,
+      `Adjusting what you tend, not whether you tend`,
+      `Letting go of an effort that drains you`,
     ],
     inReading: {
       upright: `patience, and taking stock of what's growing`,
@@ -4588,6 +4832,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Working on your inner self`,
+      `Remembering why you practise`,
+      `Finding joy in the making, not just the result`,
+      `Good enough; easing perfectionism`,
+      `Resting from striving`,
     ],
     reversedNuances: [
       `Needing more practice or preparation`,
@@ -4654,6 +4902,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Realising money can't buy everything`,
+      `Your worth isn't in what you own`,
+      `Enjoying quietly what is truly yours`,
+      `Self-reliance that stays open to connection`,
+      `Building inner foundations`,
     ],
     reversedNuances: [
       `Time to look honestly at where you stand`,
@@ -4721,6 +4973,13 @@ const CARDS = [
       `Too focused on status`,
       `Lacking long-term vision`,
     ],
+    reversedIdeas: [
+      `Choosing what you carry forward`,
+      `Lovingly laying old beliefs to rest`,
+      `Tending your own roots first`,
+      `Defining security on your own terms`,
+      `A legacy of values, not only things`,
+    ],
     inReading: {
       upright: `legacy, roots and lasting foundations`,
       reversed: `a legacy that is more than money`,
@@ -4784,6 +5043,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Practical routines are needed`,
+      `One steady habit, kept`,
+      `Starting small and practical`,
+      `Confidence built through follow-through`,
+      `Bringing your focus back to the ground`,
     ],
     reversedNuances: [
       `Unsure how to set goals and plan`,
@@ -4853,6 +5116,13 @@ const CARDS = [
       `Bored or stuck in a routine`,
       `Goals not clear yet`,
       `Too focused on work or money`,
+    ],
+    reversedIdeas: [
+      `Changing one thing and keeping going`,
+      `Gentle change within your routine`,
+      `Renewal without losing your steadiness`,
+      `Flexibility as a new strength`,
+      `Making room for rest and play`,
     ],
     inReading: {
       upright: `steady, reliable progress`,
@@ -4983,6 +5253,10 @@ const CARDS = [
     ],
     reversedIdeas: [
       `Letting go of a method that no longer works`,
+      `Success that rests on your values`,
+      `Holding security more loosely`,
+      `Worth beyond possessions`,
+      `Generosity, starting with yourself`,
     ],
     inReading: {
       upright: `mature stewardship and grounded stability`,
