@@ -270,6 +270,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .fd-flip > .cface { transform: rotateY(180deg); border-radius: 5px; overflow: hidden; }
 .fd-flip > .cface.reversed { transform: rotateY(180deg) rotate(180deg); }
 .fd-flip > .cback { border-radius: 5px; }
+/* Until a card turns, its flip box stays flat: a tilted 3D layer is drawn
+   soft, which blurred the backs of the fan. */
+.fd-card:not(.turned) .fd-flip { transform-style: flat; }
+.fd-card:not(.turned) .fd-flip > * { -webkit-backface-visibility: visible; backface-visibility: visible; }
+.fd-card:not(.turned) .fd-flip > .cface { visibility: hidden; }
 .fd-card.revealed .fd-flip > .cface {
   box-shadow: 0 0 14px 3px rgba(255, 214, 130, .55);
 }
