@@ -672,6 +672,32 @@ function drawFrames(t) {
 }
 
 // Where a card sits on screen: its centre and half its size.
+// The great circle's radius round the spread's cards (see drawMagicLayer).
+function greatR1(geo) {
+  const left = Math.min(...geo.map((g) => g.x - g.rx)), right = Math.max(...geo.map((g) => g.x + g.rx));
+  const top = Math.min(...geo.map((g) => g.y - g.ry)), bottom = Math.max(...geo.map((g) => g.y + g.ry));
+  return Math.round(Math.max((right - left) / 2 + 26, Math.min((bottom - top) / 2 + 26, (MG.w || innerWidth) * 0.48)));
+}
+
+// The first time the great circle is drawn at a size, the graphics card
+// takes a tenth of a second or more to take in its pictures; on the first
+// pick, that froze the card's flight. So while the spread sits waiting to
+// be picked from, the whole circle is drawn once at this spread's size,
+// into a tiny picture nobody sees. (Once per size: they're kept.)
+const magicReady = new Set();
+function prepareMagic() {
+  if (!S || calm || $("table").hidden) return;
+  const R1 = greatR1(S.slots.map((s, i) => cardGeom(i)));
+  if (!(R1 > 0) || magicReady.has(R1)) return;
+  magicReady.add(R1);
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const x = c.getContext("2d");
+  x.setTransform(0.08, 0, 0, 0.08, 32, 32);
+  const now = performance.now();
+  drawArcaneCircle(x, now, { cx: 0, cy: 0, R1, seal: null, from: now - 3000 });
+}
+
 function cardGeom(i) {
   const r = S.slots[i].box.getBoundingClientRect();
   return { x: r.left + r.width / 2, y: r.top + r.height / 2, rx: r.width / 2, ry: r.height / 2 };
@@ -913,7 +939,7 @@ function drawMagicLayer(t) {
   const top = Math.min(...geo.map((g) => g.y - g.ry)), bottom = Math.max(...geo.map((g) => g.y + g.ry));
   const cx = (left + right) / 2, cy = (top + bottom) / 2;
   const header = document.querySelector("#table .bar").getBoundingClientRect().bottom;
-  const R1 = Math.round(Math.max((right - left) / 2 + 26, Math.min((bottom - top) / 2 + 26, MG.w * 0.48)));
+  const R1 = greatR1(geo);
 
   // All turned: threads from every card meet in a seal above the spread,
   // then the circle comes together. Until then, it shows only the elements

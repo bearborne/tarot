@@ -14,6 +14,15 @@ const wobble = (n) => (Math.random() * 2 - 1) * n;
 // unless the person has asked for reduced motion, or the animation is one
 // of a pair that must keep exact step with each other (given id "exact":
 // a ring and the window edge it rides, say).
+// Phones (a touch screen): the same animations, without the blurs and soft
+// glows that a phone has to repaint on every frame, which made them stutter.
+// LITE also lowers the sharpness of canvases drawn every frame (see PX).
+const LITE = matchMedia("(pointer: coarse)").matches;
+document.documentElement.classList.toggle("lite", LITE);
+// How sharp to draw a canvas that's redrawn every frame: the screen's own
+// sharpness up to `cap`, and no more than 1.5 on a phone.
+const PX = (cap = 2) => Math.min(devicePixelRatio || 1, cap, LITE ? 1.5 : cap);
+const heavyFilter = /blur|drop-shadow/;
 {
   const plain = Element.prototype.animate;
   const still = matchMedia("(prefers-reduced-motion: reduce)");
@@ -22,6 +31,9 @@ const wobble = (n) => (Math.random() * 2 - 1) * n;
       opts = typeof opts === "number" ? { duration: opts } : { ...opts };
       if (opts.duration > 1) opts.duration = vary(opts.duration);
       if (opts.delay > 0) opts.delay = vary(opts.delay, 0.18);
+    }
+    if (LITE && Array.isArray(frames) && frames.some((f) => heavyFilter.test(f.filter || ""))) {
+      frames = frames.map(({ filter, ...f }) => f);
     }
     return plain.call(this, frames, opts);
   };

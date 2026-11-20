@@ -200,7 +200,7 @@ const homeShown = () => !$("home").hidden && !document.hidden;
 function makeStarfield(canvas, shown) {
   const f = { stars: [], dust: [], running: false };
   f.size = () => {
-    const r = Math.min(devicePixelRatio || 1, 2);
+    const r = LITE ? 1 : PX(2);   // (stars are dots: a phone needs no more)
     canvas.width = innerWidth * r;
     canvas.height = innerHeight * r;
     canvas.getContext("2d").setTransform(r, 0, 0, r, 0, 0);
@@ -773,7 +773,7 @@ function dawnReveal(mid) {
   const cx = b.left + b.width / 2 - d.left, cy = b.top + b.height / 2 - 0.06 * b.height - 6 - d.top;
   // The light round the card: room for its glow, never more than about 1400
   // pixels across (it's soft, and a phone has to keep up).
-  const S = Math.ceil(h * 4.4), k = Math.min(devicePixelRatio || 1, 1.5, 1400 / S);
+  const S = Math.ceil(h * 4.4), k = Math.min(PX(1.5), LITE ? 1 : 1.5, 1400 / S);
   const layer = (z) => {
     const c = document.createElement("canvas");
     c.className = "dawn-fx";
@@ -788,7 +788,7 @@ function dawnReveal(mid) {
   // it all), each over the whole screen; and the band at the halo's rim that
   // bends what it passes over, like light through glass.
   const W = innerWidth, Hs = innerHeight, C = { x: b.left + b.width / 2, y: cy + d.top };
-  const sk = Math.min(devicePixelRatio || 1, 1.5, Math.sqrt(2.6e6 / (W * Hs)));
+  const sk = Math.min(LITE ? 1 : PX(1.5), Math.sqrt(2.6e6 / (W * Hs)));
   const screen = (cls) => {
     const c = document.createElement("canvas");
     c.className = cls;
@@ -908,7 +908,7 @@ function dustToWords(mid, pick, t0) {
   const r = (a, b) => a + Math.random() * (b - a);
   // Two canvases over the whole screen, inside the deck: the crumbling cards
   // (under the card of the day, as the cards were), and the dust (above).
-  const W = innerWidth, Hs = innerHeight, k = Math.min(devicePixelRatio || 1, 1.5);
+  const W = innerWidth, Hs = innerHeight, k = LITE ? 1 : PX(1.5);
   const d = deck.getBoundingClientRect();
   const layer = (z) => {
     const c = document.createElement("canvas");
@@ -1027,7 +1027,7 @@ function dustToWords(mid, pick, t0) {
     const o = smooth(w.came / Math.max(1, w.want * 0.9));
     w.el.classList.remove("asleep");
     w.el.style.opacity = (0.92 * o).toFixed(3);
-    w.el.style.filter = o < 0.99 ? `blur(${((1 - o) * 3).toFixed(2)}px)` : "";
+    if (!LITE) w.el.style.filter = o < 0.99 ? `blur(${((1 - o) * 3).toFixed(2)}px)` : "";
     if (o >= 0.99) show(w);
   }
   function show(w) {

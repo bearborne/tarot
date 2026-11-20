@@ -39,6 +39,15 @@ function ringArt(R) {
     ctx.stroke(path);
   };
   const glow = (ctx, path, a, w, blur) => {   // a line of light: a bright core and one soft glow
+    if (LITE) {   // (on a phone, the glow is a wide faint stroke: shadowBlur every frame is too slow)
+      ctx.strokeStyle = `rgba(255, 190, 110, ${0.22 * a})`;
+      ctx.lineWidth = w + blur * 0.5;
+      ctx.stroke(path);
+      ctx.strokeStyle = `rgba(255, 238, 205, ${a})`;
+      ctx.lineWidth = w;
+      ctx.stroke(path);
+      return;
+    }
     ctx.save();
     ctx.shadowColor = `rgba(255, 190, 110, ${0.8 * a})`;
     ctx.shadowBlur = blur;
@@ -93,7 +102,7 @@ function ringArt(R) {
 function ringElement(R) {
   R = Math.max(14, R);
   const art = ringArt(R), M = 18, box = 2 * (R + M);
-  const k = Math.min(devicePixelRatio || 1, 2) * 1.35;
+  const k = LITE ? PX() : PX() * 1.35;
   const ring = document.createElement("div");
   ring.className = "rune-ring";
   ring.setAttribute("aria-hidden", "true");
@@ -258,7 +267,7 @@ function holeArt(hr) {
       ctx.rotate(TIP);
       ctx.lineCap = "round";
       ctx.shadowColor = `rgba(180, 120, 255, ${0.7 * h})`;
-      ctx.shadowBlur = Math.max(3, r * 0.25);
+      ctx.shadowBlur = LITE ? 0 : Math.max(3, r * 0.25);
       fadedArc(ctx, r * 1.07, Math.PI + 0.2, Math.PI - 0.4, "195, 145, 255", 0.32 * h, Math.max(1.5, r * 0.16));
       fadedArc(ctx, r * 1.05, Math.PI + 0.35, Math.PI - 0.7, "240, 225, 255", 0.45 * h, 0.7);
       fadedArc(ctx, r * 1.04, 0.5, Math.PI - 1, "185, 135, 255", 0.18 * h, Math.max(1, r * 0.08));
@@ -268,7 +277,7 @@ function holeArt(hr) {
       ctx.drawImage(N, -box / 2, -box / 2, box, box);
       // The thin ring of light caught right at the edge, brighter on the near-turning side.
       ctx.shadowColor = `rgba(190, 130, 255, ${0.8 * h})`;
-      ctx.shadowBlur = 3;
+      ctx.shadowBlur = LITE ? 0 : 3;
       if (conic) {
         const ring = ctx.createConicGradient(Math.PI + TIP, 0, 0);
         ring.addColorStop(0, `rgba(250, 242, 255, ${0.9 * h})`);
@@ -289,7 +298,7 @@ function holeArt(hr) {
 // The hole as an element at C, drawn every frame for as long as
 // `state(ms)` returns { h, grow } (null: it's over, and it goes).
 function miniHole(C, hr, state) {
-  const art = holeArt(hr), k = Math.min(devicePixelRatio || 1, 2) * 1.5;
+  const art = holeArt(hr), k = LITE ? PX() : PX() * 1.5;
   const cv = document.createElement("canvas");
   cv.className = "mini-hole";
   cv.width = cv.height = Math.ceil(art.box * k);
@@ -340,7 +349,7 @@ function collapseCopy(node, look = node) {
   // shadow over its dissolving edge.
   const box = fxDiv("collapse-copy");
   Object.assign(box.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px`,
-    zIndex: ++Z, filter: `url(#${id})` });
+    zIndex: ++Z, filter: LITE ? "" : `url(#${id})` });   // (the smoke's ripple is too slow for a phone)
   const keep = fxDiv("collapse-keep");
   const copy = look.cloneNode(true);
   copy.removeAttribute("id");

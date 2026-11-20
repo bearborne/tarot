@@ -2918,3 +2918,31 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .themed-pop .pill.small { margin: 2px auto 0; }
 .themed-pop .link.small { margin: -4px auto 0; }
 @media (prefers-reduced-motion: reduce) { .themed-pop { transition: none; } }
+
+/* Phones (a touch screen, html.lite: see LITE in js/core.js): the same
+   movements without the blurs and soft glows a phone must repaint on every
+   frame. Blurring over the drifting stars meant re-blurring the whole strip
+   every frame; a blur that clears as a word fades in is a repaint per frame. */
+@media (pointer: coarse) {
+  .dawn-lens, .hole-wave, .thread-strip, .overlay {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .hole-wave::before, .hole-wave::after { filter: none; }
+  .thread-strip { background: rgba(21, 19, 28, .97); }
+  .overlay { background: rgba(10, 8, 15, .86); }
+  .themed-pop { filter: none; }
+  .sky-wheel .w-moon { animation: none; filter: drop-shadow(0 0 6px rgba(255, 214, 130, .5)); }
+  .sky-wheel .w-planet, .sky-wheel .w-tick { transition: font-size .25s, fill .25s, fill-opacity .25s, stroke-opacity .25s; }
+  @keyframes fd-word-in {
+    from { opacity: 0; scale: .6; }
+    to { opacity: .92; scale: 1; }
+  }
+  @keyframes sky-blur-in { from { opacity: 0; } }
+  @keyframes sky-tile-in { from { opacity: 0; transform: translateY(6px); } }
+  @keyframes place-in {
+    from { opacity: 0; letter-spacing: .3em; transform: translateY(5px); }
+    60%  { color: #ffe6ad; text-shadow: 0 0 10px rgba(255, 214, 140, .7); }
+    to   { opacity: 1; letter-spacing: normal; transform: none; }
+  }
+}

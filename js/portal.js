@@ -137,7 +137,7 @@ function arcanePortal(points, open) {
 
   const cv = el("canvas", "portal-fx");
   cv.setAttribute("aria-hidden", "true");
-  const dpr = Math.min(devicePixelRatio || 1, 1.5);   // soft light: no need for more
+  const dpr = LITE ? 1 : PX(1.5);   // soft light: no need for more
   cv.width = W * dpr; cv.height = H * dpr;
   Object.assign(cv.style, { position: "fixed", inset: "0", width: "100%", height: "100%", pointerEvents: "none", zIndex: 9000 });
   // The veil dimming the table goes on its own canvas underneath, so the
@@ -625,7 +625,7 @@ function arcanePortal(points, open) {
       const through = arcSeg(s, OPEN, OPEN + 0.2) * (1 - arcSeg(s, END - 0.75, END - 0.05));
       // The blur: thick at first, clearing as the window widens.
       const blur = 10 * arcSeg(s, OPEN, OPEN + 0.08) * (1 - easeInOut(arcSeg(s, OPEN + 0.25, END - 0.1)));
-      if (blur > 0.05) {
+      if (blur > 0.05 && !LITE) {
         const mask = `radial-gradient(circle at ${C.x}px ${C.y}px, #000 0, #000 ${r * 0.3}px, transparent ${r * 0.95}px)`;
         Object.assign(blurEl.style, {
           backdropFilter: `blur(${blur.toFixed(2)}px) brightness(${(1 + 0.25 * through).toFixed(3)})`,

@@ -51,6 +51,13 @@ function startReading(spread, from) {
     pile.append(c);
   }
   $("fan").innerHTML = "";
+  // Once the spread has landed, while nothing moves, ready the circle's
+  // light for the first pick (see prepareMagic).
+  const reading = S;
+  setTimeout(() => {
+    const go = () => { if (S === reading && S.phase === "shuffle") prepareMagic(); };
+    window.requestIdleCallback ? requestIdleCallback(go, { timeout: 600 }) : go();
+  }, 1300);
   $("hint").textContent = "Tap the deck to spread the cards";
   $("hint").classList.remove("dim");
 }
@@ -232,6 +239,7 @@ function pileOffset(i) {
 $("deck").addEventListener("click", async () => {
   if (!S || S.phase !== "shuffle") return;
   S.phase = "busy";
+  prepareMagic();   // (if it isn't ready yet: better now, before anything moves, than mid-pick)
   S.order = shuffledOrder(S.deck.length);
   setHint(S.n === 1 ? "Pick a card" : `Pick ${S.n} cards`);
   await fanOut();

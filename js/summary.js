@@ -1206,7 +1206,9 @@ function openSummary(entries, title, magic = false, named = null) {
   sheet.append(bar, body, strip);
   document.body.append(sheet);
   placeAsks();   // again, now that the columns can be measured
-  if (magic && !calm) appearWithMagic(sheet, body);
+  // ("later": built ahead, out of sight; the portal calls sheet.appear() as its window opens.)
+  if (magic === "later") sheet.appear = () => appearWithMagic(sheet, body);
+  else if (magic && !calm) appearWithMagic(sheet, body);
   else slideIn(sheet);
   back.addEventListener("click", async () => {
     // Opened through the circle, it goes back into the light the same way.
@@ -1344,6 +1346,16 @@ function summonSummary(open, key = null) {
     const g = cardGeom(i);
     return { x: g.x, y: g.y, w: g.rx * 2, h: g.ry * 2, el: s.tcard };
   }) : [];
-  const total = arcanePortal(points, () => open(true));
+  // The page is built now, before the light starts, and kept out of sight
+  // until the window opens: built mid-flight, it froze the portal for a
+  // moment. Its card pictures start decoding now too, so they're ready.
+  const sheet = open("later");
+  sheet.style.visibility = "hidden";
+  sheet.querySelectorAll("img").forEach((img) => img.decode?.().catch(() => {}));
+  const total = arcanePortal(points, () => {
+    sheet.style.visibility = "";
+    sheet.appear?.();
+    return sheet;
+  });
   setTimeout(() => { summoning = false; }, total);
 }
