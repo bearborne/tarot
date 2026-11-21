@@ -604,44 +604,30 @@ function summaryQuestions(entries, lens) {
   const whole = [];
   const ask = (q, score) => whole.push({ q, score });
 
-  // Two cards' key ideas that meet in one theme: quoted, so the question
-  // could only come from these two cards.
+  // The two cards most strongly linked, and the question their shared tag
+  // raises: "Imagination and choice: what choice are you circling…?"
   const linked = connectedIdeas(entries, 3);
-  const clause = (x, t) => {
-    const bits = x.split(/;\s*/);
-    const c = bits.find((b) => ideaThemes(b).includes(t)) || bits[0];
-    // Woven into a sentence: no "Love:" lead-in, no capital, no closing stop.
-    // (Inner commas go too: "a cycle near its end, with delays" would break the sentence.)
-    const s = c.replace(/^[A-Z][a-z]+:\s*/, "").replace(/[.;:,\s]+$/, "").replace(/,\s*/g, " ");
-    return s.charAt(0).toLowerCase() + s.slice(1);
-  };
-  // Stricter than themesOf, since these are quoted: a stem must start a
-  // word, and a short one must be (nearly) the whole word ("care", not
-  // "career"). "…in love or work", "…at work" only say where; they don't
-  // link ideas.
-  const ideaThemes = (x) => {
-    const k = x.toLowerCase().replace(/\b(?:in|at) (?:love|work)(?: or (?:love|work))?/g, "");
-    const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return Object.keys(THEMES).filter((t) => THEMES[t].some((stem) =>
-      new RegExp(`(^|[^a-z])${esc(stem)}${stem.length <= 5 ? "(s|es|d|ed|ing)?([^a-z]|$)" : ""}`).test(k)));
-  };
   let bridge = null;
-  linked.forEach((xs, i) => linked.forEach((ys, j) => {
-    if (j <= i) return;
-    xs.forEach((x, a) => ys.forEach((y, b) => {
-      // "self" alone is too loose a link ("self-inspiration", "self-healing").
-      const shared = ideaThemes(x).filter((t) => t !== "self" && ideaThemes(y).includes(t));
-      const score = shared.length * 10 - a - b;
-      if (shared.length && (!bridge || score > bridge.score)) bridge = { i, j, x, y, t: shared[0], score };
-    }));
+  connectedIdeas(entries, 3, true).forEach((xs, i) => xs.forEach((l) => {
+    if (l.tag && (!bridge || l.score > bridge.score)) bridge = { i, j: l.with, tag: l.tag, score: l.score };
   }));
   if (bridge) {
-    const { i, j, t: bt } = bridge;
-    // One sentence: how the two cards read (always a noun phrase, so it
-    // weaves in cleanly), then the question their shared theme raises.
-    const reads = (e) => clause(phrases(e.card, e.reversed).g, bt);
-    // (A comma before the second, since a reading may hold its own "and".)
-    ask(`Between ${reads(entries[i])}, and ${reads(entries[j])}, ${lower(THEME_TEXT[bt][2])}`, 10);
+    const { i, j, tag } = bridge;
+    // Each card's own keyword for what they share. When both cards have
+    // one (and they differ), they lead: "Imagination and choice: …".
+    // Otherwise, how many cards speak of it: "With 2 of the 3 cards
+    // speaking of choosing, …".
+    const word = (e) => (filled(keywordsFor(e.card, e.reversed)).find((k) => linkTagsOf(k).includes(tag)) || "").toLowerCase();
+    const [w1, w2] = [word(entries[i]), word(entries[j])];
+    const idx = whichCards(entries, (e) => {
+      const { ideas, nuances } = ideasFor(e.card, e.reversed);
+      return [...filled(keywordsFor(e.card, e.reversed)), ...ideas, ...nuances].some((x) => linkTagsOf(x).includes(tag));
+    });
+    const q = w1 && w2 && w1 !== w2
+      ? `${cap(w1)} and ${w2}: ${lower(LINK_TEXT[tag][1])}`
+      : `With ${who(idx)} speaking of ${LINK_TEXT[tag][0]}, ${lower(LINK_TEXT[tag][1])}`;
+    ask(q, 10);
+    bridge.themes = themesOf(q);
   }
 
   // The lens's challenge and advice, in the card's own words.
@@ -653,11 +639,20 @@ function summaryQuestions(entries, lens) {
   } else if (n >= 2) {
     // No advice place: the first and last cards' advice, side by side.
     const [a1, a2] = [entries[0], entries[n - 1]].map((e) => (e.card.inReading || {})[e.reversed ? "reversedAdvice" : "advice"] || (e.card.inReading || {}).advice);
-    if (a1 && a2 && a1 !== a2) ask(`Is it time to ${a1.replace(/[.;\s]+$/, '')}, or to ${a2.replace(/[.;\s]+$/, '')}?`, 6);
+    // Short advice reads as a real either/or; long advice would bury it,
+    // so the cards' key words stand in.
+    // A hard key word ("self-doubt", "delays") is no path to choose.
+    const hard = (k) => linkTagsOf(k).some((t) => HARD_TAGS.includes(t)) || themesOf(k).includes("shadow")
+      || /delay|setback|obstacle|unfinished|restless|hesitat/.test(k);
+    const short = (x) => x && x.split(/\s+/).length <= 7 && !/[;,]/.test(x.replace(/[.;\s]+$/, ""));
+    if (a1 && a2 && a1 !== a2) {
+      if (short(a1) && short(a2)) ask(`Is it time to ${a1.replace(/[.;\s]+$/, '')}, or to ${a2.replace(/[.;\s]+$/, '')}?`, 6);
+      else if (kw(entries[0]) && kw(entries[n - 1]) && kw(entries[0]) !== kw(entries[n - 1]) && !hard(kw(entries[0])) && !hard(kw(entries[n - 1]))) ask(`Is it time for ${kw(entries[0])}, or for ${kw(entries[n - 1])}?`, 6);
+    }
   }
 
   themes.slice(0, 3).forEach((t) => {
-    if (bridge && bridge.t === t) return;   // already asked, in the cards' own ideas
+    if (bridge && bridge.themes.includes(t)) return;   // already asked, by the two linked cards
     const idx = whichCards(entries, (e, i) => sets[i].has(t));
     const what = t === "heart" ? "the heart" : THEME_TEXT[t][0].toLowerCase();
     if (idx.length < n || n <= 3) ask(`With ${who(idx)} speaking of ${what}, ${lower(THEME_TEXT[t][2])}`, idx.length * 2 + (idx.length === n ? 1 : 0));
@@ -783,7 +778,16 @@ function listItems(items) {
     if (head) li.append(el("strong", "", head));
     if (text) li.append(el("span", "", text));
     // ideas: the card's key ideas that connect to the rest of the reading
-    if (ideas && ideas.length) li.append(el("span", "summary-ideas", ideas.join("\n")));
+    // (Plain strings, or { x, to }: the idea, and the card it links to.)
+    if (ideas && ideas.length) {
+      const box = el("span", "summary-ideas");
+      ideas.forEach((d) => {
+        const one = el("span", "summary-idea", typeof d === "string" ? d : d.x);
+        if (d.to) one.append(el("span", "summary-link", `— with ${d.to}`));
+        box.append(one);
+      });
+      li.append(box);
+    }
     if (sub) li.append(el("em", "summary-q", sub));
     ul.append(li);
   });
@@ -875,33 +879,240 @@ function drawThread(box, targets, lit, animate) {
 }
 
 // ── Ideas that connect ──────────────────────────────────
+// Links between cards use their own, narrower tags than THEMES (which name
+// and colour the reading): "grief" and "romance" rather than one broad
+// "heart", so two cards only meet over something they really share.
+// A word ending in * is a stem ("heal*": heal, healing, healed); any other
+// is matched as a whole word, so "rest" can't be found inside "restless".
+// "-" inside a word stands for a space or a hyphen.
+const LINK_TAGS = {
+  romance:     "romance romantic attraction lover lovers partner* falling* union relationship* soulmate*",
+  selfLove:    "self-love self-care self-worth self-respect worth worthiness self-compassion",
+  compassion:  "compassion* empath* kindness kind gentle* tender* warmth",
+  feelings:    "emotion* feeling* feelings heart* intimacy",
+  grief:       "grief griev* heartache heartbreak sorrow* loss pain painful hurt* disappoint* regret* mourn* wound*",
+  healing:     "heal heals healed healing healer recover* restor* mend* repair*",
+  hope:        "hope* optimis* faith new-dawn dawn",
+  fear:        "fear* anxi* worry worries worrying dread nightmare* panic*",
+  doubt:       "doubt* self-doubt hesitat* uncertain* insecur* indecis*",
+  rest:        "rest resting pause* recharg* replenish* sleep*",
+  patience:    "patience patient* waiting wait delay* slow* timing pace",
+  peace:       "peace* calm* serenity serene quiet* stillness tranquil* mindful*",
+  solitude:    "solitude alone withdraw* retreat* isolat* privat* hermit* lonel*",
+  inward:      "inner inward* reflect* contemplat* introspect* soul-search*",
+  intuition:   "intuition* intuitive instinct* gut psychic* sixth inner-knowing",
+  dreams:      "dream* imagin* fantas* illusion* wishful daydream*",
+  spirit:      "spiritu* sacred divine higher meditat* prayer*",
+  wisdom:      "wisdom wise lesson* learn* study* studying teach* mentor* guidance advice",
+  truth:       "truth* honest* integrity authentic* sincer*",
+  clarity:     "clarity clear* fog* confus* insight*",
+  justice:     "fair* justice accountab* consequence* karma law* responsib*",
+  choice:      "choice* choos* decid* decision* option* crossroad* weigh*",
+  plans:       "plan* planning goal* strateg* long-term foresight direction purpose*",
+  beginnings:  "begin* start* fresh seed* potential opportunit* new-start new-beginning*",
+  endings:     "end ending* endings closure finish* complet* leav* walk-away walking-away moving-on",
+  lettingGo:   "letting-go let-go release* surrender* detach* loosen*",
+  change:      "change* transform* transition* shift* rebirth cycle* evolv*",
+  upheaval:    "sudden* unexpected upheaval shock* breakthrough* revelation* collapse* chaos",
+  courage:     "courage* brave* bold* risk* dare* daring",
+  resilience:  "strength strong* resilien* persever* endur* persist* stamina",
+  drive:       "action* energy energetic momentum motivat* drive* fast speed* movement swift*",
+  passion:     "passion* desire* fire enthusias* excite* excitement inspir* spark*",
+  power:       "control* power* authority dominan* command* leader* leadership",
+  discipline:  "discipline* routine* habit* diligen* consisten* steady steadi* commitment* commit*",
+  work:        "work* skill* career* craft* effort* job* practice* master* apprentic*",
+  money:       "money financ* income wealth* abundance prosper* invest* saving* material* business*",
+  generosity:  "generos* receiv* charit* sharing share* gift* giving-back giving-and",
+  security:    "secur* stabil* stable safe* safety foundation* ground* grounded",
+  home:        "home* family famil* roots heritage legacy inherit* children",
+  past:        "past memor* nostalg* childhood inner-child old return* returning",
+  community:   "community friend* friendship* team* teamwork collaborat* cooperat* belong* group*",
+  joy:         "joy* happi* fun play* playful delight* celebrat* milestone*",
+  success:     "success* recognition victor* win wins winning achiev* reward* acknowledg* pride proud",
+  confidence:  "confiden* self-assur* self-belief self-trust",
+  freedom:     "freedom free independen* liberat*",
+  adventure:   "adventur* travel* journey* explor* horizon* curio* discover* seek*",
+  conflict:    "conflict* compet* argument* tension* struggle* fight* battle* rival*",
+  boundaries:  "boundar* protect* guard* defen* limit limits limiting",
+  words:       "word* speak* voice* communicat* conversation* news message* listen*",
+  mind:        "mind minds mindset thought* think* mental* overthink* logic* reason* intellect* idea ideas",
+  stuck:       "stuck trap* restrict* helpless* victim* cage* stagnat* bound",
+  balance:     "balanc* harmon* moderat* temperance middle juggl* priorit* align*",
+  deception:   "decept* lie lies secret* hidden trick* manipulat* dishonest* betray*",
+  burden:      "burden* overwhelm* exhaust* weary weariness tired burnout carry* carrying",
+  content:     "content* satisf* enough gratitude grateful enjoy* comfort* pleasure* luxur*",
+  apathy:      "apathy apathetic boredom bored dissatisf* discontent* overlook* stagnant",
+  body:        "nature natural body health* physical* earth* earthy",
+  creativity:  "creativ* art* artist* express* expression*",
+  nurture:     "nurtur* care caring mother* tend tending tended fertil*",
+  growth:      "growth grow* progress* develop* expand* expansion",
+  acceptance:  "accept* embrac* allow*",
+  forgiveness: "forgiv* reconcil* amends",
+  patterns:    "pattern* addict* attachment* obsess* compuls* tempt* shadow*",
+  trust:       "trust*",
+};
+const LINK_TAG_RE = Object.fromEntries(Object.entries(LINK_TAGS).map(([t, words]) => {
+  const alts = words.split(/\s+/).map((w) => {
+    const stem = w.endsWith("*");
+    const body = (stem ? w.slice(0, -1) : w).replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/-/g, "[ -]");
+    return stem ? `${body}[a-z'-]*` : body;
+  });
+  return [t, new RegExp(`(?<![a-z])(?:${alts.join("|")})(?![a-z])`, "i")];
+}));
+const linkTagsOf = (text) => Object.keys(LINK_TAG_RE).filter((t) => LINK_TAG_RE[t].test(text));
+
+// How rare each tag is across the deck: a tag on few card sides says more
+// when two cards share it than one on many. log2(sides / sides with it).
+let linkWeights = null;
+function linkWeight(t) {
+  if (!linkWeights) {
+    const seen = {};
+    let sides = 0;
+    CARDS.forEach((c) => [false, true].forEach((rev) => {
+      sides++;
+      const { ideas, nuances } = ideasFor(c, rev);
+      new Set([...filled(keywordsFor(c, rev)), ...ideas, ...nuances].flatMap(linkTagsOf)).forEach((x) => { seen[x] = (seen[x] || 0) + 1; });
+    }));
+    linkWeights = Object.fromEntries(Object.keys(LINK_TAGS).map((x) => [x, Math.log2(sides / (seen[x] || 1))]));
+  }
+  return linkWeights[t] || 0;
+}
+// What two cards linked by a tag have in common: [topic, question].
+// The topic follows a link ("— with The Lovers, on choosing"); the question
+// is asked when two cards meet over the tag. Both point to the self first.
+const LINK_TEXT = {
+  romance:     ["love and partnership", "What do you hope to be given in love, and do you give it to yourself?"],
+  selfLove:    ["how you treat yourself", "What would change if you treated yourself as someone worth caring for?"],
+  compassion:  ["kindness", "Where could you be as gentle with yourself as you are with others?"],
+  feelings:    ["feelings", "Which feeling have you been carrying without naming it?"],
+  grief:       ["loss and hurt", "What loss is still asking to be felt, before it can soften?"],
+  healing:     ["healing", "What in you is already mending, and how can you give it room?"],
+  hope:        ["hope", "What small light are you willing to trust right now?"],
+  fear:        ["fear", "Which of your fears is about now, and which is about a story you tell yourself?"],
+  doubt:       ["doubt", "What would you do if you trusted your own judgement a little more?"],
+  rest:        ["rest", "What would real rest look like for you this week?"],
+  patience:    ["patience and timing", "What are you rushing that would ripen on its own?"],
+  peace:       ["calm", "Where do you find the quiet that steadies you?"],
+  solitude:    ["time alone", "Is your time alone restoring you, or keeping you apart?"],
+  inward:      ["looking inward", "What do you notice when you stop and look inward?"],
+  intuition:   ["intuition", "What does your quiet inner knowing keep telling you?"],
+  dreams:      ["dreams and imagining", "Which of your dreams is a wish, and which is a plan waiting to begin?"],
+  spirit:      ["the spirit", "What gives your life a sense of meaning beyond the everyday?"],
+  wisdom:      ["learning", "What lesson are you ready to take to heart?"],
+  truth:       ["honesty", "What truth about yourself are you ready to say out loud?"],
+  clarity:     ["seeing clearly", "What would you see if you looked at this without hope or fear?"],
+  justice:     ["fairness", "Where are you being asked to be fair, to others and to yourself?"],
+  choice:      ["choosing", "What choice are you circling, and what do you really want from it?"],
+  plans:       ["plans and direction", "Where are you heading, and is it still your own direction?"],
+  beginnings:  ["beginnings", "What is ready to begin in you, if you let it?"],
+  endings:     ["endings", "What is ready to end, and what will it make room for?"],
+  lettingGo:   ["letting go", "What are you holding that you could set down?"],
+  change:      ["change", "What change in you is already under way?"],
+  upheaval:    ["sudden change", "What could this shake-up be clearing away for you?"],
+  courage:     ["courage", "What would you do now if you were a little braver with yourself?"],
+  resilience:  ["staying strong", "What has kept you standing so far, and does it still serve you?"],
+  drive:       ["energy and action", "Where does your energy want to go first?"],
+  passion:     ["passion", "What lights you up when no one is asking anything of you?"],
+  power:       ["power and control", "Where do you need to take charge, and where to loosen your grip?"],
+  discipline:  ["steady effort", "Which small habit, kept every day, would carry you furthest?"],
+  work:        ["work and skill", "What work feels like your own, and how can you give it more of you?"],
+  money:       ["money and resources", "What does enough look like for you?"],
+  generosity:  ["giving and receiving", "Is it easier for you to give or to receive, and why?"],
+  security:    ["security", "What makes you feel safe, and can you build more of it yourself?"],
+  home:        ["home and family", "What did you inherit that you want to keep, and what can you leave behind?"],
+  past:        ["the past", "What from your past is asking to be seen with kinder eyes?"],
+  community:   ["belonging", "Where do you feel you truly belong, and who belongs with you?"],
+  joy:         ["joy", "What joy could you let yourself have today?"],
+  success:     ["success", "What have you achieved that you haven't let yourself feel proud of?"],
+  confidence:  ["confidence", "Where could you back yourself without waiting for approval?"],
+  freedom:     ["freedom", "What would freedom feel like here, and what stands in its way?"],
+  adventure:   ["exploring", "Where is your curiosity pulling you?"],
+  conflict:    ["conflict", "Which struggle is worth your energy, and which can you let settle?"],
+  boundaries:  ["boundaries", "Which boundary would protect your peace without closing your heart?"],
+  words:       ["speaking and listening", "What needs saying, and who needs to hear it, you included?"],
+  mind:        ["the mind", "Which thoughts help you, and which keep you going in circles?"],
+  stuck:       ["feeling stuck", "What is one small step that is already open to you?"],
+  balance:     ["balance", "What in your life needs a fairer share of you?"],
+  deception:   ["what's hidden", "What might you be hiding, even from yourself?"],
+  burden:      ["what you carry", "Which of the loads you carry are truly yours?"],
+  content:     ["contentment", "What do you already have that you could enjoy more fully?"],
+  apathy:      ["restlessness", "What have you stopped noticing that once delighted you?"],
+  body:        ["the body and nature", "What is your body asking you for?"],
+  creativity:  ["creating", "What wants to be made through you?"],
+  nurture:     ["nurturing", "What are you tending, and who is tending you?"],
+  growth:      ["growth", "Where are you growing, even if it feels slow?"],
+  acceptance:  ["acceptance", "What could you accept as it is, so you can move on from it?"],
+  forgiveness: ["forgiveness", "Who could you forgive, yourself included?"],
+  patterns:    ["patterns and attachments", "Which pattern keeps returning, and what does it give you?"],
+  trust:       ["trust", "Where could you trust yourself, or someone else, a little more?"],
+};
+
+// Tags for what weighs on you: never offered as a path to choose.
+const HARD_TAGS = ["grief", "fear", "doubt", "conflict", "stuck", "burden", "deception", "patterns", "apathy"];
+
+// The least an idea must share with a card to be shown as linked to it.
+const MIN_LINK = 2;
+
 // For each card, the key ideas (of the side it fell on) that speak most to
-// the other cards: an idea scores for each theme it shares with another
-// card's keywords and ideas, and more when it names one of that card's
-// keywords outright. The warm ideas win ties over the nuances. One card
-// alone simply shows its first few ideas.
-function connectedIdeas(entries, per = 2) {
+// the other cards: an idea scores for each tag it shares with another card's
+// keywords and ideas (rare tags far more than common ones), and more when it
+// names one of that card's keywords outright. The warm ideas win ties over
+// the nuances. One card alone simply shows its first few ideas.
+// withLinks: each idea as { x, with, tag, score }, `with` the place of the
+// card it speaks to most and `tag` what they share (null when only a
+// keyword joins them); ideas that link to no card strongly enough are left out.
+function connectedIdeas(entries, per = 2, withLinks = false) {
   const linesOf = (e) => { const { ideas, nuances } = ideasFor(e.card, e.reversed); return { ideas, nuances }; };
   const profile = entries.map((e) => {
     const words = filled(keywordsFor(e.card, e.reversed)).map((w) => w.toLowerCase());
     const { ideas, nuances } = linesOf(e);
-    const themes = {};
-    [...words, ...ideas, ...nuances].flatMap(themesOf).forEach((t) => { themes[t] = (themes[t] || 0) + 1; });
-    return { words, themes };
+    return { words, tags: new Set([...words, ...ideas, ...nuances].flatMap(linkTagsOf)) };
   });
   return entries.map((e, i) => {
     const { ideas, nuances } = linesOf(e);
-    if (entries.length === 1) return ideas.slice(0, 3);
+    if (entries.length === 1) return ideas.slice(0, 3).map((x) => (withLinks ? { x, with: null } : x));
     const scored = [...ideas.map((x) => [x, 0.5]), ...nuances.map((x) => [x, 0])].map(([x, bonus], k) => {
-      const low = x.toLowerCase(), mine = themesOf(x);
-      const score = profile.reduce((sum, o, j) => j === i ? sum
-        : sum + mine.reduce((s, t) => s + Math.min(o.themes[t] || 0, 2), 0)
-              + o.words.filter((w) => w.length > 3 && low.includes(w)).length * 2, 0);
-      return { x, score: score + (score ? bonus : 0), k };
+      const low = x.toLowerCase(), mine = linkTagsOf(x);
+      // How much this idea speaks to each other card; the strongest is its link.
+      // tag: the rarest tag the two share, which names what joins them.
+      let best = null, bestScore = 0, tag = null;
+      profile.forEach((o, j) => {
+        if (j === i) return;
+        const shared = mine.filter((t) => o.tags.has(t)).sort((a, b) => linkWeight(b) - linkWeight(a));
+        const s = shared.reduce((s, t) => s + linkWeight(t), 0)
+                + o.words.filter((w) => w.length > 3 && low.includes(w)).length * 3;
+        if (s > bestScore) { bestScore = s; best = j; tag = shared[0] || null; }
+      });
+      return { x, raw: bestScore, score: bestScore + (bestScore ? bonus : 0), k, with: best, tag };
     });
-    const linked = scored.filter((s) => s.score > 0).sort((a, b) => b.score - a.score || a.k - b.k);
+    const linked = scored.filter((s) => s.raw >= MIN_LINK).sort((a, b) => b.score - a.score || a.k - b.k);
+    if (withLinks) return linked.slice(0, per).map(({ x, with: w, tag, score }) => ({ x, with: w, tag, score }));
     return (linked.length ? linked : scored).slice(0, per).map((s) => s.x);
   });
+}
+
+// ── The pair that speaks loudest ────────────────────────
+// Of the spread's pairs that have their own written line (pairs.js), the
+// one whose cards share the most: rare tags count most, and two Major
+// Arcana a little more. The lines are written for upright cards, so a
+// reversed card sits this out. { i, j, text } or null.
+function strongestPair(entries) {
+  if (typeof PAIR_LINES === "undefined" || entries.length < 2) return null;
+  const tags = entries.map((e) => {
+    const { ideas, nuances } = ideasFor(e.card, e.reversed);
+    return new Set([...filled(keywordsFor(e.card, e.reversed)), ...ideas, ...nuances].flatMap(linkTagsOf));
+  });
+  let best = null;
+  entries.forEach((a, i) => entries.forEach((b, j) => {
+    if (j <= i || a.reversed || b.reversed) return;
+    const [x, y] = [CARDS.indexOf(a.card), CARDS.indexOf(b.card)].sort((m, k) => m - k);
+    const text = PAIR_LINES[`${x}-${y}`];
+    if (!text) return;
+    const score = [...tags[i]].filter((t) => tags[j].has(t)).reduce((s, t) => s + linkWeight(t), 0)
+                + (isMajorCard(a.card) && isMajorCard(b.card) ? 2 : 0);
+    if (!best || score > best.score) best = { i, j, text, score };
+  }));
+  return best;
 }
 
 // entries: [{ card, reversed, label, question }]
@@ -1059,9 +1270,21 @@ function openSummary(entries, title, magic = false, named = null) {
   // Shared words: their tiles alone (no title of their own), under the
   // reading's title. A fresh copy each time the reading is redrawn.
   const sharedTiles = () => patterns["Shared words"] && partSection(patterns["Shared words"], cardCols).querySelector(".tiles");
+  // The strongest written pair, under the reading's title: the two cards'
+  // names in gold, then their line. Tap to light the two cards up.
+  const pair = strongestPair(entries);
+  const pairEl = () => {
+    if (!pair) return null;
+    const p = el("p", "summary-pair");
+    threadable(p, [pair.i, pair.j], "");
+    p.append(el("span", "pair-names", `${entries[pair.i].card.name} · ${entries[pair.j].card.name}`), el("span", "pair-text", pair.text));
+    return p;
+  };
   // Each card's key ideas that relate most to the other cards, shown under
   // its line in "The reading".
-  const linked = connectedIdeas(entries);
+  // Each idea with the card it links to, and what they share: "— with The Lovers, on choosing".
+  const linked = connectedIdeas(entries, 2, true).map((list) =>
+    list.map(({ x, with: j, tag }) => ({ x, to: j === null ? "" : `${entries[j].card.name}${tag ? `, on ${LINK_TEXT[tag][0]}` : ""}` })));
   let lens = laidOut;
   let topic = null;           // the topic whose themes are listed, or null for the topics
   let menuOpen = false;       // the themes are shown only once "Select a theme" is pressed
@@ -1092,6 +1315,8 @@ function openSummary(entries, title, magic = false, named = null) {
       })));
       const title = sec.querySelector(".asks-title");
       const sw = sharedTiles();
+      const pl = pairEl();
+      if (pl) title.after(pl);
       if (sw) title.after(sw);
       lensPart.append(sec);
     } else {
@@ -1101,6 +1326,8 @@ function openSummary(entries, title, magic = false, named = null) {
       sec.append(el("p", "asks-title", "The reading"));
       const sw = sharedTiles();
       if (sw) sec.append(sw);
+      const pl = pairEl();
+      if (pl) sec.append(pl);
       sec.append(listItems(entries.map((e, i) => {
         const { g, a } = phrases(e.card, e.reversed);
         return { head: e.card.name, text: `${cap(g)}${e.reversed ? `; ${a}` : ""}.`, ideas: linked[i], cards: [i] };

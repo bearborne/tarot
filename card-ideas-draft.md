@@ -421,7 +421,7 @@ Everything here is paraphrased in our own words. Nothing is copied. Use it to le
 - ✦ Strong intuition — listen to it
 - ✦ Knowing what's best for you
 - ✦ Partnerships; possibilities; progress
-- ◐ Weighing options: stay or go?
+- ◐ Weighing whether to stay or go
 - ◐ Needing courage; aware of the risks
 - ◐ Possible travel; investment decisions
 
@@ -750,7 +750,7 @@ Everything here is paraphrased in our own words. Nothing is copied. Use it to le
 - ⚠ Stuck in the past, naivety, unrealistic hopes, lack of support
 
 ### 7 of Cups · Upright
-- ✦ Ask yourself: what do I really want?
+- ✦ Asking yourself what you really want
 - ✦ Decide from the heart
 - ✦ Research and plan before choosing
 - ✦ Don't let others pressure your choice

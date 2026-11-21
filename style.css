@@ -804,7 +804,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* The summary's reading text in the screen-reading font; the gold
    headings keep the deck's own serif. */
 .summary-page .col-main li > span,
-.summary-page .col-main .summary-q,
+.summary-page .col-main .summary-q { font-family: var(--read); }
 
 /* The lens buttons: each reads the spread from another angle */
 .lens-title {
@@ -1169,15 +1169,22 @@ button { font: inherit; color: inherit; cursor: pointer; }
   line-height: 1.35;
 }
 .key-ideas li.nuance { color: var(--muted); border-style: dashed; }
-/* Under each card's line in "The reading": its ideas that connect, one per line */
+/* Under each card's line in "The reading": its ideas that connect, one per
+   line, each with the card it links to beneath it in gold */
 .summary-ideas {
   display: block;
   margin-top: 4px;
-  white-space: pre-line;
   color: var(--muted);
   font-size: .92em;
   line-height: 1.45;
 }
+/* The strongest written pair, under "The reading": names in gold, then the line */
+.summary-pair { margin: 0 0 14px; text-align: center; line-height: 1.45; }
+.summary-pair .pair-names { display: block; color: var(--gold); font-size: .8rem; letter-spacing: .06em; margin-bottom: 2px; }
+.summary-pair .pair-text { display: block; font-family: var(--read); font-style: italic; color: var(--ink); }
+.summary-idea { display: block; }
+.summary-idea + .summary-idea { margin-top: 6px; }
+.summary-link { display: block; color: var(--gold); font-size: .85em; }
 .picture-guide ul { margin: 0; padding: 0; list-style: none; }
 .picture-guide li { margin: 0 0 .8em; line-height: 1.45; }
 .picture-guide strong {

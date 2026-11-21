@@ -1614,7 +1614,7 @@ const CARDS = [
       `Passion needs one focus; trust the way you already lean`,
     ],
     nuances: [
-      `Weighing options: stay or go?`,
+      `Weighing whether to stay or go`,
       `Needing courage; aware of the risks`,
       `Weighing where to put your energy`,
     ],
@@ -2896,7 +2896,7 @@ const CARDS = [
       `The veiled figure in the middle: the hidden self, and the truest wish.`,
     ],
     ideas: [
-      `Ask yourself: what do I really want?`,
+      `Asking yourself what you really want`,
       `Decide from the heart`,
       `Research and plan before choosing`,
       `Don't let others pressure your choice`,
