@@ -260,7 +260,9 @@ async function spreadDeck() {
   prepareMagic();   // (if it isn't ready yet: better now, before anything moves, than mid-pick)
   S.order = shuffledOrder(S.deck.length);
   setHint(S.n === 1 ? "Pick a card" : `Pick ${S.n} cards`);
-  await fanOut();
+  // The cards are in the fan as soon as fanOut starts, so they can be
+  // picked straight away, while they are still sweeping out.
+  fanOut();
   S.phase = "pick";
 }
 
@@ -303,15 +305,16 @@ async function fanOut() {
       ], { duration: ms, delay, easing: "cubic-bezier(.25, .8, .3, 1)", fill: "backwards" });
       // Every other card leaves a spark at its tip as it passes.
       if (i % 2 === (count % 2 ? 0 : 1) || i === 0 || i === count - 1) {
-        setTimeout(() => { if (c.isConnected) tipSpark(c, a); }, delay + ms * 0.5);
+        setTimeout(() => { if (c.isConnected && !c.dataset.taken) tipSpark(c, a); }, delay + ms * 0.5);
       }
       last = Math.max(last, delay + ms);
     }
     c.addEventListener("click", () => pick(c));
     fan.append(c);
   }
+  const reading = S;
   await wait(last);
-  if (!calm) fan.classList.add("ready");
+  if (!calm && S === reading && fan.children.length) fan.classList.add("ready");
 }
 
 // A flash of light where the deck stood, as it opens: a gold ring widening
@@ -389,7 +392,10 @@ async function pick(fanCard) {
   const r = fanCard.getBoundingClientRect();
   const w = fanCard.offsetWidth, h = fanCard.offsetHeight;
   const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-  const a = +fanCard.dataset.angle;
+  // The card's angle where it is now: it may be picked mid-sweep, still turning.
+  const m = getComputedStyle(fanCard).transform;
+  const mm = m && m !== "none" ? new DOMMatrix(m) : null;
+  const a = mm ? (Math.atan2(mm.b, mm.a) * 180) / Math.PI : +fanCard.dataset.angle;
   const target = slot.box.getBoundingClientRect();
   const dx = target.left + target.width / 2 - cx;
   const dy = target.top + target.height / 2 - cy;
