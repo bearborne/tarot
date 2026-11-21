@@ -183,7 +183,7 @@ function cardsToDust(src, C, dpr) {
       if (u >= 1) { dust[j] = dust[dust.length - 1]; dust.pop(); j--; continue; }
       const fall = Math.pow(u, 1.9);
       const rr = R + (d.r0 * (1 + d.puff * Math.sin(Math.PI * Math.min(1, u * 2.2))) - R) * (1 - fall);
-      const a = d.a0 + twist * d.spin * Math.pow(u, 2.2);
+      const a = d.a0 + twist * (d.spin / portalPace) * Math.pow(u, 2.2);   // (its spiral no quicker on a repeat)
       const x = C.x + Math.cos(a) * rr, y = C.y + Math.sin(a) * rr;
       const age = s - d.born, heat = Math.exp(-age / 0.17);
       let col = mix(mix(d.col, ASH, smooth(age / 0.5) * 0.45), EMBER, heat * 0.85);
@@ -344,7 +344,7 @@ function arcanePortal(points, open) {
   const frames = src.some((p) => p.dust) && $("frames");
   const framesFade = frames && frames.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700 / portalPace, delay: 300 / portalPace, fill: "forwards" });
   // When the window opens, how wide it is, and when it's all over (seconds).
-  const OPEN = 1.15, SHOW = 1.55, END = 2.2, SLOW = 1.4 / portalPace;   // (faster on a repeat: see summonSummary)
+  const OPEN = 1.15, SHOW = 1.55, END = 2.2, SLOW = 1.4 / portalPace;   // (half as long on a repeat: see summonSummary)
   const easeInOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(2 - 2 * p, 3) / 2);
   // As it spins up, the whole circle swells to this much bigger.
   const SWELL = 1.3;
@@ -416,6 +416,9 @@ function arcanePortal(points, open) {
   requestAnimationFrame(function frame(now) {
     // The portal's own clock runs at SLOW: the whole switch takes its time.
     const s = (now - t0) / 1000 / SLOW, dt = last ? Math.min(0.05, s - last) : 0;
+    // What turns (the circle, its energy, the flare) keeps its first-play
+    // pace on a repeat: only the clock is shorter, not the spin quicker.
+    const turnDt = dt / portalPace;
     last = s;
     if (s >= OPEN && !sheet) {
       sheet = open(C) || null;
@@ -506,9 +509,9 @@ function arcanePortal(points, open) {
     // faster as you cross through.
     const whirl = Math.pow(arcSeg(s, OPEN - 0.15, END), 1.4);
     const speed = (0.25 + 0.55 * Math.pow(arcSeg(s, 0.6, OPEN), 1.8) + 2.2 * whirl) * surge * (1 - 0.92 * hold);
-    rot += speed * dt;
+    rot += speed * turnDt;
     // The energy's own clock: it carries on from the table's, then runs up to eight times as fast.
-    pulseT = pulseT === null ? now : pulseT + dt * 1000 * (1 + 1.5 * arcSeg(s, 0.4, OPEN));
+    pulseT = pulseT === null ? now : pulseT + turnDt * 1000 * (1 + 1.5 * arcSeg(s, 0.4, OPEN));
     // Every ring turns slowly at its own pace and in its own direction
     // (PORTAL_SPIN); the table's circle carries on from where each part is.
     const turnOf = (key) => (G ? partTurn(key, now) : 0) + PORTAL_SPIN[key] * rot;
@@ -680,7 +683,7 @@ function arcanePortal(points, open) {
     // The runes igniting: a flare runs round the bands, lighting each rune
     // as it passes, faster every lap as the circle charges. The band's own
     // runes are drawn again, much brighter, through a wedge trailing the flare.
-    flare += (1.2 + 2.2 * Math.pow(charge, 1.6)) * dt;
+    flare += (1.2 + 2.2 * Math.pow(charge, 1.6)) * turnDt;
     const ignite = (0.3 + 0.7 * charge) * fade * (1 - arcSeg(s, OPEN - 0.05, OPEN + 0.2));
     if (ignite > 0.01 && sweep >= 1) {
       const kOut = G ? push : (R1 / R2 + (1 - R1 / R2) * grow) * push;

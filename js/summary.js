@@ -1313,14 +1313,14 @@ function appearWithMagic(sheet, body, C = circleMiddle()) {
 // in it flashes; the empty page fades off the table, and the table's
 // pieces (its bar, each card's place, the buttons) are made again as
 // home's are: dust flies out of the flash and each piece's front lays it down.
-// The first time for a reading it plays in full; after that, three times as
-// fast (as the portal does: see summonSummary).
+// The first time in a visit it plays in full; after that, three times as
+// fast (as the portal goes quicker: see summonSummary).
 // Resolves once the page is gone. (Timers, so a paused page never waits.)
 const BACK_FX = { fly: 300, burn: 480, fade: 220 };
-const backSeen = new Set();
+let backSeen = false;   // (per visit: a fresh page load plays it in full again)
 function vanishWithMagic(sheet) {
-  const key = sheet.readingKey, k = key != null && backSeen.has(key) ? 3 : 1;
-  if (key != null) backSeen.add(key);
+  const k = backSeen ? 3 : 1;
+  backSeen = true;
   const C = circleMiddle();
   sheet.style.pointerEvents = "none";
   // (each card goes whole, picture and labels, as one piece)
@@ -1345,18 +1345,19 @@ function tableParts() {
 // Before the summary opens: the cards' light converges in the middle of
 // the screen, the arcane circle spins up there, and the summary appears
 // through it (arcanePortal, below).
-// The first time a reading's summary opens, the portal plays in full; after
-// that, for that same reading, it plays three times as fast. `key` names the
+// The first time a summary opens in a visit, the portal plays in full; after
+// that, for any reading, it takes half as long, its circle still turning at
+// its first pace. A fresh page load plays it in full again. `key` names the
 // reading (its id in the history, or the reading itself before it's saved).
 // portalPace is read by arcanePortal, emergeCards and appearWithMagic. (The way back keeps its own count.)
 let summoning = false, portalPace = 1;
-const portalSeen = new Set();
+let portalSeen = false;
 function summonSummary(open, key = null) {
   if (calm) { open(false); return; }
   if (summoning) return;   // already on its way
   summoning = true;
-  portalPace = key != null && portalSeen.has(key) ? 3 : 1;
-  if (key != null) portalSeen.add(key);
+  portalPace = portalSeen ? 2 : 1;
+  portalSeen = true;
   // The turned cards on the table; from the History there are none on screen.
   const onTable = S && !$("table").hidden;
   const points = onTable ? S.slots.map((s, i) => {
