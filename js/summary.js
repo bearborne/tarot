@@ -607,11 +607,11 @@ function mirrorItems(entries, nameOf) {
   return items.slice(0, 5);
 }
 
-// What the reading asks: questions for the spread as a whole, then one from
-// each card, headed by the place it holds in the chosen lens. The questions
-// for the whole never name cards (the row of cards above shows them); they
-// quote the cards' own ideas and advice, or count the cards that raised them,
-// so each still belongs to this reading alone.
+// What the reading asks: one short list, the questions that belong most to
+// this spread, drawn from the spread as a whole and from the cards' own
+// questions alike. Each is one plain sentence (no quotes); the spread's own
+// never name cards (the row of cards above shows them) but weave in the
+// cards' ideas and advice, or count the cards that raised them.
 const ELEMENT_ASK = {
   Fire:  ["where is that drive pulling you?", "where could a little more passion or courage help?"],
   Water: ["what are those feelings telling you?", "what would change if you let yourself feel this fully?"],
@@ -624,10 +624,12 @@ function summaryQuestions(entries, lens) {
   const sets = themeSets(entries);
   const lower = (q) => q[0].toLowerCase() + q.slice(1);
   // "One card", "2 of the 5 cards", "Both cards", "All 3 cards" — never names.
-  const who = (idx) => (idx.length === n ? (n === 2 ? "Both cards" : `All ${n} cards`) : idx.length === 1 ? "One card" : `${idx.length} of the ${n} cards`);
-  const verb = (idx, one, many) => (idx.length === 1 ? one : many);
+  const who = (idx) => (idx.length === n ? (n === 2 ? "both cards" : `all ${n} cards`) : idx.length === 1 ? "one card" : `${idx.length} of the ${n} cards`);
   const kw = (e) => (filled(keywordsFor(e.card, e.reversed))[0] || "").toLowerCase();
+  // Every question is one plain sentence, with how strongly it belongs to
+  // this spread (how many cards stand behind it).
   const whole = [];
+  const ask = (q, score) => whole.push({ q, score });
 
   // Two cards' key ideas that meet in one theme: quoted, so the question
   // could only come from these two cards.
@@ -635,7 +637,10 @@ function summaryQuestions(entries, lens) {
   const clause = (x, t) => {
     const bits = x.split(/;\s*/);
     const c = bits.find((b) => ideaThemes(b).includes(t)) || bits[0];
-    return /^[A-Z][a-z]+:/.test(c) ? c : c.charAt(0).toLowerCase() + c.slice(1);
+    // Woven into a sentence: no "Love:" lead-in, no capital, no closing stop.
+    // (Inner commas go too: "a cycle near its end, with delays" would break the sentence.)
+    const s = c.replace(/^[A-Z][a-z]+:\s*/, "").replace(/[.;:,\s]+$/, "").replace(/,\s*/g, " ");
+    return s.charAt(0).toLowerCase() + s.slice(1);
   };
   // Stricter than themesOf, since these are quoted: a stem must start a
   // word, and a short one must be (nearly) the whole word ("care", not
@@ -658,113 +663,106 @@ function summaryQuestions(entries, lens) {
     }));
   }));
   if (bridge) {
-    const { i, j, x, y, t: bt } = bridge;
-    whole.push(`“${cap(clause(x, bt))}” and “${clause(y, bt)}”: ${lower(THEME_TEXT[bt][2])}`);
+    const { i, j, t: bt } = bridge;
+    // One sentence: how the two cards read (always a noun phrase, so it
+    // weaves in cleanly), then the question their shared theme raises.
+    const reads = (e) => clause(phrases(e.card, e.reversed).g, bt);
+    // (A comma before the second, since a reading may hold its own "and".)
+    ask(`Between ${reads(entries[i])}, and ${reads(entries[j])}, ${lower(THEME_TEXT[bt][2])}`, 10);
   }
 
   // The lens's challenge and advice, in the card's own words.
   const placeAt = (p) => (lens ? lens.places.indexOf(p) : -1);
   const ci = placeAt("challenge"), ai = placeAt("advice");
-  if (ci >= 0) whole.push(`The challenge, ${phrases(entries[ci].card, entries[ci].reversed).c}: what makes that hard right now?`);
+  if (ci >= 0) ask(`Where is ${phrases(entries[ci].card, entries[ci].reversed).c} asking the most of you right now?`, 8);
   if (ai >= 0) {
-    whole.push(`The advice, ${phrases(entries[ai].card, entries[ai].reversed).a}: what would that look like this week?`);
+    ask(`What would it look like this week to ${phrases(entries[ai].card, entries[ai].reversed).a}?`, 8);
   } else if (n >= 2) {
     // No advice place: the first and last cards' advice, side by side.
     const [a1, a2] = [entries[0], entries[n - 1]].map((e) => (e.card.inReading || {})[e.reversed ? "reversedAdvice" : "advice"] || (e.card.inReading || {}).advice);
-    if (a1 && a2 && a1 !== a2) whole.push(`${cap(a1)}, or ${a2}: which comes first?`);
+    if (a1 && a2 && a1 !== a2) ask(`Is it time to ${a1.replace(/[.;\s]+$/, '')}, or to ${a2.replace(/[.;\s]+$/, '')}?`, 6);
   }
 
   themes.slice(0, 3).forEach((t) => {
     if (bridge && bridge.t === t) return;   // already asked, in the cards' own ideas
     const idx = whichCards(entries, (e, i) => sets[i].has(t));
     const what = t === "heart" ? "the heart" : THEME_TEXT[t][0].toLowerCase();
-    if (idx.length < n || n <= 3) whole.push(`${who(idx)} ${verb(idx, "speaks", "speak")} of ${what}: ${lower(THEME_TEXT[t][2])}`);
+    if (idx.length < n || n <= 3) ask(`With ${who(idx)} speaking of ${what}, ${lower(THEME_TEXT[t][2])}`, idx.length * 2 + (idx.length === n ? 1 : 0));
   });
   const t = tensionsOf(entries)[0];
-  if (t) whole.push(cap(t.ask));
+  if (t) ask(cap(t.ask), 5);
   if (n >= 3) {
-    // By the first and last cards' key words ("How does conflict lead to teamwork?").
+    // By the first and last cards' key words ("How could conflict lead to teamwork?").
     const [f0, fN] = [kw(entries[0]), kw(entries[n - 1])];
-    if (f0 && fN && f0 !== fN) whole.push(`How does ${f0} lead to ${fN}?`);
+    if (f0 && fN && f0 !== fN) ask(`How could ${f0} lead to ${fN}?`, 4);
   }
   if (topEl && els[topEl] >= 2) {
     const idx = whichCards(entries, (e) => elementFor(e.card) === topEl);
-    whole.push(`${who(idx)} ${verb(idx, "carries", "carry")} ${topEl}: ${ELEMENT_ASK[topEl][0]}`);
+    ask(`With ${who(idx)} carrying ${topEl}, ${ELEMENT_ASK[topEl][0]}`, idx.length * 1.5);
   }
   const missing = Object.keys(ELEMENT_ASK).filter((x) => !els[x]);
-  if (n >= 4 && missing.length === 1) whole.push(`No ${missing[0]} among ${n} cards: ${ELEMENT_ASK[missing[0]][1]}`);
+  if (n >= 4 && missing.length === 1) ask(`With no ${missing[0]} among ${n} cards, ${ELEMENT_ASK[missing[0]][1]}`, 3);
   if (majors >= 2 && majors >= Math.ceil(n / 2)) {
-    whole.push(`${who(whichCards(entries, (e) => isMajorCard(e.card)))} are Major Arcana: what larger lesson is this chapter teaching?`);
+    ask(`With ${who(whichCards(entries, (e) => isMajorCard(e.card)))} in the Major Arcana, what larger lesson is this chapter teaching?`, majors * 1.5);
   }
   if (revs && revs >= Math.ceil(n / 2)) {
-    whole.push(`${who(whichCards(entries, (e) => e.reversed))} ${revs > 1 ? "are" : "is"} reversed: what is still forming, and needs time rather than pressure?`);
+    ask(`With ${who(whichCards(entries, (e) => e.reversed))} reversed, what is still forming, and needs time rather than pressure?`, revs * 1.5);
   }
   // Two figures facing each other.
   const nameOf = (i) => (lens ? placeName(lens, i, entries[i]) : entries[i].label || "");
   const f = entries.map(facingOf);
   const meet = f.findIndex((d, i) => d === "right" && f[i + 1] === "left");
-  if (meet >= 0 && nameOf(meet) && nameOf(meet + 1)) whole.push(`What are ${nameOf(meet)} and ${nameOf(meet + 1)} saying to each other?`.replace(/ The /g, " the "));
+  if (meet >= 0 && nameOf(meet) && nameOf(meet + 1)) ask(`What are ${nameOf(meet)} and ${nameOf(meet + 1)} saying to each other?`.replace(/ The /g, " the "), 5);
 
-  // As many questions for the reading as it has cards (each card asks one too).
-  const asked = [...new Set(whole)].slice(0, n);
-  const used = new Set(asked);
-  // Each card's question: the one that speaks most to the other cards
-  // (their keywords, key ideas and how they read) and to this card's own
-  // connecting ideas. Ties keep the card's own order.
+  // The cards' own questions join the same list, scored by how many of the
+  // other cards share their themes (keywords, key ideas, how they read),
+  // plus one for this card's own connecting ideas. A question that touches
+  // no other card scores low and rarely makes the cut.
   const rich = entries.map((e) => {
     const { ideas, nuances } = ideasFor(e.card, e.reversed);
     const { g, a, c } = phrases(e.card, e.reversed);
     return new Set([...filled(keywordsFor(e.card, e.reversed)), ...ideas, ...nuances, g, a, c].flatMap(themesOf));
   });
-  const each = entries.map((e, i) => {
+  entries.forEach((e, i) => {
     const mine = new Set(linked[i].flatMap(themesOf));
-    const scored = filled(questionsFor(e.card, e.reversed)).filter((x) => !used.has(x)).map((x, k) => {
-      const ts = themesOf(x);
-      const score = ts.reduce((s, t) => s + rich.filter((r, j) => j !== i && r.has(t)).length + (mine.has(t) ? 1 : 0), 0);
-      return { x, score, k };
-    }).sort((p, q) => q.score - p.score || p.k - q.k);
-    let q = scored.length ? scored[0].x : "";
-    // Out of questions: ask how to follow the card's advice.
-    if (!q) { const a = (e.card.inReading || {})[e.reversed ? "reversedAdvice" : "advice"]; q = a ? `What would it look like to ${a}?` : ""; }
-    if (!q || used.has(q)) return null;
-    used.add(q);
-    return { head: lens ? placeName(lens, i, e) : e.label || e.card.name, text: q };
-  }).filter(Boolean);
-  return { whole: asked, each };
-}
-// The questions, in two boxes: the reading's own, and one from each card.
-function fillSummaryAsks(wholeBox, eachBox, entries, lens) {
-  if (entries.length === 1) {
-    // One card: its own questions, in one box.
-    const e = entries[0];
-    const qs = filled(questionsFor(e.card, e.reversed)).slice(0, 3);
-    wholeBox.innerHTML = "";
-    wholeBox.hidden = !qs.length;
-    const ul = el("ul");
-    qs.forEach((q) => ul.append(el("li", "", q)));
-    wholeBox.append(el("p", "asks-title", "The card asks"), ul);
-    eachBox.innerHTML = "";
-    eachBox.hidden = true;
-    return;
-  }
-  const { whole, each } = summaryQuestions(entries, lens);
-  wholeBox.innerHTML = "";
-  wholeBox.hidden = !whole.length;
-  wholeBox.append(el("p", "asks-title", "The reading asks"));
-  const ul = el("ul");
-  whole.forEach((q) => ul.append(el("li", "", q)));
-  wholeBox.append(ul);
-  eachBox.innerHTML = "";
-  eachBox.hidden = !each.length;
-  if (!each.length) return;
-  eachBox.append(el("p", "asks-title", "Each card asks"));
-  const ul2 = el("ul", "asks-each");
-  each.forEach(({ head, text }) => {
-    const li = el("li");
-    li.append(el("strong", "", head), el("span", "", text));
-    ul2.append(li);
+    filled(questionsFor(e.card, e.reversed)).forEach((q) => {
+      const ts = themesOf(q);
+      const others = rich.filter((r, j) => j !== i && ts.some((t) => r.has(t))).length;
+      whole.push({ q, score: others * 2 + (ts.some((t) => mine.has(t)) ? 1 : 0), card: i });
+    });
   });
-  eachBox.append(ul2);
+
+  // The strongest few, one list: a question whose themes were already
+  // asked about drops back, and each card gives at most one of its own.
+  const count = Math.min(Math.max(3, n + 1), 5);
+  const pool = whole.map((w, k) => ({ ...w, k, ts: themesOf(w.q) }));
+  const picked = [], seen = new Set(), cardsUsed = new Set(), covered = new Set();
+  while (picked.length < count) {
+    let best = null, bestScore = -Infinity;
+    pool.forEach((w) => {
+      if (seen.has(w.q) || (w.card !== undefined && cardsUsed.has(w.card))) return;
+      const s = w.score - (w.ts.length && w.ts.every((t) => covered.has(t)) ? 4 : 0);
+      if (s > bestScore || (s === bestScore && w.k < best.k)) { best = w; bestScore = s; }
+    });
+    if (!best) break;
+    picked.push(best.q);
+    seen.add(best.q);
+    if (best.card !== undefined) cardsUsed.add(best.card);
+    best.ts.forEach((t) => covered.add(t));
+  }
+  return picked;
+}
+// The questions, in one box: for one card, its own; for a spread, the
+// strongest of the reading's and the cards' questions together.
+function fillSummaryAsks(box, entries, lens) {
+  const one = entries.length === 1;
+  const e = entries[0];
+  const qs = one ? filled(questionsFor(e.card, e.reversed)).slice(0, 3) : summaryQuestions(entries, lens);
+  box.innerHTML = "";
+  box.hidden = !qs.length;
+  const ul = el("ul");
+  qs.forEach((q) => ul.append(el("li", "", q)));
+  box.append(el("p", "asks-title", one ? "The card asks" : "The reading asks"), ul);
 }
 
 // Buttons that belong together stay one line each, all at the same size:
@@ -1076,14 +1074,13 @@ function openSummary(entries, title, magic = false, named = null) {
   //   left:  the reading (shared words right under its title, then the
   //          arc line, number arcs included), themes
   //   right: symbols, gaze, mirrors & tensions, elements
-  //   below: the reading asks (left), each card asks (right)
+  //   below: what the reading asks (one list)
   // Slots marked "lens" are refilled when the lens changes.
   const leftCol = el("div", "sum-col"), rightCol = el("div", "sum-col");
   const lensPart = el("div", "sum-slot");     // lens
   const gazeSlot = el("div", "sum-slot");     // lens
   const mirrorSlot = el("div", "sum-slot");   // lens
   const asks = el("div", "asks summary-asks");
-  const asksEach = el("div", "asks summary-asks");
   const spreadArc = arcBits(entries);
   // The patterns that don't depend on the lens, by their titles.
   const patterns = {};
@@ -1096,6 +1093,7 @@ function openSummary(entries, title, magic = false, named = null) {
   const linked = connectedIdeas(entries);
   let lens = laidOut;
   let topic = null;           // the topic whose themes are listed, or null for the topics
+  let menuOpen = false;       // the themes are shown only once "Select a theme" is pressed
   let placeAsks = () => {};   // set once the columns are built (below)
   const render = () => {
     drawLensBox();
@@ -1111,7 +1109,7 @@ function openSummary(entries, title, magic = false, named = null) {
     const arc = spreadArc.length ? `${cap(spreadArc.join(", "))}.` : "";
     fill(gazeSlot, gazePart(entries, nameOf));
     fill(mirrorSlot, part("Mirrors & tensions", mirrorItems(entries, nameOf), { tiles: true, wrap: true }));
-    fillSummaryAsks(asks, asksEach, entries, lens);
+    fillSummaryAsks(asks, entries, lens);
     lensPart.innerHTML = "";
     if (lens) {
       // One section: the arc of the whole spread on top, then each card in
@@ -1154,9 +1152,19 @@ function openSummary(entries, title, magic = false, named = null) {
       b.addEventListener("click", go);
       return b;
     };
-    const pick = (l) => () => { lens = l; render(); };
-    if (laidOut) lensBox.append(btn("As laid out", lens === laidOut, pick(laidOut)));
-    else lensBox.append(btn("No theme", !lens, pick(null)));
+    // Picking a way of reading closes the theme menu.
+    const pick = (l) => () => { lens = l; menuOpen = false; topic = null; render(); };
+    // One line: the plain reading, and a button that opens the themes
+    // (named after the chosen theme, when there is one).
+    const row = el("div", "lens-row");
+    row.append(laidOut ? btn("As laid out", lens === laidOut, pick(laidOut)) : btn("No theme", !lens, pick(null)));
+    const chosen = lens && lens.theme;
+    const toggle = btn(`${chosen ? chosen.name : "Select a theme"} ${menuOpen ? "▴" : "▾"}`, !!chosen,
+      () => { menuOpen = !menuOpen; topic = null; drawLensBox(); }, "lens-btn lens-open");
+    toggle.setAttribute("aria-expanded", menuOpen ? "true" : "false");
+    row.append(toggle);
+    lensBox.append(row);
+    if (!menuOpen) { fitOneLine([...row.querySelectorAll(".lens-btn")]); return; }
     if (!topic) {
       // The topics, as small tiles; the one holding the chosen theme is marked.
       const grid = el("div", "lens-topics");
@@ -1180,27 +1188,20 @@ function openSummary(entries, title, magic = false, named = null) {
   put(leftCol, lensPart, sectionOf("Themes"));
   put(rightCol, sectionOf("Symbols"), gazeSlot, mirrorSlot, sectionOf("Elements"));
   const asksRow = el("div", "sum-asks");
-  asksRow.append(asks, asksEach);
+  asksRow.append(asks);
   main.append(leftCol, rightCol, asksRow);
   if (named) main.append(reflectionPart(named.id));
   // LAYOUT RULE: no empty space under the shorter column on a wide screen.
-  // Each question box closes its own column (the reading's on the left,
-  // each card's on the right) and stretches down to meet the other column;
-  // a lone box goes under a clearly shorter column, else full width below.
-  // On a phone they stay below.
+  // The question box goes under a clearly shorter column, else full width
+  // below both. On a phone it stays below.
   const wide = matchMedia("(min-width: 1340px)");
   placeAsks = () => {
-    asksRow.append(asks, asksEach);
-    if (!wide.matches) return;
-    const shown = [asks, asksEach].filter((b) => !b.hidden);
-    if (shown.length === 2) { leftCol.append(asks); rightCol.append(asksEach); }
-    else if (shown.length === 1) {
-      // (The columns stretch to the same height, so measure what's in them.)
-      const filled = (col) => Math.max(0, ...[...col.children].map((c) => c.getBoundingClientRect().bottom));
-      // Columns already near level: the box stays full width below them.
-      const l = filled(leftCol), r = filled(rightCol);
-      if (Math.abs(l - r) > 120) (l < r ? leftCol : rightCol).append(shown[0]);
-    }
+    asksRow.append(asks);
+    if (!wide.matches || asks.hidden) return;
+    // (The columns stretch to the same height, so measure what's in them.)
+    const filled = (col) => Math.max(0, ...[...col.children].map((c) => c.getBoundingClientRect().bottom));
+    const l = filled(leftCol), r = filled(rightCol);
+    if (Math.abs(l - r) > 120) (l < r ? leftCol : rightCol).append(asks);
   };
   wide.addEventListener("change", placeAsks);
 

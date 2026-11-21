@@ -1675,6 +1675,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (hover: hover) {
   .lens-btn:hover { border-color: rgba(201, 169, 110, .7); color: var(--ink); }
 }
+/* The plain reading and the theme menu's button, side by side */
+.lens-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 /* The table's themes, in two steps: topics as small tiles, then a topic's themes */
 .lens-topics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
 .lens-topic { padding: 7px 4px; font-size: .85rem; text-overflow: ellipsis; }
