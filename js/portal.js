@@ -7,9 +7,9 @@
 // and brighter, its runes blurring. At its height the middle opens like a
 // window: the summary shows inside the rune ring, then the window widens
 // and pushes the circle outward until the summary fills the screen.
-// The cards themselves are swallowed: each is drawn along its streak into
-// the spinning circle, shrinking and twisting as it falls in, and once the
-// window opens they fly back out of it to their places on the summary.
+// The cards themselves crumble to dust where they lie, and the black hole
+// at the circle's heart draws the dust in (cardsToDust); once the window
+// opens they fly back out of it to their places on the summary.
 // open() must return the summary's sheet, which is revealed through the window.
 
 // A copy of an element, fixed exactly over it, for flying about the screen.
@@ -28,6 +28,188 @@ function flyingCopy(src, z, look = src) {
   c.append(copy);
   document.body.append(c);
   return { c, x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+// The turned cards on the table crumbling to dust where they lie, as the
+// fan does round the card of the day (dustToWords, in js/home.js): each
+// from its edge nearest the circle outward, a ragged, glowing front eating
+// across it, its pieces lifting off as fine dust in the card's own colours,
+// blown out a little, then caught by the black hole and drawn in, spiralling
+// faster and faster, violet as they near the dark.
+// On a canvas of its own, above the portal's light (where the cards were).
+// Times are the portal's (s, in its own seconds: see arcanePortal).
+const PORTAL_DUST = { from: 0.12, stagger: 0.07, crumble: 0.5, fall: [0.45, 0.7], by: 1.25, perPx: LITE ? 30 : 14, most: LITE ? 260 : 520 };
+function cardsToDust(src, C, dpr) {
+  const W = innerWidth, H = innerHeight, TAU = Math.PI * 2;
+  const r = (a, b) => a + Math.random() * (b - a);
+  const smooth = (v) => { v = Math.min(1, Math.max(0, v)); return v * v * (3 - 2 * v); };
+  const twist = Math.random() < 0.5 ? -1 : 1;
+  const cards = [];
+  src.forEach((p) => {
+    if (!p.el || !p.el.isConnected) return;
+    const face = p.el.querySelector(".cface"), im = face?.querySelector("img");
+    if (!face) return;
+    const b = face.getBoundingClientRect();
+    if (b.width < 2 || b.height < 2) return;
+    const flip = face.classList.contains("reversed");
+    // Its picture, as it shows.
+    const pic = document.createElement("canvas");
+    pic.width = Math.ceil(b.width * dpr); pic.height = Math.ceil(b.height * dpr);
+    const x = pic.getContext("2d");
+    x.scale(dpr, dpr);
+    x.beginPath();
+    x.roundRect ? x.roundRect(0, 0, b.width, b.height, 7) : x.rect(0, 0, b.width, b.height);
+    x.clip();
+    x.fillStyle = im ? "#1a1714" : getComputedStyle(face).backgroundColor || "#e9e2d3";
+    x.fillRect(0, 0, b.width, b.height);
+    if (im?.complete && im.naturalWidth) {
+      x.save();
+      if (flip) { x.translate(b.width, b.height); x.rotate(Math.PI); }
+      x.drawImage(im, 0, 0, b.width, b.height);
+      x.restore();
+    }
+    // Its colours, small, for the dust.
+    let px = null;
+    try {
+      const c = document.createElement("canvas");
+      c.width = 12; c.height = 20;
+      const y = c.getContext("2d");
+      y.drawImage(pic, 0, 0, 12, 20);
+      px = y.getImageData(0, 0, 12, 20).data;
+    } catch {}
+    const cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+    cards.push({ cx, cy, W: b.width, H: b.height, pic, px, p: 0,
+      dir: Math.sign(cx - C.x) || 1, ph: [r(0, TAU), r(0, TAU), r(0, TAU)],
+      count: Math.round(Math.min(PORTAL_DUST.most, Math.max(90, (b.width * b.height) / PORTAL_DUST.perPx))) });
+    p.dust = true;
+    p.el.style.visibility = "hidden";   // (the picture takes its place)
+  });
+  // The nearest the circle first.
+  cards.sort((a, b) => Math.hypot(a.cx - C.x, a.cy - C.y) - Math.hypot(b.cx - C.x, b.cy - C.y));
+  cards.forEach((cd, i) => { cd.start = PORTAL_DUST.from + Math.min(i, 9) * PORTAL_DUST.stagger; });
+  if (!cards.length) return null;
+
+  const cv = el("canvas", "portal-dust");
+  cv.setAttribute("aria-hidden", "true");
+  cv.width = W * dpr; cv.height = H * dpr;
+  Object.assign(cv.style, { position: "fixed", inset: "0", width: "100%", height: "100%", pointerEvents: "none", zIndex: 9001 });
+  document.body.append(cv);
+  const ctx = cv.getContext("2d");
+
+  const spot = document.createElement("canvas");
+  spot.width = spot.height = 32;
+  {
+    const x = spot.getContext("2d"), g = x.createRadialGradient(16, 16, 0, 16, 16, 16);
+    g.addColorStop(0, "rgba(255, 246, 220, 1)");
+    g.addColorStop(0.25, "rgba(255, 214, 140, .55)");
+    g.addColorStop(1, "rgba(255, 170, 80, 0)");
+    x.fillStyle = g;
+    x.fillRect(0, 0, 32, 32);
+  }
+
+  // How far a card's crumbling has eaten across it at height ly (its own x of the front).
+  const front = (cd, p, ly) => {
+    const rag = 0.075 * cd.W * (Math.sin(ly * 0.09 + cd.ph[0]) + 0.6 * Math.sin(ly * 0.23 + cd.ph[1]) + 0.35 * Math.sin(ly * 0.53 + cd.ph[2])) / 1.95;
+    return -cd.dir * cd.W / 2 + cd.dir * (p * cd.W * 1.3 - 0.15 * cd.W + rag + 0.08 * cd.W * (ly / cd.H));
+  };
+  const colourAt = (cd, lx, ly) => {
+    if (!cd.px) return [201, 169, 110];
+    const fx = Math.min(1, Math.max(0, lx / cd.W + 0.5)), fy = Math.min(1, Math.max(0, ly / cd.H + 0.5));
+    const i = (Math.min(19, Math.floor(fy * 20)) * 12 + Math.min(11, Math.floor(fx * 12))) * 4;
+    return [cd.px[i], cd.px[i + 1], cd.px[i + 2]];
+  };
+  const dust = [];
+  function shed(s, cd, p0, p1) {
+    const n = Math.round(cd.count * (p1 - p0) * 1.3);
+    for (let j = 0; j < n; j++) {
+      const ly = r(-cd.H / 2, cd.H / 2), a = front(cd, p0, ly), b = front(cd, p1, ly);
+      const lx = a + Math.random() * (b - a);
+      if (Math.abs(lx) > cd.W / 2) continue;
+      const x = cd.cx + lx, y = cd.cy + ly, dx = x - C.x, dy = y - C.y;
+      dust.push({ r0: Math.hypot(dx, dy), a0: Math.atan2(dy, dx), born: s,
+        dur: Math.max(0.15, Math.min(r(...PORTAL_DUST.fall), PORTAL_DUST.by - s)),
+        size: r(0.7, 2.1), col: colourAt(cd, lx, ly), puff: r(0.08, 0.28), spin: r(1.8, 3), glow: Math.random() < 0.35, x, y });
+    }
+  }
+  const ASH = [150, 140, 196], EMBER = [255, 214, 150], VIOLET = [190, 140, 255];
+  const mix = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  const STEPS = 26;
+
+  // One moment of it: `s` the portal's time, `R` the hole's edge.
+  function draw(s, R) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cards.forEach((cd) => {
+      const u = Math.min(1, Math.max(0, (s - cd.start) / PORTAL_DUST.crumble));
+      const p = smooth(u) * 0.6 + 0.4 * u;
+      if (p > cd.p) { shed(s, cd, cd.p, p); cd.p = p; }
+      if (cd.p >= 1) return;
+      const ys = Array.from({ length: STEPS + 1 }, (_, j) => -cd.H / 2 - 2 + ((cd.H + 4) * j) / STEPS);
+      const edge = () => ys.forEach((ly, j) => (j ? ctx.lineTo(front(cd, cd.p, ly), ly) : ctx.moveTo(front(cd, cd.p, ly), ly)));
+      ctx.save();
+      ctx.translate(cd.cx, cd.cy);
+      ctx.save();
+      ctx.beginPath();
+      edge();
+      ctx.lineTo(cd.dir * (cd.W / 2 + 6), cd.H / 2 + 2);
+      ctx.lineTo(cd.dir * (cd.W / 2 + 6), -cd.H / 2 - 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(cd.pic, -cd.W / 2, -cd.H / 2, cd.W, cd.H);
+      ctx.restore();
+      // The front glows as it eats in: a ragged line of embers.
+      if (cd.p > 0) {
+        ctx.beginPath();
+        ctx.rect(-cd.W / 2, -cd.H / 2, cd.W, cd.H);
+        ctx.clip();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.lineCap = ctx.lineJoin = "round";
+        const glow = Math.sin(Math.PI * Math.min(1, cd.p * 1.15));
+        [[7, 0.35], [2.4, 0.7], [0.9, 1]].forEach(([lw, a]) => {
+          ctx.strokeStyle = `rgba(255, ${lw > 2 ? 170 : 226}, ${lw > 2 ? 90 : 170}, ${(a * glow).toFixed(3)})`;
+          ctx.lineWidth = lw;
+          ctx.beginPath();
+          edge();
+          ctx.stroke();
+        });
+      }
+      ctx.restore();
+    });
+    // The grains: blown out a little, then caught, each spiralling in,
+    // quicker and quicker, until it's gone into the dark.
+    for (let j = 0; j < dust.length; j++) {
+      const d = dust[j], u = (s - d.born) / d.dur;
+      if (u >= 1) { dust[j] = dust[dust.length - 1]; dust.pop(); j--; continue; }
+      const fall = Math.pow(u, 1.9);
+      const rr = R + (d.r0 * (1 + d.puff * Math.sin(Math.PI * Math.min(1, u * 2.2))) - R) * (1 - fall);
+      const a = d.a0 + twist * d.spin * Math.pow(u, 2.2);
+      const x = C.x + Math.cos(a) * rr, y = C.y + Math.sin(a) * rr;
+      const age = s - d.born, heat = Math.exp(-age / 0.17);
+      let col = mix(mix(d.col, ASH, smooth(age / 0.5) * 0.45), EMBER, heat * 0.85);
+      col = mix(col, VIOLET, smooth((u - 0.45) / 0.55));
+      const al = (0.6 + 0.4 * heat) * (1 - smooth((u - 0.85) / 0.15));
+      const size = d.size * (1 - 0.35 * fall);
+      if (u > 0.4) {
+        ctx.strokeStyle = `rgba(${col[0] | 0}, ${col[1] | 0}, ${col[2] | 0}, ${(0.45 * al).toFixed(3)})`;
+        ctx.lineWidth = size * 0.8;
+        ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(x, y); ctx.stroke();
+      }
+      d.x = x; d.y = y;
+      ctx.fillStyle = `rgba(${col[0] | 0}, ${col[1] | 0}, ${col[2] | 0}, ${al.toFixed(3)})`;
+      ctx.fillRect(x - size / 2, y - size / 2, size, size);
+      const gl = d.glow ? Math.max(heat * 0.5, 0.3 * Math.sin(Math.PI * u)) : heat * 0.25;
+      if (gl > 0.03) {
+        const gr = size * 3 + 2;
+        ctx.globalCompositeOperation = "lighter";
+        ctx.globalAlpha = Math.min(1, gl * al);
+        ctx.drawImage(spot, x - gr, y - gr, gr * 2, gr * 2);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = "source-over";
+      }
+    }
+  }
+  return { draw, remove: () => cv.remove() };
 }
 
 // The cards coming back out of the portal: each flies from its heart,
@@ -154,21 +336,13 @@ function arcanePortal(points, open) {
   const ctx = cv.getContext("2d"), vctx = veilCv.getContext("2d"), cctx = circCv.getContext("2d");
   [ctx, vctx, cctx].forEach((x) => x.setTransform(dpr, 0, 0, dpr, 0, 0));
 
-  // The turned cards, lifted off the table to be swallowed (copies above
-  // the light; the real ones wait, hidden, under the summary).
-  src.forEach((p) => {
-    if (!p.el || !p.el.isConnected) return;
-    // Only the card's face flies: the table card is a 3D flip, which a glow would flatten.
-    p.fly = flyingCopy(p.el, 9001, p.el.querySelector(".cface") || p.el).c;
-    p.el.style.visibility = "hidden";
-  });
+  // The turned cards crumble to dust where they lie, and the black hole takes
+  // the dust (pictures of them above the light; the real ones wait, hidden,
+  // under the summary).
+  const cardDust = cardsToDust(src, C, dpr);
   // The top layer (above the cards) fades as the cards leave.
-  const frames = src.some((p) => p.fly) && $("frames");
+  const frames = src.some((p) => p.dust) && $("frames");
   const framesFade = frames && frames.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 700 / portalPace, delay: 300 / portalPace, fill: "forwards" });
-  // When each card starts falling in, and when it's gone (seconds).
-  // (The window opens just as the first card is swallowed: no waiting.)
-  const fall = (i) => [0.2 + i * 0.05, OPEN - 0.05 + i * 0.04];
-
   // When the window opens, how wide it is, and when it's all over (seconds).
   const OPEN = 1.15, SHOW = 1.55, END = 2.2, SLOW = 1.4 / portalPace;   // (faster on a repeat: see summonSummary)
   const easeInOut = (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(2 - 2 * p, 3) / 2);
@@ -291,36 +465,14 @@ function arcanePortal(points, open) {
     }
     ctx.globalCompositeOperation = "lighter";
 
-    // Streaks of light from the cards, swirling in to the middle. A card
-    // rides its streak, slowly at first, then faster as the circle pulls
-    // it in, shrinking and twisting until it's gone in a flash at the heart.
+    // Streaks of light from the cards, swirling in to the middle (the cards
+    // themselves go to dust: see cardsToDust).
     src.forEach((p, i) => {
-      const [f0, f1] = fall(i);
-      const u = p.fly ? arcSeg(s, f0, f1) : arcSeg(s, i * 0.05, 0.55 + i * 0.05);
-      const e = p.fly ? Math.pow(u, 2.3) : easeIO(u);
+      const u = arcSeg(s, i * 0.05, 0.55 + i * 0.05);
+      const e = easeIO(u);
       const dx = C.x - p.x, dy = C.y - p.y;
       const m = { x: (p.x + C.x) / 2 - dy * 0.35, y: (p.y + C.y) / 2 + dx * 0.35 };
       const at = (v) => ({ x: (1 - v) * (1 - v) * p.x + 2 * (1 - v) * v * m.x + v * v * C.x, y: (1 - v) * (1 - v) * p.y + 2 * (1 - v) * v * m.y + v * v * C.y });
-      if (p.fly) {
-        const h = at(e);
-        const turn = (i % 2 ? -1 : 1) * 620 * Math.pow(e, 1.4);
-        const sc = Math.max(0.02, 1 - 0.97 * Math.pow(e, 0.75));
-        // a trembling lift before it lets go of the table
-        const shake = u === 0 && s > f0 - 0.3 ? Math.sin(s * 90 + i) * 1.5 * arcSeg(s, f0 - 0.3, f0) : 0;
-        p.fly.style.transform = `translate(${h.x - p.x + shake}px, ${h.y - p.y}px) rotate(${turn}deg) scale(${sc})`;
-        p.fly.style.opacity = String(1 - arcSeg(e, 0.82, 1));
-        p.fly.style.filter = `brightness(${1 + 1.6 * e})`;
-        // the flash as the circle takes it
-        const gone = arcSeg(s, f1, f1 + 0.35);
-        if (gone > 0 && gone < 1) {
-          glint(ctx, C.x, C.y, 16 * (1 - gone) + 6, Math.sin(Math.PI * gone));
-          ctx.strokeStyle = `rgba(${ARC_CORE}, ${0.5 * (1 - gone)})`;
-          ctx.lineWidth = 1.2;
-          ctx.beginPath();
-          ctx.arc(C.x, C.y, R1 * 0.15 + R1 * 0.5 * gone, 0, Math.PI * 2);
-          ctx.stroke();
-        }
-      }
       if (p.h && u < 0.4) {
         const q = u / 0.4;
         ctx.strokeStyle = `rgba(${ARC_CORE}, ${0.7 * (1 - q)})`;
@@ -340,7 +492,7 @@ function arcanePortal(points, open) {
         ctx.lineTo(b.x, b.y);
         ctx.stroke();
       }
-      if (!p.fly) { const h = at(e); glint(ctx, h.x, h.y, 7, 1); }
+      { const h = at(e); glint(ctx, h.x, h.y, 7, 1); }
     });
 
     // The circle quickens gently as it charges, then whirls up as the window
@@ -834,6 +986,8 @@ function arcanePortal(points, open) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.drawImage(circCv, 0, 0);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // The cards crumbling, and their dust falling into the dark.
+    cardDust?.draw(s, Math.max(hr * 0.95, R1 * 0.12));
 
     if (s < END) requestAnimationFrame(frame);
     else {
@@ -842,7 +996,8 @@ function arcanePortal(points, open) {
       veilCv.remove();
       circCv.remove();
       if (sheet) { sheet.style.clipPath = ""; sheet.style.transform = ""; sheet.style.transformOrigin = ""; }
-      src.forEach((p) => { if (p.fly) { p.fly.remove(); p.el.style.visibility = ""; } });
+      cardDust?.remove();
+      src.forEach((p) => { if (p.dust) p.el.style.visibility = ""; });
       if (framesFade) framesFade.cancel();
       MG.portal = false;   // the table draws its circle again, behind the summary
     }

@@ -8,6 +8,8 @@
 // glowing front of embers eats across it and its pieces lift off as fine
 // dust in the page's own colours, hot, then ash, then caught by the hole,
 // each grain spiralling in, faster and faster, violet as it nears the dark.
+// The cards on the page don't go in whole: each is lifted off the picture
+// and crumbles to dust where it is, first of all, its dust caught by the hole.
 // Streaks of light spiral in from beyond the screen and the view trembles.
 // The moment the last grain goes in, that's the end: the home screen is
 // simply there, its night sky filling the screen, and its title, cards and
@@ -63,6 +65,10 @@ function landHome() {
 const GREAT_FX = { form: 520, pullFrom: 160, pullMs: 1450, tailMs: 220, flareMs: 720, flareStep: 45 };
 // The dust: how many grains a whole screen makes, and how long one takes to fall in.
 const GREAT_DUST = { grains: LITE ? 1400 : 3200, fallMs: [650, 1150] };
+// The cards on the page crumbling to dust where they are, before the page
+// itself goes: when the first starts, how far apart the others do, how long
+// one takes, and its grains (one for about this many square pixels, at most `most`).
+const CARD_DUST = { from: 120, stagger: 110, crumble: 760, perPx: LITE ? 34 : 16, most: LITE ? 260 : 560 };
 
 let swallowing = false;
 async function swallowHome(btn) {
@@ -85,7 +91,21 @@ async function swallowHome(btn) {
     }
   }
   if (snap && !(snap.width && snap.height)) snap = null;
-  playGreatHole(snap, dpr, colours);
+  playGreatHole(snap, dpr, colours, snap ? cardsOn(sheet) : []);
+}
+
+// The cards showing on a page (their pictures), where they are on the screen:
+// they don't go in with the page, they turn to dust first.
+function cardsOn(sheet) {
+  return [...sheet.querySelectorAll("img")].map((im) => {
+    const b = im.getBoundingClientRect();
+    if (!im.complete || !im.naturalWidth || b.width < 24 || b.height < b.width * 1.2) return null;
+    if (b.bottom < 0 || b.top > innerHeight || b.right < 0 || b.left > innerWidth) return null;
+    if (getComputedStyle(im).visibility === "hidden") return null;
+    const holder = im.parentElement, cs = getComputedStyle(im), hs = holder ? getComputedStyle(holder) : null;
+    const round = parseFloat(cs.borderTopLeftRadius) || (hs && Math.abs(holder.offsetWidth - b.width) < 2 ? parseFloat(hs.borderTopLeftRadius) || 0 : 0);
+    return { x: b.left, y: b.top, w: b.width, h: b.height, round };
+  }).filter(Boolean).slice(0, 12);
 }
 
 // The page's colours across the screen, on a coarse grid, read from the
@@ -148,7 +168,7 @@ function pageColours() {
   };
 }
 
-function playGreatHole(snap, dpr, colours = null) {
+function playGreatHole(snap, dpr, colours = null, cardRects = []) {
   const W = innerWidth, H = innerHeight, TAU = Math.PI * 2;
   const C = { x: W / 2, y: H / 2 };
   const far = Math.hypot(W / 2, H / 2) + 8, base = Math.min(W, H);
@@ -201,6 +221,71 @@ function playGreatHole(snap, dpr, colours = null) {
     if (!px) return colours ? colours(lx, ly) : PALETTE[(Math.random() * PALETTE.length) | 0];
     const i = (Math.min(SH - 1, Math.max(0, Math.floor((ly / H) * SH))) * SW + Math.min(SW - 1, Math.max(0, Math.floor((lx / W) * SW)))) * 4;
     return [px[i], px[i + 1], px[i + 2]];
+  };
+
+  // ── The cards crumbling ──
+  // Each card is lifted off the picture (the page behind it filled in with
+  // the colour beside it) and crumbles away where it is, as the fan does
+  // round the card of the day: from its edge nearest the hole outward, a
+  // ragged, glowing front eating across it, its pieces lifting off as dust
+  // in its own colours, which the hole then catches like the rest.
+  // They're all dust well before the page's own front reaches them.
+  let page = snap;
+  const cards = [];
+  if (snap && cardRects.length) {
+    const kx = snap.width / W, ky = snap.height / H;
+    page = document.createElement("canvas");
+    page.width = snap.width; page.height = snap.height;
+    const pg = page.getContext("2d");
+    pg.drawImage(snap, 0, 0);
+    let sx = null;
+    try { sx = snap.getContext("2d"); } catch {}
+    const n = cardRects.length, spare = EATEN - 250 - CARD_DUST.crumble - CARD_DUST.from;
+    const stagger = n > 1 ? Math.max(0, Math.min(CARD_DUST.stagger, spare / (n - 1))) : 0;
+    // (the nearest the middle first)
+    cardRects.slice().sort((a, b) => Math.hypot(a.x + a.w / 2 - C.x, a.y + a.h / 2 - C.y) - Math.hypot(b.x + b.w / 2 - C.x, b.y + b.h / 2 - C.y))
+      .forEach((c, i) => {
+        const pic = document.createElement("canvas");
+        pic.width = Math.max(1, Math.round(c.w * kx)); pic.height = Math.max(1, Math.round(c.h * ky));
+        pic.getContext("2d").drawImage(snap, c.x * kx, c.y * ky, c.w * kx, c.h * ky, 0, 0, pic.width, pic.height);
+        let cpx = null;
+        try {
+          const s = document.createElement("canvas");
+          s.width = 12; s.height = 20;
+          const x = s.getContext("2d");
+          x.drawImage(pic, 0, 0, 12, 20);
+          cpx = x.getImageData(0, 0, 12, 20).data;
+        } catch {}
+        let bg = [21, 19, 28];
+        try {
+          const bx = Math.min(snap.width - 1, Math.max(0, Math.round((c.x - 5) * kx)));
+          const by = Math.min(snap.height - 1, Math.max(0, Math.round((c.y + c.h / 2) * ky)));
+          const d = sx.getImageData(bx, by, 1, 1).data;
+          bg = [d[0], d[1], d[2]];
+        } catch {}
+        pg.save();
+        pg.scale(kx, ky);
+        pg.fillStyle = `rgb(${bg[0]}, ${bg[1]}, ${bg[2]})`;
+        pg.beginPath();
+        pg.roundRect ? pg.roundRect(c.x - 1, c.y - 1, c.w + 2, c.h + 2, c.round + 1) : pg.rect(c.x - 1, c.y - 1, c.w + 2, c.h + 2);
+        pg.fill();
+        pg.restore();
+        const cx = c.x + c.w / 2, cy = c.y + c.h / 2;
+        cards.push({ cx, cy, W: c.w, H: c.h, pic, cpx, p: 0, start: CARD_DUST.from + i * stagger,
+          dir: Math.sign(cx - C.x) || 1, ph: [r(0, TAU), r(0, TAU), r(0, TAU)],
+          count: Math.round(Math.min(CARD_DUST.most, Math.max(90, (c.w * c.h) / CARD_DUST.perPx))) });
+      });
+  }
+  // How far a card's crumbling has eaten across it at height ly (its own x of the front).
+  const cardFront = (cd, p, ly) => {
+    const rag = 0.075 * cd.W * (Math.sin(ly * 0.09 + cd.ph[0]) + 0.6 * Math.sin(ly * 0.23 + cd.ph[1]) + 0.35 * Math.sin(ly * 0.53 + cd.ph[2])) / 1.95;
+    return -cd.dir * cd.W / 2 + cd.dir * (p * cd.W * 1.3 - 0.15 * cd.W + rag + 0.08 * cd.W * (ly / cd.H));
+  };
+  const cardColour = (cd, lx, ly) => {
+    if (!cd.cpx) return colourAt(cd.cx + lx, cd.cy + ly);
+    const fx = Math.min(1, Math.max(0, lx / cd.W + 0.5)), fy = Math.min(1, Math.max(0, ly / cd.H + 0.5));
+    const i = (Math.min(19, Math.floor(fy * 20)) * 12 + Math.min(11, Math.floor(fx * 12))) * 4;
+    return [cd.cpx[i], cd.cpx[i + 1], cd.cpx[i + 2]];
   };
 
   // A soft round spot of light, for the hot grains.
@@ -266,6 +351,64 @@ function playGreatHole(snap, dpr, colours = null) {
         col: colourAt(lx, ly), puff: r(0.04, 0.16), spin: r(2, 3.4), glow: Math.random() < 0.3, x: at.x, y: at.y });
     }
   }
+  // A card's pieces lift off where its front has just passed: blown out
+  // further than the page's, and hanging a moment longer before they fall in.
+  function shedCard(t, g, cd, p0, p1) {
+    const n = Math.round(cd.count * (p1 - p0) * 1.3);
+    for (let j = 0; j < n; j++) {
+      const ly = r(-cd.H / 2, cd.H / 2), a = cardFront(cd, p0, ly), b = cardFront(cd, p1, ly);
+      const lx = a + Math.random() * (b - a);
+      if (Math.abs(lx) > cd.W / 2) continue;
+      const at = toScreen(g, cd.cx + lx, cd.cy + ly), dx = at.x - C.x, dy = at.y - C.y;
+      const ms = Math.max(100, Math.min(r(850, 1300), SWALLOWED - t));
+      dust.push({ r0: Math.hypot(dx, dy), a0: Math.atan2(dy, dx), born: t, ms, size: r(0.7, 2.2),
+        col: cardColour(cd, lx, ly), puff: r(0.12, 0.34), spin: r(1.8, 3), glow: Math.random() < 0.4, x: at.x, y: at.y });
+    }
+  }
+  const cardSteps = 26;
+  const cardYs = (cd) => Array.from({ length: cardSteps + 1 }, (_, j) => -cd.H / 2 - 2 + ((cd.H + 4) * j) / cardSteps);
+  // Each card as it is this moment (in the page's own place): what's left of it.
+  function drawCards(t, g) {
+    cards.forEach((cd) => {
+      const u = Math.min(1, Math.max(0, (t - cd.start) / CARD_DUST.crumble));
+      const p = smooth(u) * 0.6 + 0.4 * u;
+      if (p > cd.p) { shedCard(t, g, cd, cd.p, p); cd.p = p; }
+      if (cd.p >= 1) return;
+      const ys = cardYs(cd);
+      ctx.save();
+      ctx.translate(cd.cx, cd.cy);
+      ctx.beginPath();
+      ys.forEach((ly, j) => (j ? ctx.lineTo(cardFront(cd, cd.p, ly), ly) : ctx.moveTo(cardFront(cd, cd.p, ly), ly)));
+      ctx.lineTo(cd.dir * (cd.W / 2 + 6), cd.H / 2 + 2);
+      ctx.lineTo(cd.dir * (cd.W / 2 + 6), -cd.H / 2 - 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(cd.pic, -cd.W / 2, -cd.H / 2, cd.W, cd.H);
+      ctx.restore();
+    });
+  }
+  // The embers along each card's front.
+  function drawCardFronts(g) {
+    cards.forEach((cd) => {
+      if (cd.p <= 0 || cd.p >= 1) return;
+      const ys = cardYs(cd), glow = Math.sin(Math.PI * Math.min(1, cd.p * 1.15));
+      ctx.save();
+      ctx.translate(cd.cx, cd.cy);
+      ctx.beginPath();
+      ctx.rect(-cd.W / 2, -cd.H / 2, cd.W, cd.H);
+      ctx.clip();
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = ctx.lineJoin = "round";
+      [[7, 0.35], [2.4, 0.7], [0.9, 1]].forEach(([lw, a]) => {
+        ctx.strokeStyle = `rgba(255, ${lw > 2 ? 170 : 226}, ${lw > 2 ? 90 : 170}, ${(a * glow).toFixed(3)})`;
+        ctx.lineWidth = lw / g.s;
+        ctx.beginPath();
+        ys.forEach((ly, j) => (j ? ctx.lineTo(cardFront(cd, cd.p, ly), ly) : ctx.moveTo(cardFront(cd, cd.p, ly), ly)));
+        ctx.stroke();
+      });
+      ctx.restore();
+    });
+  }
   const ASH = [150, 140, 196], EMBER = [255, 214, 150], VIOLET = [190, 140, 255];
   const mix = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
   let qLast = 0;
@@ -289,7 +432,8 @@ function playGreatHole(snap, dpr, colours = null) {
     ctx.save();
     ring();
     ctx.clip();
-    ctx.drawImage(snap, 0, 0, W, H);
+    ctx.drawImage(page, 0, 0, W, H);
+    drawCards(t, g);
     // darkening as it's pulled towards the dark
     ctx.fillStyle = `rgba(3, 1, 8, ${(0.55 * pull(t)).toFixed(3)})`;
     ctx.fillRect(0, 0, W, H);
@@ -309,6 +453,7 @@ function playGreatHole(snap, dpr, colours = null) {
       ctx.stroke();
     });
     ctx.restore();
+    drawCardFronts(g);
     ctx.restore();
   }
   // The grains: blown out a little by the crumbling, then caught, each
