@@ -74,16 +74,17 @@ function skyAt(date) {
   return { bodies, moon };
 }
 
-// The zodiac wheel: Aries on the left, going round anticlockwise. It's
-// built once and kept, so when the time steps the planets glide round
-// to their new places instead of jumping.
-const WHEEL = { svg: null, planets: {}, signs: [], moon: null, lit: null, raf: 0, hot: null };
-const WS = 300, WC = WS / 2, WR = 136, WBAND = 20;
-const WHEEL_NS = "http://www.w3.org/2000/svg";
-const wheelPt = (lon, r) => { const a = Math.PI - lon * Math.PI / 180; return [WC + r * Math.cos(a), WC - r * Math.sin(a)]; };
+// The chart: the zodiac inside the app's magic circle, drawn in fine gold
+// hairlines. A band of runes turns slowly round the outside, a faint
+// hexagram sits inside, and the Moon as it looks tonight is in the middle.
+// It's built once and kept, so when the time steps the planets glide round
+// to their new places. Aries is on the left; the signs go round clockwise.
+const WR = { runesOut: 147, runesIn: 133, zOut: 128, zIn: 108, planet: 94, core: 34 };
+const WHEEL = { svg: null, planets: {}, signs: [], moon: null, hot: null, cols: null };
+const wheelXY = (lon, r) => { const a = Math.PI - lon * Math.PI / 180; return [r * Math.cos(a), -r * Math.sin(a)]; };
 
 function svgEl(parent, tag, attrs = {}, txt) {
-  const e = document.createElementNS(WHEEL_NS, tag);
+  const e = document.createElementNS(SVG_NS, tag);
   Object.entries(attrs).forEach(([a, v]) => e.setAttribute(a, v));
   if (txt != null) e.textContent = txt;
   parent.append(e);
@@ -91,107 +92,106 @@ function svgEl(parent, tag, attrs = {}, txt) {
 }
 
 function buildWheel() {
-  const svg = document.createElementNS(WHEEL_NS, "svg");
-  svg.setAttribute("viewBox", `0 0 ${WS} ${WS}`);
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "-150 -150 300 300");
   svg.setAttribute("class", "sky-wheel");
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", "Zodiac wheel");
-  const defs = svgEl(svg, "defs");
-  const glow = svgEl(defs, "filter", { id: "skyGlow", x: "-50%", y: "-50%", width: "200%", height: "200%" });
-  svgEl(glow, "feGaussianBlur", { stdDeviation: "2.2", result: "b" });
-  const merge = svgEl(glow, "feMerge");
-  svgEl(merge, "feMergeNode", { in: "b" });
-  svgEl(merge, "feMergeNode", { in: "SourceGraphic" });
-  const core = svgEl(defs, "radialGradient", { id: "skyCore" });
-  svgEl(core, "stop", { offset: "0", "stop-color": "#ffd682", "stop-opacity": ".2" });
-  svgEl(core, "stop", { offset: ".6", "stop-color": "#ffbe5a", "stop-opacity": ".06" });
-  svgEl(core, "stop", { offset: "1", "stop-color": "#ffbe5a", "stop-opacity": "0" });
+  svg.setAttribute("aria-label", "Zodiac chart");
+  const ring = (r, cls = "w-line") => svgEl(svg, "circle", { r, class: cls });
 
-  // A slowly turning ring of gold dots outside the zodiac, like the runes of the summary.
-  // (It fades in on its own wrapper, so the turning is never restarted.)
-  const runes = svgEl(svgEl(svg, "g", { class: "w-runes-in" }), "g", { class: "w-runes" });
-  for (let i = 0; i < 72; i++) {
-    const [x, y] = wheelPt(i * 5, WR + 8);
-    if (i % 6 === 0) svgEl(runes, "rect", { x: x - 2, y: y - 2, width: 4, height: 4, class: "w-diamond",
-      transform: `rotate(45 ${x} ${y})` });
-    else svgEl(runes, "circle", { cx: x, cy: y, r: i % 2 ? .7 : 1.1, class: "w-dot" });
+  // The turning band of runes, between two circles, broken by small node circles.
+  const band = svgEl(svg, "g", { class: "w-runes" });
+  const mid = (WR.runesOut + WR.runesIn) / 2, n = 48;
+  for (let i = 0; i < n; i++) {
+    const deg = i * 360 / n, a = deg * Math.PI / 180;
+    const x = mid * Math.cos(a), y = mid * Math.sin(a);
+    if (i % 8 === 0) { svgEl(band, "circle", { cx: x, cy: y, r: 2.6, class: "w-node" }); continue; }
+    svgEl(band, "path", { d: RUNE_D[(i * 7) % RUNE_D.length], class: "w-rune",
+      transform: `translate(${x} ${y}) rotate(${deg + 90}) scale(.5) translate(-6 -8)` });
   }
-  svgEl(svg, "circle", { cx: WC, cy: WC, r: WR - WBAND, fill: "url(#skyCore)" });
-  svgEl(svg, "circle", { cx: WC, cy: WC, r: WR, class: "w-line w-draw", pathLength: 1 });
-  svgEl(svg, "circle", { cx: WC, cy: WC, r: WR - WBAND, class: "w-line w-draw", pathLength: 1 });
-  svgEl(svg, "circle", { cx: WC, cy: WC, r: 44, class: "w-faint w-draw", pathLength: 1 });
-  // A small tick every 10°, a line across the band where each sign begins.
+  ring(WR.runesOut); ring(WR.runesIn, "w-faint");
+
+  // The zodiac band: a line where each sign begins, a small tick every 10°.
+  ring(WR.zOut); ring(WR.zIn);
   for (let d = 0; d < 360; d += 10) {
-    const [x1, y1] = wheelPt(d, WR - WBAND), [x2, y2] = wheelPt(d, d % 30 ? WR - WBAND + 3 : WR);
+    const [x1, y1] = wheelXY(d, WR.zIn), [x2, y2] = wheelXY(d, d % 30 ? WR.zIn + 3 : WR.zOut);
     svgEl(svg, "line", { x1, y1, x2, y2, class: d % 30 ? "w-faint" : "w-line" });
   }
   SIGN_GLYPHS.forEach((g, i) => {
-    // The sign's stretch of the band, lit up when one of its planets is pointed at.
-    const [ox1, oy1] = wheelPt(i * 30, WR), [ox2, oy2] = wheelPt(i * 30 + 30, WR);
-    const [ix1, iy1] = wheelPt(i * 30, WR - WBAND), [ix2, iy2] = wheelPt(i * 30 + 30, WR - WBAND);
-    const seg = svgEl(svg, "path", { class: "w-seg", d: `M${ox1} ${oy1} A${WR} ${WR} 0 0 1 ${ox2} ${oy2} ` +
-      `L${ix2} ${iy2} A${WR - WBAND} ${WR - WBAND} 0 0 0 ${ix1} ${iy1} Z` });
-    const [x, y] = wheelPt(i * 30 + 15, WR - WBAND / 2);
-    const t = svgEl(svg, "text", { x, y, class: "w-sign" }, asText(g));
-    t.style.animationDelay = `${i * 50}ms`;
-    WHEEL.signs[i] = { seg, glyph: t };
+    const [x, y] = wheelXY(i * 30 + 15, (WR.zOut + WR.zIn) / 2);
+    WHEEL.signs[i] = svgEl(svg, "text", { x, y, class: "w-sign" }, asText(g));
   });
-  const planets = svgEl(svg, "g");
+
+  // The hexagram, its points on the zodiac's inner line, and the small circle at the centre.
+  const hex = [0, 1].map((t) => [0, 1, 2].map((k) => wheelXY(90 + t * 60 + k * 120, WR.zIn)));
+  hex.forEach((pts) => svgEl(svg, "polygon", { points: pts.map((p) => p.join(",")).join(" "), class: "w-hex" }));
+  ring(WR.core, "w-faint");
+
+  // The planets: each turns round the centre, so a step makes it glide.
+  const layer = svgEl(svg, "g");
   SKY_BODIES.forEach((body) => {
-    const tick = svgEl(planets, "line", { class: "w-tick" });
-    const glyph = svgEl(planets, "text", { class: "w-planet" }, asText(GLYPHS[body]));
-    WHEEL.planets[body] = { tick, glyph, lon: null, ring: 0 };
+    const orbit = svgEl(layer, "g", { class: "w-orbit" });
+    svgEl(orbit, "line", { x1: -WR.zIn, y1: 0, x2: -WR.zIn + 6, y2: 0, class: "w-tick" });
+    const arm = svgEl(orbit, "g", { class: "w-arm" });
+    const glyph = svgEl(arm, "text", { class: "w-planet" }, asText(GLYPHS[body]));
+    WHEEL.planets[body] = { orbit, arm, glyph, turn: null };
   });
-  WHEEL.moon = svgEl(svg, "text", { x: WC, y: WC - 6, class: "w-moon" });
-  WHEEL.lit = svgEl(svg, "text", { x: WC, y: WC + 19, class: "w-lit" });
+
+  // The Moon in the middle: a hairline circle with its lit part filled.
+  WHEEL.moon = svgEl(svg, "g", { class: "w-moon" });
   WHEEL.svg = svg;
 }
 
-function placePlanet(p, lon, ring, alpha = 1) {
-  p.lon = lon;   // where it is right now, so a step mid-glide carries on from here
-  p.ring = ring;
-  const [x, y] = wheelPt(lon, ring);
-  p.glyph.setAttribute("x", x);
-  p.glyph.setAttribute("y", y);
-  p.glyph.style.opacity = alpha;
-  const [x1, y1] = wheelPt(lon, WR - WBAND), [x2, y2] = wheelPt(lon, WR - WBAND - 6);
-  Object.entries({ x1, y1, x2, y2 }).forEach(([a, v]) => p.tick.setAttribute(a, v));
-  p.tick.style.opacity = alpha;
+// The lit part of a Moon of radius r centred on 0, 0, for a phase angle (0 new, 180 full).
+function moonLitPath(angle, r) {
+  const a = angle * Math.PI / 180, rx = Math.abs(Math.cos(a)) * r, gibbous = Math.cos(a) < 0;
+  return `M0 ${-r} A${r} ${r} 0 0 1 0 ${r} A${rx} ${r} 0 0 ${gibbous ? 1 : 0} 0 ${-r} Z`;
 }
 
-// Moves the planets to this moment's places: they sweep in from the
-// centre when the wheel opens, and glide the short way round after that.
-function updateWheel(bodies, moon, opening) {
+function updateWheel(bodies, phase, opening) {
+  // Planets near each other step inwards so their glyphs don't overlap.
   const placed = [];
-  const targets = [...bodies].sort((a, b) => a.lon - b.lon).map((b) => {
-    let ring = WR - WBAND - 17;   // planets near each other step inwards
-    while (placed.some((q) => q.ring === ring && Math.abs(((q.lon - b.lon + 540) % 360) - 180) < 10)) ring -= 20;
-    placed.push({ lon: b.lon, ring });
+  [...bodies].sort((a, b) => a.lon - b.lon).forEach((b) => {
+    let r = WR.planet;
+    while (placed.some((q) => q.r === r && Math.abs(((q.lon - b.lon + 540) % 360) - 180) < 9)) r -= 17;
+    placed.push({ lon: b.lon, r });
     const p = WHEEL.planets[b.body];
     p.sign = b.sign;
     p.glyph.classList.toggle("retro", b.retro);
-    const fresh = p.lon == null || opening;
-    const from = fresh ? b.lon - 140 : p.lon;
-    const to = from + ((((b.lon - from) % 360) + 540) % 360) - 180;
-    const fromRing = fresh ? 8 : p.ring;
-    return { p, from, to, fromRing, ring, fade: fresh };
+    // Turn the short way round from where it was (signs run clockwise on screen, as CSS turns).
+    const target = b.lon;
+    const turn = p.turn == null || opening ? target : p.turn + ((((target - p.turn) % 360) + 540) % 360) - 180;
+    const set = () => {
+      p.turn = turn;
+      p.orbit.style.transform = `rotate(${turn}deg)`;
+      p.arm.style.transform = `translateX(${-r}px)`;
+      p.glyph.style.transform = `rotate(${-turn}deg)`;
+    };
+    if (opening && !calm) {
+      // Opening: each planet sweeps in from further round, near the centre.
+      p.orbit.style.transition = p.arm.style.transition = p.glyph.style.transition = "none";
+      p.orbit.style.transform = `rotate(${turn + 120}deg)`;
+      p.arm.style.transform = "translateX(-10px)";
+      p.glyph.style.transform = `rotate(${-turn - 120}deg)`;
+      p.orbit.style.opacity = 0;
+      p.orbit.getBoundingClientRect();
+      p.orbit.style.transition = p.arm.style.transition = p.glyph.style.transition = "";
+      p.orbit.style.opacity = "";
+      requestAnimationFrame(set);
+    } else set();
   });
-  WHEEL.moon.textContent = moon.icon;
-  WHEEL.lit.textContent = `${moon.lit}% lit`;
-  cancelAnimationFrame(WHEEL.raf);
-  const done = () => targets.forEach((t) => placePlanet(t.p, t.to, t.ring));
-  if (calm) { done(); return; }
-  const start = performance.now(), dur = opening ? 1400 : 900;
-  const ease = (k) => 1 - Math.pow(1 - k, 3);
-  WHEEL.raf = requestAnimationFrame(function frame(now) {
-    targets.forEach((t, i) => {
-      const delay = opening ? i * 45 : 0;
-      const k = ease(Math.min(1, Math.max(0, (now - start - delay) / dur)));
-      placePlanet(t.p, t.from + (t.to - t.from) * k, t.fromRing + (t.ring - t.fromRing) * k, t.fade ? k : 1);
-    });
-    if (now - start < dur + targets.length * 45) WHEEL.raf = requestAnimationFrame(frame);
-    else done();
-  });
+  WHEEL.moon.innerHTML = `<g${phase > 180 ? ' transform="scale(-1 1)"' : ""}><path class="lit" d="${moonLitPath(phase, 15)}"/></g>` +
+    `<circle class="rim" r="15"/>`;
+}
+
+// Lights up one planet and the sign it's in (null: none).
+function skyHot(body) {
+  WHEEL.hot = body;
+  WHEEL.svg?.classList.toggle("focus", !!body);
+  Object.entries(WHEEL.planets).forEach(([b, p]) => p.orbit.classList.toggle("hot", b === body));
+  const sign = body ? WHEEL.planets[body].sign : -1;
+  WHEEL.signs.forEach((t, i) => t.classList.toggle("hot", i === sign));
+  document.querySelectorAll("#skySheet .sky-row").forEach((r) => r.classList.toggle("hot", r.dataset.body === body));
 }
 
 // The sheet's own night sky, like the home screen's.
@@ -212,10 +212,36 @@ function skyStep(dir) {
   renderSky();
 }
 
+// What each phase asks of you, in a line.
+const MOON_NOTES = [
+  "Begin — set one quiet intention for yourself.",
+  "Growing — tend the small start you made.",
+  "Deciding — act on what you chose.",
+  "Refining — the shape clarifies before the bloom.",
+  "Seeing — what was hidden in you comes to light.",
+  "Sharing — give out what you have learned.",
+  "Releasing — let go of what you've outgrown.",
+  "Resting — clear space before the next start."];
+
+// The Moon as it looks tonight: a hairline circle with its lit part filled.
+function moonPic(angle) {
+  const r = 26, c = 28, a = angle * Math.PI / 180;
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 56 56");
+  svg.setAttribute("class", "sky-moon-pic");
+  svg.setAttribute("aria-hidden", "true");
+  const rx = Math.abs(Math.cos(a)) * r, gibbous = Math.cos(a) < 0;
+  // The lit half-circle, closed by the curved edge between light and dark.
+  const lit = `M${c} ${c - r} A${r} ${r} 0 0 1 ${c} ${c + r} A${rx} ${r} 0 0 ${gibbous ? 1 : 0} ${c} ${c - r} Z`;
+  svg.innerHTML = `<g${angle > 180 ? ` transform="matrix(-1 0 0 1 ${2 * c} 0)"` : ""}>` +
+    `<path class="lit" d="${lit}"/></g><circle class="rim" cx="${c}" cy="${c}" r="${r}"/>`;
+  return svg;
+}
+
 function renderSky(opening = false) {
   const box = $("skyBody");
-  // The wheel's box stays in the page while the rest is redrawn: taking the
-  // wheel out and back would restart its turning ring of runes.
+  // The chart stays in the page while the rest is redrawn: taking it out
+  // and back would restart its turning runes and its planets' glide.
   [...box.children].forEach((n) => { if (n !== WHEEL.cols) n.remove(); });
   if (typeof Astronomy === "undefined") {
     box.append(el("p", "empty-note", "The sky couldn't be worked out on this device."));
@@ -225,18 +251,15 @@ function renderSky(opening = false) {
   const { bodies, moon } = skyAt(date);
   box.classList.toggle("entering", opening && !calm);
 
-  const ornament = () => { const l = el("div", "rpg-line sky-orn"); l.append(el("i"), el("b"), el("i")); return l; };
+  // Date, and ‹ Hour Day Week Month Year › to step through time.
   const when = el("p", "sky-when");
   when.append(el("span", "", `${date.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })} · ${timeText(date)}`));
-  // Present: back to the sky as it is now. Always there, so nothing shifts; resting while it's already now.
-  const present = el("button", "chip sky-present", "Present");
-  present.disabled = !SKY.at;
+  const present = el("button", "link sky-present", "Now");
+  present.hidden = !SKY.at;
   present.setAttribute("aria-label", "Back to the present sky");
   present.addEventListener("click", () => { SKY.at = null; renderSky(); });
   when.append(present);
-  const top = [ornament(), when];
 
-  // ‹ Hour Day Week Month Year ›
   const steps = el("div", "sky-steps");
   const back = el("button", "sky-arrow", "‹"), fwd = el("button", "sky-arrow", "›");
   back.setAttribute("aria-label", `Back one ${SKY.unit.toLowerCase()}`);
@@ -245,110 +268,58 @@ function renderSky(opening = false) {
   fwd.addEventListener("click", () => skyStep(1));
   const units = el("div", "sky-units");
   SKY_UNITS.forEach((u) => {
-    const b = el("button", `chip sky-unit${u === SKY.unit ? " on" : ""}`, u);
+    const b = el("button", `sky-unit${u === SKY.unit ? " on" : ""}`, u);
     b.addEventListener("click", () => { SKY.unit = u; renderSky(); });
     units.append(b);
   });
   steps.append(back, units, fwd);
-  top.push(steps);
 
-  const moonPos = bodies.find((b) => b.body === "Moon");
-  const lunation = el("div", "sky-moon");
-  lunation.append(el("span", "sky-moon-main", `${moon.icon} ${moon.name} · Moon in ${SIGNS[moonPos.sign]} ${moonPos.dms}`),
-    el("span", "sky-moon-note", `${moon.lit}% lit · day ${moon.day} of 29`));
-  flashIfChanged(lunation, "moon", lunation.textContent, opening);
-  fitOneLine([lunation.firstChild], true);   // phase and Moon sign stay on one line
-
-  // On a wide screen the wheel sits beside the list; on a phone above it.
-  if (!WHEEL.svg) buildWheel();
-  WHEEL.svg.classList.toggle("drawing", opening && !calm);
-  if (!WHEEL.cols) { WHEEL.cols = el("div", "sky-cols"); WHEEL.cols.append(WHEEL.svg); }
-  const cols = WHEEL.cols, side = el("div", "sky-side");
-  cols.querySelector(".sky-side")?.remove();
-  cols.append(side);
-  if (!cols.isConnected) box.append(cols);
-  cols.before(...top);
-  WHEEL.svg.getBoundingClientRect();   // settle it in its new place before it moves
-  if (opening) WHEEL.hot = null;
-  updateWheel(bodies, moon, opening);
-
-  // Two columns, read down: Sun to Mars, then Jupiter to Chiron. The Moon is in the bar above.
+  // Planets: glyph, "Sun in Scorpio", degrees on the right. Two columns on a wide screen, read down.
+  const listHead = el("div", "sky-head");
+  listHead.append(el("span", "", SKY.at ? "In the sky then" : "Now in the sky"));
   const list = el("div", "sky-list");
-  bodies.filter((b) => b.body !== "Moon").forEach((p, i) => {
+  bodies.forEach((p, i) => {
     const row = el("div", "sky-row");
     row.style.setProperty("--i", i);
-    const info = el("span", "sky-info");
-    const where = el("span", "sky-where", `${SIGNS[p.sign]} ${p.dms}`);
-    if (p.retro) where.append(el("span", "sky-rx", " ℞"));
-    info.append(el("span", "sky-name", p.body), where, el("small", "sky-rule", RULES[p.body]));
-    row.append(el("span", "sky-glyph", asText(GLYPHS[p.body])), info);
-    // Pointing at a tile lights up its planet and sign on the wheel; on a phone, a tap does.
+    const name = el("span", "sky-name");
+    name.append(p.body, el("i", "", " in "), SIGNS[p.sign]);
+    const deg = el("span", "sky-deg", p.dms.replace("°", "° "));
+    if (p.retro) deg.append(el("span", "sky-rx", "℞"));
+    row.append(el("span", "sky-glyph", asText(GLYPHS[p.body])), name, deg);
+    // Pointing at a row lights up its planet and sign on the chart; on a phone, a tap does.
+    row.dataset.body = p.body;
+    row.classList.toggle("hot", WHEEL.hot === p.body);
     row.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") skyHot(p.body); });
     row.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") skyHot(null); });
-    let down = null;
-    row.addEventListener("pointerdown", (e) => { down = [e.clientX, e.clientY]; });
-    row.addEventListener("pointerup", (e) => {
-      if (e.pointerType === "mouse") return;   // a mouse already lit it by pointing
-      if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 10) return;   // a scroll, not a tap
-      skyHot(WHEEL.hot === p.body ? null : p.body);
-    });
-    row.classList.toggle("hot", WHEEL.hot === p.body);
-    row.dataset.body = p.body;
-    flashIfChanged(row, p.body, where.textContent, opening);
+    row.addEventListener("click", (e) => { if (e.pointerType !== "mouse") skyHot(WHEEL.hot === p.body ? null : p.body); });
+    flashIfChanged(row, p.body, row.textContent, opening);
     list.append(row);
   });
-  side.append(lunation, list);
-  // Every sign shows at one size: if the longest doesn't fit its tile, they all shrink together.
-  fitOneLine([...list.querySelectorAll(".sky-where")], true);
-  fitSkyToWheel();
+
+  // Moon phase
+  const moonHead = el("div", "sky-head");
+  moonHead.append(el("span", "", "Moon phase"));
+  const card = el("div", "sky-moon");
+  const text = el("div", "sky-moon-text");
+  text.append(el("span", "sky-moon-name", moon.name),
+    el("span", "sky-moon-meta", `Day ${moon.day} of 29 · ${moon.lit}% lit`),
+    el("span", "sky-moon-note", MOON_NOTES[MOON_PHASES.indexOf(moon.name)]));
+  card.append(moonPic(Astronomy.MoonPhase(date)), text);
+  flashIfChanged(card, "moon", text.textContent, opening);
+
+  // On a wide screen the chart sits beside the list; on a phone above it.
+  if (!WHEEL.svg) buildWheel();
+  if (!WHEEL.cols) { WHEEL.cols = el("div", "sky-cols"); WHEEL.cols.append(WHEEL.svg); }
+  WHEEL.cols.querySelector(".sky-side")?.remove();
+  const side = el("div", "sky-side");
+  side.append(listHead, list, moonHead, card);
+  WHEEL.cols.append(side);
+  if (!WHEEL.cols.isConnected) box.append(WHEEL.cols);
+  WHEEL.cols.before(when, steps);
+  WHEEL.svg.classList.toggle("drawing", opening && !calm);
+  if (opening) WHEEL.hot = null;
+  updateWheel(bodies, Astronomy.MoonPhase(date), opening);
   skyHot(WHEEL.hot);   // the sign may have changed with the time
-}
-
-// On a wide screen the Moon bar and tiles grow together until they're as
-// tall as the wheel beside them (or as wide as the room left allows).
-function fitSkyToWheel() {
-  const side = document.querySelector("#skySheet .sky-side"), cols = side?.parentElement;
-  if (!side) return;
-  const list = side.querySelector(".sky-list");
-  side.style.fontSize = list.style.gridTemplateColumns = "";
-  if (!matchMedia("(min-width: 900px)").matches) return;
-  const fit = () => {
-    if (!side.isConnected) return;
-    const wheel = WHEEL.svg.getBoundingClientRect();
-    if (!wheel.height) return;
-    // The tiles are sized for the longest place any planet could be in, so
-    // they keep one size as the time changes; only the text inside shrinks.
-    const wheres = [...side.querySelectorAll(".sky-where")];
-    const real = wheres.map((w) => [...w.childNodes]);
-    side.style.fontSize = list.style.gridTemplateColumns = "";
-    wheres.forEach((w) => { w.style.fontSize = w.style.height = w.style.lineHeight = ""; w.textContent = "Sagittarius 28°48′ ℞"; });
-    const gap = parseFloat(getComputedStyle(cols).columnGap) || 0;
-    const room = cols.clientWidth - wheel.width - gap;
-    let size = parseFloat(getComputedStyle(side).fontSize);
-    for (let i = 0; i < 3; i++) {   // text and boxes don't grow in exact proportion, so settle in a few steps
-      const r = side.getBoundingClientRect();
-      size *= Math.min(wheel.height / r.height, room / r.width);
-      side.style.fontSize = `${size.toFixed(2)}px`;
-    }
-    list.style.gridTemplateColumns = getComputedStyle(list).gridTemplateColumns;
-    wheres.forEach((w, i) => w.replaceChildren(...real[i]));
-  };
-  fit();
-  document.fonts?.ready.then(fit);
-}
-addEventListener("resize", () => { if (!$("skySheet").hidden) fitSkyToWheel(); });
-
-// Lights up one planet and the sign it's in (null: none).
-function skyHot(body) {
-  WHEEL.hot = body;
-  WHEEL.svg?.classList.toggle("focus", !!body);
-  Object.entries(WHEEL.planets).forEach(([b, p]) => {
-    p.glyph.classList.toggle("hot", b === body);
-    p.tick.classList.toggle("hot", b === body);
-  });
-  const sign = body ? WHEEL.planets[body].sign : -1;
-  WHEEL.signs.forEach((s, i) => { s.seg.classList.toggle("hot", i === sign); s.glyph.classList.toggle("hot", i === sign); });
-  document.querySelectorAll("#skySheet .sky-row").forEach((r) => r.classList.toggle("hot", r.dataset.body === body));
 }
 
 // A soft gold glow on whatever changed since the last step.
@@ -362,7 +333,6 @@ $("skyBtn").addEventListener("click", () => {
   SKY.shown = {};
   renderSky(true);
   bloomFromButton($("skySheet"), $("skyBtn"));
-  fitSkyToWheel();   // now it's showing and can be measured
   skyField.size();
   skyField.start();
 });
