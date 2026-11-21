@@ -191,7 +191,7 @@ function cardSVG(s) {
     <radialGradient id="glow" cx="391" cy="${s.haloY}" r="380" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="${shade(s.gold, 0.3)}"/><stop offset="1" stop-color="${s.gold}" stop-opacity="0"/></radialGradient>
     ${metal("metal", s.gold, 150, 300, 650, 1050)}
     ${metal("metalFrame", s.frameGold, 0, 0, W, H)}
-    <filter id="shine" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur in="SourceGraphic" stdDeviation="${s.shineBlur}" result="b"/><feColorMatrix in="b" values="1 0 0 0 .08  0 1 0 0 .05  0 0 1 0 0  0 0 0 ${s.shine} 0" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="shine" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur in="SourceGraphic" stdDeviation="${s.shineBlur}" result="b"/><feColorMatrix in="b" values="1 0 0 0 .08  0 1 0 0 .05  0 0 1 0 0  0 0 0 ${s.shine} 0" result="g"/></filter>
     <filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 0"/></filter>
   </defs>
   <!-- Drawn small (the home fan, the table), the bear's lines would come
@@ -205,12 +205,17 @@ function cardSVG(s) {
   ${s.grain > 0 ? `<rect width="${W}" height="${H}" filter="url(#grain)" opacity="${s.grain}"/>` : ""}
   ${s.vignette > 0 ? `<rect width="${W}" height="${H}" fill="url(#vig)" opacity="${s.vignette}"/>` : ""}
   ${s.glow > 0 ? `<circle cx="391" cy="${s.haloY}" r="380" fill="url(#glow)" opacity="${s.glow}"/>` : ""}
-  <g transform="${art}"${shine}>
+  <!-- The glow is a blurred copy drawn underneath; the lines themselves carry
+       no filter, so they stay sharp vector lines when the card is drawn
+       small, turned or scaled. -->
+  ${shine ? `<use href="#art"${shine}/>
+  <use href="#frame"${shine}/>` : ""}
+  <g id="art" transform="${art}">
     <g id="halo">${halo}</g>
     <g id="bear" fill="none" stroke="${gold}" stroke-width="${s.lineW}" stroke-linecap="round" stroke-linejoin="round">${parts.bear}</g>
     <g id="crescent-and-nose" fill="${gold}" fill-rule="evenodd">${parts.fills}</g>
   </g>
-  <g id="frame"${shine}>${frame}${suits}</g>
+  <g id="frame">${frame}${suits}</g>
 </svg>`;
 }
 
