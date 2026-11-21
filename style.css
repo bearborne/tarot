@@ -799,16 +799,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .summary-part li strong::first-letter { text-transform: uppercase; }
 .summary-asks { margin-top: 18px; }
 .summary-q { display: block; margin-top: 3px; color: var(--muted); font-size: .92rem; }
-/* The reading's arc (one line over the whole spread) and, under each
-   card's place, how it follows the card before it. */
-.summary-arc { margin: -4px 0 12px; font-style: italic; color: var(--ink); font-size: 1.05rem; }
 /* the shared words' tiles, right under the reading's title */
 .summary-part > .tiles:not(:last-child) { margin-bottom: 16px; }
 /* The summary's reading text in the screen-reading font; the gold
    headings keep the deck's own serif. */
 .summary-page .col-main li > span,
 .summary-page .col-main .summary-q,
-.summary-arc { font-family: var(--read); }
 
 /* The lens buttons: each reads the spread from another angle */
 .lens-title {
@@ -1755,7 +1751,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .summary-page .summary-part li:first-child { padding-top: 0; }
   .summary-page .summary-part li strong { font-size: 1.25rem; margin-bottom: 4px; }
   .summary-page .summary-q { font-size: 1rem; margin-top: 6px; }
-  .summary-page .summary-arc { font-size: 1.2rem; }
   .summary-page .summary-asks li { font-size: 1.2rem; font-family: var(--read); }
 
   /* The card's page, laid out like the summary: the card big on the

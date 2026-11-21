@@ -326,33 +326,6 @@ const placeName = (lens, i, entry) => (lens.own ? (lens.labels ? lens.labels[i] 
 
 const numberOf = (card) => (card.court ? null : +((card.correspondences || {}).number || NaN));
 
-// ── The arc of the whole spread ─────────────────────────
-// One line on where the spread travels, from its first card to its last:
-// these clauses, joined. (Themes,
-// elements and counts have their own tiles, so they aren't repeated here.)
-
-function arcBits(entries) {
-  const n = entries.length;
-  if (n < 2) return [];
-  const themes = entries.map((e) => new Set(filled(keywordsFor(e.card, e.reversed)).map((w) => w.toLowerCase()).flatMap(themesOf)));
-  const first = themes[0], last = themes[n - 1];
-  const has = (set, ...ts) => ts.some((t) => set.has(t));
-  const bits = [];
-  if (has(first, "change", "shadow") && has(last, "renewal", "beginnings", "joy")) bits.push("from a hard place to renewal");
-  else if (has(first, "stillness", "shadow", "reflection") && has(last, "will", "freedom", "beginnings")) bits.push("from rest to action");
-  else if (has(first, "will", "freedom") && has(last, "stillness", "reflection")) bits.push("from effort to rest");
-  else if (has(first, "heart", "together") && has(last, "self", "freedom")) bits.push("from others to yourself");
-  // Pairs already note a single card turning; this is the spread as a whole.
-  if (n >= 3) {
-    const half = Math.ceil(n / 2);
-    const earlyRev = entries.slice(0, half).filter((e) => e.reversed).length;
-    const lateRev = entries.slice(half).filter((e) => e.reversed).length;
-    if (earlyRev && !lateRev) bits.push("opening up as it goes");
-    if (!earlyRev && lateRev) bits.push("turning inward as it goes");
-  }
-  return bits;
-}
-
 // ── The summary itself ──────────────────────────────────
 // Card names stay in the row of cards at the top; the text speaks of
 // places and patterns instead.
@@ -1071,8 +1044,7 @@ function openSummary(entries, title, magic = false, named = null) {
   lensBox.setAttribute("role", "group");
   lensBox.setAttribute("aria-label", "Read it as");
   // The page's layout, top to bottom (side by side on a wide screen):
-  //   left:  the reading (shared words right under its title, then the
-  //          arc line, number arcs included), themes
+  //   left:  the reading (shared words right under its title), themes
   //   right: symbols, gaze, mirrors & tensions, elements
   //   below: what the reading asks (one list)
   // Slots marked "lens" are refilled when the lens changes.
@@ -1081,7 +1053,6 @@ function openSummary(entries, title, magic = false, named = null) {
   const gazeSlot = el("div", "sum-slot");     // lens
   const mirrorSlot = el("div", "sum-slot");   // lens
   const asks = el("div", "asks summary-asks");
-  const spreadArc = arcBits(entries);
   // The patterns that don't depend on the lens, by their titles.
   const patterns = {};
   patternParts(entries).parts.forEach((p) => (patterns[p.title] = p));
@@ -1105,15 +1076,12 @@ function openSummary(entries, title, magic = false, named = null) {
       slot.innerHTML = "";
       if (p && p.items.length) slot.append(partSection(p, cardCols));
     };
-    // The arc line: where the spread travels, when it clearly does.
-    const arc = spreadArc.length ? `${cap(spreadArc.join(", "))}.` : "";
     fill(gazeSlot, gazePart(entries, nameOf));
     fill(mirrorSlot, part("Mirrors & tensions", mirrorItems(entries, nameOf), { tiles: true, wrap: true }));
     fillSummaryAsks(asks, entries, lens);
     lensPart.innerHTML = "";
     if (lens) {
-      // One section: the arc of the whole spread on top, then each card in
-      // its place.
+      // One section: each card in its place.
       const sec = listSection("The reading", entries.map((e, i) => ({
         head: placeName(lens, i, e),
         // The place is already the heading, so drop the line's own "Ahead: " lead-in.
@@ -1123,7 +1091,6 @@ function openSummary(entries, title, magic = false, named = null) {
         cards: [i],
       })));
       const title = sec.querySelector(".asks-title");
-      if (arc) title.after(el("p", "summary-arc", arc));
       const sw = sharedTiles();
       if (sw) title.after(sw);
       lensPart.append(sec);
@@ -1134,7 +1101,6 @@ function openSummary(entries, title, magic = false, named = null) {
       sec.append(el("p", "asks-title", "The reading"));
       const sw = sharedTiles();
       if (sw) sec.append(sw);
-      if (arc) sec.append(el("p", "summary-arc", arc));
       sec.append(listItems(entries.map((e, i) => {
         const { g, a } = phrases(e.card, e.reversed);
         return { head: e.card.name, text: `${cap(g)}${e.reversed ? `; ${a}` : ""}.`, ideas: linked[i], cards: [i] };
