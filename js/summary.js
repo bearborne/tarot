@@ -1313,21 +1313,26 @@ function appearWithMagic(sheet, body, C = circleMiddle()) {
 // in it flashes; the empty page fades off the table, and the table's
 // pieces (its bar, each card's place, the buttons) are made again as
 // home's are: dust flies out of the flash and each piece's front lays it down.
+// The first time for a reading it plays in full; after that, three times as
+// fast (as the portal does: see summonSummary).
 // Resolves once the page is gone. (Timers, so a paused page never waits.)
 const BACK_FX = { fly: 300, burn: 480, fade: 220 };
+const backSeen = new Set();
 function vanishWithMagic(sheet) {
+  const key = sheet.readingKey, k = key != null && backSeen.has(key) ? 3 : 1;
+  if (key != null) backSeen.add(key);
   const C = circleMiddle();
   sheet.style.pointerEvents = "none";
   // (each card goes whole, picture and labels, as one piece)
   const pieces = [...summaryParts(sheet).filter((p) => !p.closest(".related-card")), ...sheet.querySelectorAll(".related-card")];
-  const { end } = burnFronts(pieces, C, { mode: "burn", fly: BACK_FX.fly, build: BACK_FX.burn, z: ++Z });
+  const { end } = burnFronts(pieces, C, { mode: "burn", fly: BACK_FX.fly / k, build: BACK_FX.burn / k, z: ++Z });
   const onTable = S && !$("table").hidden;
   return new Promise((done) => setTimeout(() => {
     // The table's pieces, laid down from nothing (still under the page as it fades).
-    if (onTable) burnFronts(tableParts(), C, { mode: "build", at: BACK_FX.fade * 0.6, z: ++Z, flash: { at: 0, ms: 300 } });
-    sheet.animate([{ opacity: 1 }, { opacity: 0 }], { duration: BACK_FX.fade, easing: "ease-out", fill: "forwards" });
-    setTimeout(done, BACK_FX.fade);
-  }, Math.max(0, end - 120)));
+    if (onTable) burnFronts(tableParts(), C, { mode: "build", at: BACK_FX.fade * 0.6 / k, fly: BURN_FX.fly / k, build: BURN_FX.build / k, z: ++Z, flash: { at: 0, ms: 300 / k } });
+    sheet.animate([{ opacity: 1 }, { opacity: 0 }], { duration: BACK_FX.fade / k, easing: "ease-out", fill: "forwards" });
+    setTimeout(done, BACK_FX.fade / k);
+  }, Math.max(0, end - 120 / k)));
 }
 // The table's pieces, as a burning front makes them: the bar's buttons, each
 // card's place (with its name), the hint, and the buttons at the end.
@@ -1343,7 +1348,7 @@ function tableParts() {
 // The first time a reading's summary opens, the portal plays in full; after
 // that, for that same reading, it plays three times as fast. `key` names the
 // reading (its id in the history, or the reading itself before it's saved).
-// portalPace is read by arcanePortal, emergeCards and appearWithMagic.
+// portalPace is read by arcanePortal, emergeCards and appearWithMagic. (The way back keeps its own count.)
 let summoning = false, portalPace = 1;
 const portalSeen = new Set();
 function summonSummary(open, key = null) {
@@ -1362,6 +1367,7 @@ function summonSummary(open, key = null) {
   // until the window opens: built mid-flight, it froze the portal for a
   // moment. Its card pictures start decoding now too, so they're ready.
   const sheet = open("later");
+  sheet.readingKey = key;   // (for the way back: see vanishWithMagic)
   sheet.style.visibility = "hidden";
   sheet.querySelectorAll("img").forEach((img) => img.decode?.().catch(() => {}));
   const total = arcanePortal(points, (C) => {

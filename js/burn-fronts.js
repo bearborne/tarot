@@ -87,7 +87,7 @@ function burnFronts(parts, C, { mode = "build", at = 0, fly = BURN_FX.fly, build
     for (let j = 0; j < n; j++) {
       const land = pc.start + r(0.05, 0.85) * build, x = r(-pc.span, pc.span);
       const along = Math.min(pc.ext, Math.max(-pc.ext, frontAt(pc, progress(pc, land), x)));
-      const [tx, ty] = scr(pc, along, x), trip = r(280, 460);
+      const [tx, ty] = scr(pc, along, x), trip = r(280, 460) * Math.min(1, build / BURN_FX.build);   // (quicker when it all is)
       grains.push(burning ? { tx, ty, from: land, land: land + trip, size: r(0.8, 2), spin: twist * r(0.4, 0.9) }
         : { tx, ty, from: Math.max(0, land - trip), land, size: r(0.8, 2), spin: twist * r(0.4, 0.9) });
     }
