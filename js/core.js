@@ -470,59 +470,6 @@ function ringAround(node) {
   return { x: b.left + b.width / 2, y: b.top + b.height / 2, r: Math.hypot(b.width, b.height) / 2 + 6 };
 }
 
-// The window's round edge as it opens or closes: a thin gold line with a
-// soft glow and a faint dotted line just inside. It changes its real size
-// (not a scale), so it stays a hairline however big it gets, where the ring
-// of runes, scaled up that far, would look like zooming into it.
-function edgeLine(C) {
-  const line = el("div", "rune-edge");
-  line.setAttribute("aria-hidden", "true");
-  Object.assign(line.style, { left: `${C.x}px`, top: `${C.y}px`, zIndex: ++Z });
-  document.body.append(line);
-  return line;
-}
-const across = (r) => `${Math.max(0, 2 * r)}px`;
-
-// A page closing back into a point, quickly: its round edge, a line of
-// light, closes in from the corners of the screen and the page shrinks
-// inside it like an iris. As it reaches C, a small ring of runes (radius R)
-// turns in round C, the page vanishes inside it, and the ring flares and
-// fades; land() runs as it flares. Resolves once the page is gone.
-// (Timers, not the animations' ends, so a paused page never waits.)
-function irisInto(sheet, C, R, land) {
-  const far = reachFrom(C), IN = OPEN_FX.inMs, GONE = OPEN_FX.goneMs, END = OPEN_FX.endMs, turn = OPEN_FX.closeTurn;
-  const ease = "cubic-bezier(.55, 0, .3, 1)";
-  sheet.style.pointerEvents = "none";
-  // (Only the outline moves: brightening the page would make a flat pale
-  // blob of its background once it's small. The light is the edge's own.)
-  sheet.animate([
-    { clipPath: `circle(${far}px at ${C.x}px ${C.y}px)` },
-    { clipPath: `circle(${R * 0.8}px at ${C.x}px ${C.y}px)`, offset: IN / GONE },
-    { clipPath: `circle(0px at ${C.x}px ${C.y}px)` },
-  ], { duration: GONE, easing: ease, fill: "forwards", id: "exact" });
-  const line = edgeLine(C);
-  line.animate([
-    { width: across(far), height: across(far), opacity: 0 },
-    { opacity: 1, offset: 0.12 },
-    { width: across(R * 0.8), height: across(R * 0.8), opacity: 1, offset: IN / GONE },
-    { width: "0px", height: "0px", opacity: 0 },
-  ], { duration: GONE, easing: ease, fill: "forwards", id: "exact" });
-  setTimeout(() => line.remove(), GONE + 30);
-  // The ring stays its own size: it only turns in round C as the edge arrives.
-  const ring = runeRing(C, R);
-  const appear = Math.max(0.01, (IN - 180) / END);
-  ring.animate([
-    { transform: `${ring.at(R * 1.35)} rotate(${-turn}deg)`, opacity: 0 },
-    { transform: `${ring.at(R * 1.35)} rotate(${-turn}deg)`, opacity: 0, offset: appear },
-    { transform: `${ring.at(R)} rotate(0deg)`, opacity: 1, filter: "brightness(1)", offset: IN / END, easing: "ease-out" },
-    { transform: `${ring.at(R * 1.04)} rotate(8deg)`, opacity: 1, filter: "brightness(1.8)", offset: Math.min(0.95, (IN + 90) / END) },
-    { transform: `${ring.at(R * 1.18)} rotate(16deg)`, opacity: 0, filter: "brightness(1)" },
-  ], { duration: END, easing: ease, fill: "forwards", id: "exact" });
-  setTimeout(() => ring.remove(), END + 50);
-  if (land) setTimeout(land, IN + 40);
-  return new Promise((done) => setTimeout(done, GONE));
-}
-
 // A card flares gold for a moment (a shadow: a filter would flatten a 3D card).
 function cardFlare(node, delay = 0) {
   node?.animate([{ boxShadow: "0 0 0 1px rgba(255, 214, 140, .85), 0 0 20px 5px rgba(255, 200, 110, .6)", offset: 0.3 }],

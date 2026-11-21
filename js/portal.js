@@ -10,7 +10,7 @@
 // The cards themselves crumble to dust where they lie, and the black hole
 // at the circle's heart draws the dust in (cardsToDust); once the window
 // opens they fly back out of it to their places on the summary.
-// open() must return the summary's sheet, which is revealed through the window.
+// open(C) must return the summary's sheet, which is revealed through the window (C: its middle).
 
 // A copy of an element, fixed exactly over it, for flying about the screen.
 // The copy sits in a wrapper that takes the flight's transforms, so the
@@ -418,7 +418,7 @@ function arcanePortal(points, open) {
     const s = (now - t0) / 1000 / SLOW, dt = last ? Math.min(0.05, s - last) : 0;
     last = s;
     if (s >= OPEN && !sheet) {
-      sheet = open() || null;
+      sheet = open(C) || null;
       if (sheet) {
         sheet.style.clipPath = "circle(0px at 50% 50%)";
         emergeCards(sheet, C);

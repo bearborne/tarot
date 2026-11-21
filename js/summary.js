@@ -1216,7 +1216,7 @@ function openSummary(entries, title, magic = false, named = null) {
   document.body.append(sheet);
   placeAsks();   // again, now that the columns can be measured
   // ("later": built ahead, out of sight; the portal calls sheet.appear() as its window opens.)
-  if (magic === "later") sheet.appear = () => appearWithMagic(sheet, body);
+  if (magic === "later") sheet.appear = (C) => appearWithMagic(sheet, body, C);
   else if (magic && !calm) appearWithMagic(sheet, body);
   else slideIn(sheet);
   back.addEventListener("click", async () => {
@@ -1280,10 +1280,21 @@ async function copyText(text, note = "Copied") {
   setTimeout(() => t.remove(), 1800);
 }
 
+// The summary page's pieces (those a burning front makes or unmakes): the
+// bar's buttons and title, the name, the cards' labels, each part of the reading.
+// (The cards' pictures fly in and out on their own: see emergeCards.)
+const summaryParts = (sheet) => [...sheet.querySelectorAll(
+  ".bar > *, .col-side > :not(.summary-cards), .related-label, .related-name, .summary-kw, .sum-col > *, .sum-asks > *")];
+// The middle of the great circle behind the spread (or of the screen, without one).
+const circleMiddle = () => (MG.great ? { x: MG.great.cx, y: MG.great.cy } : { x: innerWidth / 2, y: innerHeight * 0.46 });
+
 // The summary page arriving through the arcane portal: the page itself is
-// revealed by the widening window, while its parts brighten out of the
-// light and rise into place one after another.
-function appearWithMagic(sheet, body) {
+// revealed by the widening window, while its pieces are made by burning
+// fronts, as home's are after the black hole: dust flies out of the
+// portal's heart to each piece and its ragged ember front lays it down,
+// sweeping across it from its side nearest the heart, nearest pieces first.
+// (Drawn inside the page, so the window's edge and zoom carry it too.)
+function appearWithMagic(sheet, body, C = circleMiddle()) {
   sheet.hidden = false;
   sheet.style.zIndex = ++Z;
   sheet.scrollTop = 0;
@@ -1291,47 +1302,39 @@ function appearWithMagic(sheet, body) {
     [{ filter: "brightness(1.7)" }, { filter: "brightness(1)" }],
     { duration: 900 / portalPace, easing: "cubic-bezier(.2,.8,.2,1)" }
   );
-  // (The cards fly in on their own, out of the portal: see emergeCards.)
-  [...body.querySelectorAll(".col-side > :not(.summary-cards), .sum-col > *, .sum-asks > *")].forEach((part, i) => part.animate(
-    [{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }],
-    { duration: 520 / portalPace, delay: (200 + Math.min(i, 10) * 55) / portalPace, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" }
-  ));
+  const k = portalPace;
+  burnFronts(summaryParts(sheet), C, { mode: "build", at: 120 / k, fly: BURN_FX.fly / k, build: BURN_FX.build / k, host: sheet, z: 50 });
 }
 
-// Back to the table, quickly (about half a second), the portal in reverse:
-// a ring of gold runes closes in from the edges of the screen, turning, and
-// the summary shrinks inside it like a closing iris. The ring settles on
-// the great circle behind the spread as the page vanishes, then flares and
-// breaks into motes that fly back to the cards, which light up as they land.
-// Resolves once the page is gone; the light finishes on its own after.
-// (Timers, not the animations' ends, so a paused page never waits.)
+// Back to the table: the summary unmade by fire, the table made by it.
+// Each of the summary's pieces burns away behind a ragged ember front
+// sweeping out from the great circle's middle, its dust lifting off the
+// front and drawn into that point, nearest pieces first. As the last goes
+// in it flashes; the empty page fades off the table, and the table's
+// pieces (its bar, each card's place, the buttons) are made again as
+// home's are: dust flies out of the flash and each piece's front lays it down.
+// Resolves once the page is gone. (Timers, so a paused page never waits.)
+const BACK_FX = { fly: 300, burn: 480, fade: 220 };
 function vanishWithMagic(sheet) {
-  const G = MG.great;
-  const C = G ? { x: G.cx, y: G.cy } : { x: innerWidth / 2, y: innerHeight * 0.46 };
-  const R = G ? G.R1 : Math.round(Math.min(innerWidth, innerHeight) * 0.25);
-  const cards = S && !$("table").hidden ? S.slots.map((s) => s.tcard).filter((c) => c?.isConnected) : [];
-  // As the ring flares, motes break from it and fly back to the cards.
-  return irisInto(sheet, C, R, () => {
-    const goals = cards.length ? cards.map((c) => ({ ...ringAround(c), card: c }))
-      : Array.from({ length: 8 }, (_, k) => ({   // no cards: they just scatter outward
-        x: C.x + Math.cos(k * Math.PI / 4) * R * 1.8, y: C.y + Math.sin(k * Math.PI / 4) * R * 1.8 }));
-    goals.forEach((g, i) => {
-      const a = Math.atan2(g.y - C.y, g.x - C.x);
-      for (let m = 0; m < 3; m++) {
-        const mote = el("span", "theme-mote");
-        const sx = C.x + Math.cos(a + (m - 1) * 0.25) * R, sy = C.y + Math.sin(a + (m - 1) * 0.25) * R;
-        Object.assign(mote.style, { left: `${sx}px`, top: `${sy}px`, zIndex: Z + 1 });
-        document.body.append(mote);
-        const ms = 240 + m * 40, wait = Math.min(i, 9) * 18;
-        mote.animate([
-          { transform: "translate(0, 0) scale(1.4)", opacity: 1 },
-          { transform: `translate(${g.x - sx}px, ${g.y - sy}px) scale(.5)`, opacity: 0.2 },
-        ], { duration: ms, delay: wait, easing: "cubic-bezier(.5, 0, .2, 1)", fill: "backwards" });
-        setTimeout(() => mote.remove(), ms + wait + 20);
-      }
-      cardFlare(g.card?.querySelector(".cface"), 200 + Math.min(i, 9) * 18);
-    });
-  });
+  const C = circleMiddle();
+  sheet.style.pointerEvents = "none";
+  // (each card goes whole, picture and labels, as one piece)
+  const pieces = [...summaryParts(sheet).filter((p) => !p.closest(".related-card")), ...sheet.querySelectorAll(".related-card")];
+  const { end } = burnFronts(pieces, C, { mode: "burn", fly: BACK_FX.fly, build: BACK_FX.burn, z: ++Z });
+  const onTable = S && !$("table").hidden;
+  return new Promise((done) => setTimeout(() => {
+    // The table's pieces, laid down from nothing (still under the page as it fades).
+    if (onTable) burnFronts(tableParts(), C, { mode: "build", at: BACK_FX.fade * 0.6, z: ++Z, flash: { at: 0, ms: 300 } });
+    sheet.animate([{ opacity: 1 }, { opacity: 0 }], { duration: BACK_FX.fade, easing: "ease-out", fill: "forwards" });
+    setTimeout(done, BACK_FX.fade);
+  }, Math.max(0, end - 120)));
+}
+// The table's pieces, as a burning front makes them: the bar's buttons, each
+// card's place (with its name), the hint, and the buttons at the end.
+function tableParts() {
+  const t = $("table");
+  return [...t.querySelectorAll(".bar > button"), ...$("slots").children, $("hint"), ...$("endActions").children]
+    .filter((p) => p && p.getClientRects().length && (p.id !== "hint" || p.textContent.trim()));
 }
 
 // Before the summary opens: the cards' light converges in the middle of
@@ -1361,9 +1364,9 @@ function summonSummary(open, key = null) {
   const sheet = open("later");
   sheet.style.visibility = "hidden";
   sheet.querySelectorAll("img").forEach((img) => img.decode?.().catch(() => {}));
-  const total = arcanePortal(points, () => {
+  const total = arcanePortal(points, (C) => {
     sheet.style.visibility = "";
-    sheet.appear?.();
+    sheet.appear?.(C);
     return sheet;
   });
   setTimeout(() => { summoning = false; }, total);

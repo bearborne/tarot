@@ -57,15 +57,14 @@ function landHome() {
   startSky();
 }
 
-// The timings (ms): the hole forming, everything pulled in, and home's parts flaring.
+// The timings (ms): the hole forming, everything pulled in, and home made again.
 // It's over by pullFrom + pullMs at the latest: the picture is all crumbled
 // `tailMs` before that, and the last of its dust is
-// in by then. It cuts the moment the last grain is in. Then home's parts
-// flare to life, `flareStep` apart. After it, the release: the hole closes to
+// in by then. It cuts the moment the last grain is in. Then the release: the hole closes to
 // a point (`collapse`); dust flies out of it to each of home's pieces, the
 // farthest `fly` after the nearest; and each piece is made by a burning front
 // sweeping across it (`build`), the cards' crumbling run backwards.
-const GREAT_FX = { form: 520, pullFrom: 160, pullMs: 1450, tailMs: 220, flareMs: 720, flareStep: 45, collapse: 170, fly: 380, build: 560 };
+const GREAT_FX = { form: 520, pullFrom: 160, pullMs: 1450, tailMs: 220, collapse: 170, fly: 380, build: 560 };
 // The dust: how many grains a whole screen makes, and how long one takes to fall in.
 const GREAT_DUST = { grains: LITE ? 1400 : 3200, fallMs: [650, 1150] };
 // The cards on the page crumbling to dust where they are, before the page
@@ -518,84 +517,24 @@ function playGreatHole(snap, dpr, colours = null, cardRects = []) {
   // made again piece by piece, the cards' crumbling run backwards. Dust flies
   // out of the closed hole to each piece (the title, the fan, each button),
   // and lands along a ragged, glowing front that sweeps across that piece
-  // from its side nearest the hole, laying it down where it passes. Only the
-  // pieces themselves: the sky round them is simply there. (Taps go through.)
+  // from its side nearest the hole, laying it down where it passes (burnFronts,
+  // in js/burn-fronts.js). Only the pieces themselves: the sky round them is
+  // simply there. (Taps go through.)
   function release(R0, spin0) {
     cv.style.pointerEvents = "none";
     const COL = F.collapse;
-    const parts = homeParts();
-    // Each piece: what it shows on the screen (a piece as wide as the screen,
-    // by its contents), and the way its front goes (out from the hole).
-    const pieces = parts.map((el) => {
-      const box = el.getBoundingClientRect();
-      let b = box;
-      if (b.width > W * 0.6) {
-        const rg = document.createRange();
-        rg.selectNodeContents(el);
-        const c = rg.getBoundingClientRect();
-        if (c.width && c.height) b = c;
-      }
-      const cx = b.left + b.width / 2, cy = b.top + b.height / 2, hw = b.width / 2, hh = b.height / 2;
-      let nx = cx - C.x, ny = cy - C.y;
-      const nl = Math.hypot(nx, ny);
-      if (nl < 8) { nx = 1; ny = 0; } else { nx /= nl; ny /= nl; }
-      const ext = Math.abs(hw * nx) + Math.abs(hh * ny), span = Math.abs(hw * ny) + Math.abs(hh * nx);
-      const near = Math.hypot(Math.min(Math.max(C.x, b.left), b.right) - C.x, Math.min(Math.max(C.y, b.top), b.bottom) - C.y);
-      return { el, b, cx, cy, nx, ny, ext, span, near, ox: cx - box.left, oy: cy - box.top, p: 0,
-        ph: [r(0, TAU), r(0, TAU), r(0, TAU)], round: Math.min(hw, hh, parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0) };
-    });
-    const farthest = Math.max(1, ...pieces.map((pc) => pc.near));
-    pieces.forEach((pc) => { pc.start = COL + 90 + F.fly * (pc.near / farthest); });
-    const END = Math.max(COL, ...pieces.map((pc) => pc.start)) + F.build + 60;
-    // The front across a piece, `p` of the way, at `x` across it (measured
-    // along the way it goes, from the piece's middle): ragged, as the cards'.
-    const frontAt = (pc, p, x) => {
-      const w = 2 * pc.ext, rag = 0.075 * w * (Math.sin(x * 0.09 + pc.ph[0]) + 0.6 * Math.sin(x * 0.23 + pc.ph[1]) + 0.35 * Math.sin(x * 0.53 + pc.ph[2])) / 1.95;
-      return -pc.ext + p * w * 1.3 - 0.15 * w + rag + 0.08 * w * (x / Math.max(1, pc.span));
-    };
-    const progress = (pc, t) => { const u = seg(t, pc.start, pc.start + F.build); return smooth(u) * 0.6 + 0.4 * u; };
-    // Lay down what the front has passed: the piece clipped to it.
-    const STEPS = 28;
-    const clip = (pc) => {
-      if (pc.p >= 1) { pc.el.style.clipPath = ""; return; }
-      const S = pc.span + 40, back = -pc.ext - 120, pts = [];
-      const at = (al, x) => `${(pc.ox + al * pc.nx - x * pc.ny).toFixed(1)}px ${(pc.oy + al * pc.ny + x * pc.nx).toFixed(1)}px`;
-      for (let j = 0; j <= STEPS; j++) { const x = -S + (2 * S * j) / STEPS; pts.push(at(frontAt(pc, pc.p, x), x)); }
-      pts.push(at(back, S), at(back, -S));
-      pc.el.style.clipPath = `polygon(${pts.join(", ")})`;
-    };
-    pieces.forEach(clip);
-    flareHome((b, i) => pieces[i].start + F.build * 0.15, parts);
-    // On the screen: a point `al` along a piece's way and `x` across it.
-    const scr = (pc, al, x) => [pc.cx + al * pc.nx - x * pc.ny, pc.cy + al * pc.ny + x * pc.nx];
-    // The dust: grains flying out of the hole, each landing on a piece's front
-    // just as the front gets there.
-    const grains = [];
-    pieces.forEach((pc) => {
-      const n = Math.round(Math.min(LITE ? 40 : 90, Math.max(14, (pc.b.width * pc.b.height) / (LITE ? 900 : 420))));
-      for (let j = 0; j < n; j++) {
-        const land = pc.start + r(0.05, 0.85) * F.build, x = r(-pc.span, pc.span);
-        const along = Math.min(pc.ext, Math.max(-pc.ext, frontAt(pc, progress(pc, land), x)));
-        const [tx, ty] = scr(pc, along, x), from = Math.max(COL * 0.5, land - r(280, 460));
-        grains.push({ tx, ty, from, land, size: r(0.8, 2), spin: twist * r(0.4, 0.9) });
-      }
-    });
+    const { end } = burnFronts(homeParts(), C, { mode: "build", at: COL + 90, fly: F.fly, build: F.build, z: 9501, flash: { at: COL * 0.4, ms: COL * 0.6 + 260 } });
     const t1 = performance.now();
     let gone = false;
-    const done = () => {
-      if (gone) return;
-      gone = true;
-      pieces.forEach((pc) => (pc.el.style.clipPath = ""));
-      cv.remove();
-    };
+    const done = () => { if (!gone) { gone = true; cv.remove(); } };
+    // The hole closing to a point, spinning faster as it goes.
     const step = (now) => {
       if (gone) return;
       const t = now - t1;
-      if (t >= END) { done(); return; }
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, cv.width, cv.height);
+      if (t >= COL) { done(); return; }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // The hole closing to a point, spinning faster as it goes.
       const c = seg(t, 0, COL), hr = R0 * Math.pow(1 - c, 2);
       if (hr > 0.5) {
         ctx.save();
@@ -604,60 +543,10 @@ function playGreatHole(snap, dpr, colours = null, cardRects = []) {
         art.draw(ctx, (spin0 + t * 2.5) * 1.8, 1, 1);
         ctx.restore();
       }
-      ctx.globalCompositeOperation = "lighter";
-      // The flash where it closed, that the dust comes out of.
-      const fl = Math.sin(Math.PI * seg(t, COL * 0.4, COL + 260));
-      if (fl > 0.01) {
-        const gr = 12 + 40 * seg(t, COL * 0.4, COL + 260);
-        ctx.globalAlpha = fl;
-        ctx.drawImage(spot, C.x - gr, C.y - gr, gr * 2, gr * 2);
-        ctx.globalAlpha = 1;
-      }
-      // Each piece laid down as far as its front, the front's embers along it.
-      ctx.lineCap = ctx.lineJoin = "round";
-      pieces.forEach((pc) => {
-        const p = progress(pc, t);
-        if (p !== pc.p) { pc.p = p; clip(pc); }
-        if (p <= 0 || p >= 1) return;
-        const glow = Math.sin(Math.PI * Math.min(1, p * 1.15));
-        ctx.save();
-        ctx.beginPath();
-        if (ctx.roundRect) ctx.roundRect(pc.b.left - 2, pc.b.top - 2, pc.b.width + 4, pc.b.height + 4, pc.round + 2);
-        else ctx.rect(pc.b.left - 2, pc.b.top - 2, pc.b.width + 4, pc.b.height + 4);
-        ctx.clip();
-        [[7, 0.35], [2.4, 0.7], [0.9, 1]].forEach(([lw, a]) => {
-          ctx.strokeStyle = `rgba(255, ${lw > 2 ? 170 : 226}, ${lw > 2 ? 90 : 170}, ${(a * glow).toFixed(3)})`;
-          ctx.lineWidth = lw;
-          ctx.beginPath();
-          for (let j = 0; j <= STEPS; j++) {
-            const x = -pc.span - 4 + ((2 * pc.span + 8) * j) / STEPS, [sx, sy] = scr(pc, frontAt(pc, p, x), x);
-            j ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
-          }
-          ctx.stroke();
-        });
-        ctx.restore();
-      });
-      // The dust in flight, slowing as it lands.
-      grains.forEach((g) => {
-        if (t < g.from || t > g.land + 90) return;
-        let x, y, al;
-        if (t <= g.land) {
-          const k = (t - g.from) / (g.land - g.from), e = 1 - (1 - k) * (1 - k), tw = g.spin * (1 - e);
-          const dx = (g.tx - C.x) * e, dy = (g.ty - C.y) * e, cs = Math.cos(tw), sn = Math.sin(tw);
-          x = C.x + dx * cs - dy * sn; y = C.y + dx * sn + dy * cs; al = 0.45 + 0.55 * k;
-        } else { x = g.tx; y = g.ty; al = 1 - (t - g.land) / 90; }
-        const gr = g.size * 3 + 2;
-        ctx.fillStyle = `rgba(255, 226, 170, ${al.toFixed(3)})`;
-        ctx.fillRect(x - g.size / 2, y - g.size / 2, g.size, g.size);
-        ctx.globalAlpha = 0.6 * al;
-        ctx.drawImage(spot, x - gr, y - gr, gr * 2, gr * 2);
-        ctx.globalAlpha = 1;
-      });
-      ctx.globalCompositeOperation = "source-over";
       requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
-    setTimeout(done, END + 150);   // (even if the page's frames are paused)
+    setTimeout(done, Math.min(end, COL) + 150);   // (even if the page's frames are paused)
   }
 
   const frame = (now) => {
@@ -741,17 +630,4 @@ function homeParts() {
   return [home.querySelector(".home-head"), $("floatDeck"), $("cotd"), home.querySelector(".home-sub"),
     ...$("spreadList").children, ...(home.querySelector(".home-links")?.children || []), ...$("options").children]
     .filter((p) => p && p.getClientRects().length);
-}
-// Home's parts flaring to life, one after another (top to bottom, or each
-// when `delayOf` its place on the screen says): each lights up out of
-// nothing in a burst of gold, then settles as it is. (Made by the release's
-// burning front, a part is there already, the front laying it down: only its light flares.)
-// (On a phone, the light without the soft glow round it.)
-function flareHome(delayOf = null, parts = homeParts()) {
-  const halo = (a, r) => (LITE ? "" : ` drop-shadow(0 0 ${r}px rgba(255, 206, 120, ${a}))`);
-  parts.forEach((p, i) => p.animate([
-    { opacity: delayOf ? 1 : 0, filter: `brightness(2.6)${halo(0.95, 12)}` },
-    { opacity: 1, filter: `brightness(1.8)${halo(0.75, 9)}`, offset: 0.3 },
-    { opacity: 1, filter: `brightness(1)${halo(0, 0)}` },
-  ], { duration: GREAT_FX.flareMs, delay: delayOf ? delayOf(p.getBoundingClientRect(), i) : i * GREAT_FX.flareStep, easing: "cubic-bezier(.2, .8, .2, 1)", fill: "backwards" }));
 }
