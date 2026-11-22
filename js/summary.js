@@ -1098,13 +1098,36 @@ const MIN_LINK = 2;
 // withLinks: each idea as { x, with, tag, score }, `with` the place of the
 // card it speaks to most and `tag` what they share (null when only a
 // keyword joins them); ideas that link to no card strongly enough are left out.
+// A line that names the lack of what its tag is about ("Low confidence"),
+// rather than its presence. Two ideas on the same tag but on opposite sides
+// of this are a tension, not a match.
+// The lack must sit right against the tagged word: just before it ("Low
+// confidence", "lack of trust") or just after it ("creativity feels blocked").
+// ("Lost in thought" is absorbed, not lacking; "not a lost spark" denies the lack.)
+const LACK_BEFORE = "(?<!\\b(?:not|without) (?:a |an )?)(?:low|lack(?:ing)?|lacks|no|not|without|lost(?! in\\b)|losing|loss of|little|missing|false|absent|neglected|withheld|blocked|drained|shaken)";
+const LACK_AFTER = "(?:blocked|drained|missing|lost|stuck|absent|lacking|shaken|withheld|neglected|fades?|fading|gone)";
+const lacksOn = (x, tag) => {
+  const w = LINK_TAG_RE[tag].source.replace(/^\(\?<!\[a-z\]\)/, "").replace(/\(\?!\[a-z\]\)$/, "");
+  return new RegExp(`\\b${LACK_BEFORE}\\s+(?:of\\s+|in\\s+|your\\s+|any\\s+)?(?:[a-z-]+\\s+)?${w}(?![a-z])`, "i").test(x)
+      || new RegExp(`(?<![a-z])${w}(?:\\s+[a-z]+){0,3}?\\s+${LACK_AFTER}\\b`, "i").test(x);
+};
+
 function connectedIdeas(entries, per = 2, withLinks = false) {
   const linesOf = (e) => { const { ideas, nuances } = ideasFor(e.card, e.reversed); return { ideas, nuances }; };
   const profile = entries.map((e) => {
     const words = filled(keywordsFor(e.card, e.reversed)).map((w) => w.toLowerCase());
     const { ideas, nuances } = linesOf(e);
-    return { words, tags: new Set([...words, ...ideas, ...nuances].flatMap(linkTagsOf)) };
+    const all = [...words, ...ideas, ...nuances];
+    return { words, tags: new Set(all.flatMap(linkTagsOf)), lines: all };
   });
+  // Whether idea x meets card j on `tag` from the opposite side: every line
+  // of that card carrying the tag lacks it where x has it, or the reverse.
+  const opposed = (x, j, tag) => {
+    if (!tag) return false;
+    const on = profile[j].lines.filter((l) => LINK_TAG_RE[tag].test(l));
+    const mine = lacksOn(x, tag);
+    return on.length > 0 && on.every((l) => lacksOn(l, tag) !== mine);
+  };
   return entries.map((e, i) => {
     const { ideas, nuances } = linesOf(e);
     if (entries.length === 1) return ideas.slice(0, 3).map((x) => (withLinks ? { x, with: null } : x));
@@ -1123,7 +1146,10 @@ function connectedIdeas(entries, per = 2, withLinks = false) {
       return { x, raw: bestScore, score: bestScore + (bestScore ? bonus : 0), k, with: best, tag };
     });
     const linked = scored.filter((s) => s.raw >= MIN_LINK).sort((a, b) => b.score - a.score || a.k - b.k);
-    if (withLinks) return linked.slice(0, per).map(({ x, with: w, tag, score }) => ({ x, with: w, tag, score }));
+    // tension: the two cards meet on the tag from opposite sides (one has it, one lacks it);
+    // lack: this idea is the side that lacks it.
+    if (withLinks) return linked.slice(0, per).map(({ x, with: w, tag, score }) =>
+      ({ x, with: w, tag, score, tension: opposed(x, w, tag), lack: !!tag && lacksOn(x, tag) }));
     return (linked.length ? linked : scored).slice(0, per).map((s) => s.x);
   });
 }
@@ -1163,9 +1189,10 @@ function readingOverview(entries, pair) {
   const lower = (s) => s.charAt(0).toLowerCase() + s.slice(1);
   const out = [];
   const { themes, topEl, els, majors, revs } = patternParts(entries);
-  const top = (themes.length ? themes : readingThemes(entries)).slice(0, 2).map((t) => lower(THEME_TEXT[t][0]));
-  if (top.length === 2) out.push(`At its heart, this reading is about ${top[0]} and ${top[1]}, and where the two meet in you.`);
-  else if (top.length) out.push(`At its heart, this reading is about ${top[0]}, and what it asks of you.`);
+  // Straight into the themes: the section's title already says this is the reading as a whole.
+  const top = (themes.length ? themes : readingThemes(entries)).slice(0, 2).map((t) => THEME_TEXT[t][0]);
+  if (top.length === 2) out.push(`${top[0]} and ${lower(top[1])} meet in you.`);
+  else if (top.length) out.push(`${top[0]} asks something of you.`);
   // (A phrase with its own comma gets one after it too, so the sentence still parses.)
   const g = (e) => { const s = phrases(e.card, e.reversed).g.replace(/[.;]+$/, ""); return s.includes(",") ? `${s},` : s; };
   out.push(n === 2
@@ -1353,10 +1380,13 @@ function openSummary(entries, title, magic = false, named = null) {
   // Each idea with the card it links to: tap it to draw the thread between
   // the two cards (the strip names them, and what they share).
   const linked = connectedIdeas(entries, 2, true).map((list, i) =>
-    list.map(({ x, with: j, tag }) => (j === null ? x : {
+    list.map(({ x, with: j, tag, tension, lack }) => (j === null ? x : {
       x,
       cards: [i, j],
-      head: `${entries[i].card.name} · ${entries[j].card.name}${tag ? `, on ${LINK_TEXT[tag][0]}` : ""}`,
+      // A tension reads as such: one card lacks what the other has.
+      head: tension
+        ? `${entries[i].card.name} ↔ ${entries[j].card.name}, ${LINK_TEXT[tag][0]} ${lack ? "lacking ↔ found" : "found ↔ lacking"}`
+        : `${entries[i].card.name} · ${entries[j].card.name}${tag ? `, on ${LINK_TEXT[tag][0]}` : ""}`,
     })));
   let lens = laidOut;
   let topic = null;           // the topic whose themes are listed, or null for the topics
