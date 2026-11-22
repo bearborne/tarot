@@ -238,7 +238,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
   height: calc(var(--ch) * 1.18 + 14px);
   width: 100%;
   margin: 0 auto;
-  cursor: pointer;
   container-type: size;   /* (the keywords are sized from its height) */
 }
 .fd-card {
@@ -252,6 +251,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   transform-origin: 50% 150%;
   transform: rotate(var(--a));
   transition: transform .6s cubic-bezier(.3,.7,.3,1);
+  cursor: pointer;   /* (only the cards answer a tap, not the space round them) */
 }
 .fd-card.lift { transform: translateY(-6px) scale(1.12); transform-origin: 50% 100%; z-index: 2; }
 /* The bob moves the card by `top`, not a transform: an animated transform

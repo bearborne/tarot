@@ -1251,7 +1251,11 @@ async function revealCardOfTheDay() {
   fdBusy = false;
 }
 
-$("floatDeck").addEventListener("click", revealCardOfTheDay);
+// Only a tap on a card itself counts, not the empty space round the fan.
+$("floatDeck").addEventListener("click", (e) => {
+  const card = e.target.closest(".fd-card");
+  if (card && !card.classList.contains("gone")) revealCardOfTheDay();
+});
 
 $("cotd").addEventListener("click", revealCardOfTheDay);
 
