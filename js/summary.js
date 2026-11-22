@@ -778,12 +778,13 @@ function listItems(items) {
     if (head) li.append(el("strong", "", head));
     if (text) li.append(el("span", "", text));
     // ideas: the card's key ideas that connect to the rest of the reading
-    // (Plain strings, or { x, to }: the idea, and the card it links to.)
+    // (Plain strings, or { x, cards, head }: an idea that links to another
+    // card; tapping it draws the thread between the two cards.)
     if (ideas && ideas.length) {
       const box = el("span", "summary-ideas");
       ideas.forEach((d) => {
         const one = el("span", "summary-idea", typeof d === "string" ? d : d.x);
-        if (d.to) one.append(el("span", "summary-link", `— with ${d.to}`));
+        if (d.cards) threadable(one, d.cards, d.head);
         box.append(one);
       });
       li.append(box);
@@ -1094,8 +1095,8 @@ function connectedIdeas(entries, per = 2, withLinks = false) {
 // ── The pair that speaks loudest ────────────────────────
 // Of the spread's pairs that have their own written line (pairs.js), the
 // one whose cards share the most: rare tags count most, and two Major
-// Arcana a little more. The lines are written for upright cards, so a
-// reversed card sits this out. { i, j, text } or null.
+// Arcana a little more. When either card is reversed, the pair's reversed
+// line is used (pairs-reversed.js), if it has one. { i, j, text } or null.
 function strongestPair(entries) {
   if (typeof PAIR_LINES === "undefined" || entries.length < 2) return null;
   const tags = entries.map((e) => {
@@ -1104,9 +1105,10 @@ function strongestPair(entries) {
   });
   let best = null;
   entries.forEach((a, i) => entries.forEach((b, j) => {
-    if (j <= i || a.reversed || b.reversed) return;
+    if (j <= i) return;
     const [x, y] = [CARDS.indexOf(a.card), CARDS.indexOf(b.card)].sort((m, k) => m - k);
-    const text = PAIR_LINES[`${x}-${y}`];
+    const rev = a.reversed || b.reversed;
+    const text = rev ? (typeof PAIR_LINES_REV !== "undefined" && PAIR_LINES_REV[`${x}-${y}`]) : PAIR_LINES[`${x}-${y}`];
     if (!text) return;
     const score = [...tags[i]].filter((t) => tags[j].has(t)).reduce((s, t) => s + linkWeight(t), 0)
                 + (isMajorCard(a.card) && isMajorCard(b.card) ? 2 : 0);
@@ -1277,14 +1279,20 @@ function openSummary(entries, title, magic = false, named = null) {
     if (!pair) return null;
     const p = el("p", "summary-pair");
     threadable(p, [pair.i, pair.j], "");
-    p.append(el("span", "pair-names", `${entries[pair.i].card.name} · ${entries[pair.j].card.name}`), el("span", "pair-text", pair.text));
+    const nm = (e) => `${e.card.name}${e.reversed ? ", reversed" : ""}`;
+    p.append(el("span", "pair-names", `${nm(entries[pair.i])} · ${nm(entries[pair.j])}`), el("span", "pair-text", pair.text));
     return p;
   };
   // Each card's key ideas that relate most to the other cards, shown under
   // its line in "The reading".
-  // Each idea with the card it links to, and what they share: "— with The Lovers, on choosing".
-  const linked = connectedIdeas(entries, 2, true).map((list) =>
-    list.map(({ x, with: j, tag }) => ({ x, to: j === null ? "" : `${entries[j].card.name}${tag ? `, on ${LINK_TEXT[tag][0]}` : ""}` })));
+  // Each idea with the card it links to: tap it to draw the thread between
+  // the two cards (the strip names them, and what they share).
+  const linked = connectedIdeas(entries, 2, true).map((list, i) =>
+    list.map(({ x, with: j, tag }) => (j === null ? x : {
+      x,
+      cards: [i, j],
+      head: `${entries[i].card.name} · ${entries[j].card.name}${tag ? `, on ${LINK_TEXT[tag][0]}` : ""}`,
+    })));
   let lens = laidOut;
   let topic = null;           // the topic whose themes are listed, or null for the topics
   let menuOpen = false;       // the themes are shown only once "Select a theme" is pressed
