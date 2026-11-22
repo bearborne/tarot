@@ -2034,6 +2034,24 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .tile-n { font-weight: normal; font-size: 1.15em; color: var(--gold); }
 .tile-note { font-family: var(--read); font-size: .7rem; color: var(--muted); }
 .per-card .tile { padding-inline: 2px; }
+/* A tile's meaning, above it on hover (or a tap on the phone) */
+.tile-tip {
+  position: fixed;
+  z-index: 1000;
+  max-width: min(260px, calc(100vw - 16px));
+  padding: 7px 10px;
+  border: 1px solid rgba(201, 169, 110, .45);
+  border-radius: 8px;
+  background: rgba(18, 13, 28, .96);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, .45);
+  color: var(--ink);
+  font-family: var(--read);
+  font-size: .78rem;
+  line-height: 1.35;
+  text-align: center;
+  pointer-events: none;
+}
+.tile-tip[hidden] { display: none; }
 .tile.good { border-color: rgba(201, 169, 110, .5); }
 .tile.good .tile-note { color: var(--gold); }
 .tile.bad { border-color: rgba(201, 125, 105, .4); }

@@ -521,30 +521,46 @@ function facingOf(e) {
 
 // What the eyes rest on (symbols.js): you, a blindfold, a hidden face,
 // closed eyes, or a thing held. Each with its glyph and a brief meaning.
+// The third of each is what that gaze means, shown on hover (or a tap).
 const EYE_MARK = {
-  you:    ["◉", "at you"],
-  blind:  ["⊘", "unseeing"],
-  hidden: ["◌", "hiding"],
-  closed: ["◡", "within"],
+  you:    ["◉", "at you", "The figure looks straight at you: this card speaks to you directly. Meet its eye."],
+  blind:  ["⊘", "unseeing", "Blindfolded: you can't see the whole picture yet. Trust what you sense within."],
+  hidden: ["◌", "hiding", "The face is hidden: something feels too much to look at yet. You can look when you're ready."],
+  closed: ["◡", "within", "Eyes closed: rest. What you need now is found within."],
 };
-function eyesOf(e) { return (typeof EYES !== "undefined" && EYES[e.card.name]) || ""; }
+// [what the eyes rest on, what that means]
+function eyesOf(e) {
+  const y = (typeof EYES !== "undefined" && EYES[e.card.name]) || "";
+  return Array.isArray(y) ? y : [y, ""];
+}
+// What the way a figure looks means, by where it sits in the row.
+const WAY_WHY = {
+  back:   "It looks back toward the card before: what came before still holds your attention.",
+  past:   "It looks back, out of the reading: part of you is still with the past.",
+  next:   "It looks ahead toward the next card: you're moving toward what comes next.",
+  future: "It looks ahead, out of the reading: your attention is on the future.",
+  away:   "It is turned away from you: you're looking out over your own world, or leaving something behind.",
+};
 
 function gazePart(entries, nameOf) {
   const n = entries.length;
   const f = entries.map(facingOf);
-  const eyes = entries.map(eyesOf);
+  const seen = entries.map(eyesOf);
+  const eyes = seen.map((y) => y[0]);
   if (n < 2 || !f.some(Boolean) && !eyes.some(Boolean)) return null;
   const tiles = f.map((d, i) => {
-    const y = eyes[i], mark = EYE_MARK[y];
+    const [y, yWhy] = seen[i], mark = EYE_MARK[y];
     const arrow = { left: "←", right: "→", back: "↑" }[d];
     // Where the figure looks, as a brief meaning.
-    const way = d === "left" ? (i ? "what came" : "the past")
-      : d === "right" ? (i < n - 1 ? "what's next" : "the future")
+    const w = d === "left" ? (i ? "back" : "past")
+      : d === "right" ? (i < n - 1 ? "next" : "future")
       : d === "back" ? "away" : "";
+    const way = { back: "what came", past: "the past", next: "what's next", future: "the future", away: "away" }[w] || "";
     return {
       top: nameOf(i),
       main: arrow || (mark ? mark[0] : y ? "↓" : "·"),
       note: mark ? mark[1] : y || way,
+      tip: [mark ? mark[2] : yWhy, WAY_WHY[w]].filter(Boolean).join(" "),
       tone: d || y ? "" : "quiet",
       cards: d === "left" && i ? [i - 1, i] : d === "right" && i < n - 1 ? [i, i + 1] : [i],
     };
@@ -885,6 +901,7 @@ function partSection(p, cardCols) {
       tile.append(pips);
     }
     if (t.note) tile.append(el("span", "tile-note", t.note));
+    if (t.tip) { tile.dataset.tip = t.tip; tile.setAttribute("aria-description", t.tip); }
     threadable(tile, t.cards, [t.top, t.n, t.main].filter((x) => x != null && x !== "").join(" "));
     grid.append(tile);
   });
@@ -893,6 +910,42 @@ function partSection(p, cardCols) {
   if (p.list && p.list.length) sec.append(listItems(p.list));
   return sec;
 }
+
+// A tile's tip (data-tip): what it means, in a small bubble above it.
+// With a mouse it shows on hover; on a phone a tap shows it (tap again,
+// or anywhere else, to hide it). Scrolling hides it.
+const tileTip = (() => {
+  let bubble = null, on = null, touch = false;
+  const hide = () => { if (bubble) bubble.hidden = true; on = null; };
+  const show = (node) => {
+    if (!bubble) { bubble = el("div", "tile-tip"); bubble.setAttribute("role", "tooltip"); document.body.append(bubble); }
+    bubble.textContent = node.dataset.tip;
+    bubble.hidden = false;
+    on = node;
+    const r = node.getBoundingClientRect(), b = bubble.getBoundingClientRect();
+    const x = Math.min(Math.max(8, r.left + r.width / 2 - b.width / 2), innerWidth - b.width - 8);
+    const y = r.top - b.height - 8 >= 8 ? r.top - b.height - 8 : r.bottom + 8;
+    bubble.style.left = `${x}px`;
+    bubble.style.top = `${y}px`;
+  };
+  document.addEventListener("pointerdown", (ev) => { touch = ev.pointerType !== "mouse"; }, true);
+  document.addEventListener("pointermove", (ev) => {
+    if (ev.pointerType !== "mouse") return;
+    const t = ev.target.closest && ev.target.closest("[data-tip]");
+    if (t && t !== on) show(t); else if (!t && on) hide();
+  }, { passive: true });
+  document.addEventListener("pointerout", (ev) => { if (ev.pointerType === "mouse" && on && !ev.relatedTarget) hide(); });
+  document.addEventListener("click", (ev) => {
+    if (!touch) return;
+    const t = ev.target.closest("[data-tip]");
+    if (t && t !== on) show(t); else hide();
+  });
+  document.addEventListener("focusin", (ev) => { const t = ev.target.closest && ev.target.closest("[data-tip]"); if (t && !touch) show(t); });
+  document.addEventListener("focusout", () => { if (!touch) hide(); });
+  document.addEventListener("scroll", hide, true);
+  addEventListener("resize", hide);
+  return { hide };
+})();
 
 // A golden thread through the lit cards of a row: a gentle arc from one
 // card's centre to the next, drawn over the row in an SVG of its own.

@@ -92,7 +92,8 @@ Further down, the patterns sit in small tiles you can take in at a glance:
   Fire+Air and Water+Earth help; Fire+Water and Air+Earth clash.
 - **Gaze**: one tile per card with the way its figure looks (← what came, → what's next; at the ends, the past or the future)
   and what its eyes rest on: ◉ at you, ⊘ unseeing (blindfolded), ◌ hiding (face covered), ◡ within (eyes
-  closed), or the thing it looks at ("the cup"). A reversed card looks the other way.
+  closed), or the thing it looks at ("the cup"). A reversed card looks the other way. Hover over a
+  tile (or tap it on the phone) to read what that gaze means.
 - **Mirrors & tensions**: mirrored pairs (The Tower ↔ The Star), Ace ↔ Ten, Queen ↔ King, opposing themes.
 - **Number arcs**: whether the numbers rise, fall or peak, and where the Majors sit on the Fool's journey.
 - **The hidden card**: the cards' numbers added and reduced to a Major card (courts count 11–14).
@@ -102,7 +103,7 @@ the cards shows the thread at the bottom of the screen while you read.
 
 The symbols and the direction each figure looks are kept in **symbols.js**: `SYMBOLS` lists every
 symbol and what it means, and `PICTURES` has one line per card with its `facing` ("left", "right",
-"back" or "") and its `symbols`; `EYES` says what a figure's eyes rest on (you, a blindfold, a thing held). Add or remove ids there to change what the summary finds.
+"back" or "") and its `symbols`; `EYES` says what a figure's eyes rest on (you, a blindfold, a thing held) and, for a thing held, what that gaze means. Add or remove ids there to change what the summary finds.
 
 ## Your history, notes and backups
 

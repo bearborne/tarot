@@ -156,7 +156,8 @@ const PICTURES = {
 //    "blind"  – blindfolded
 //    "hidden" – face covered or turned down, eyes out of sight
 //    "closed" – eyes shut
-//    anything else – the thing the figure looks at ("the cup")
+//    ["the cup", "why"] – the thing the figure looks at, and what
+//              that gaze means (shown when you hover or tap the tile)
 //  Cards not listed look nowhere in particular.
 // ───────────────────────────────────────────────────────────────
 
@@ -166,28 +167,28 @@ const EYES = {
   "The Empress":        "you",
   "The Hierophant":     "you",
   "The Chariot":        "you",
-  "Strength":           "the lion",
-  "The Hermit":         "the lantern",
+  "Strength":           ["the lion", "Your eyes rest on the lion: you meet your own wild side gently, and it calms."],
+  "The Hermit":         ["the lantern", "Your eyes are on the lantern: your own inner light guides you, a step at a time."],
   "Justice":            "you",
   "The Hanged Man":     "you",
-  "Temperance":         "the cups",
+  "Temperance":         ["the cups", "Your eyes follow the water between the cups: you find your balance by patient mixing."],
   "The Devil":          "you",
-  "The Star":           "the water",
+  "The Star":           ["the water", "Your eyes are on the water you pour: you give yourself care, and it flows back."],
   "The Sun":            "you",
 
   // ── Wands ──
-  "Two of Wands":       "the globe",
-  "Page of Wands":      "the wand",
+  "Two of Wands":       ["the globe", "Your eyes are on the globe: you weigh your world and how far you could go."],
+  "Page of Wands":      ["the wand", "Your eyes are on the wand: a spark fascinates you, and it is yours to follow."],
 
   // ── Cups ──
-  "Two of Cups":        "each other",
-  "Four of Cups":       "the cups",
-  "Five of Cups":       "spilled cups",
-  "Six of Cups":        "the gift",
+  "Two of Cups":        ["each other", "They look at each other: you meet yourself, and others, as an equal."],
+  "Four of Cups":       ["the cups", "Your eyes are on the cups before you: so fixed on what you have that you miss what's offered."],
+  "Five of Cups":       ["spilled cups", "Your eyes are on the spilled cups: grief holds your gaze, while two cups still stand behind you."],
+  "Six of Cups":        ["the gift", "Their eyes are on the gift: a simple kindness touches you, perhaps one to your younger self."],
   "Nine of Cups":       "you",
-  "Page of Cups":       "the fish",
-  "Knight of Cups":     "the cup",
-  "Queen of Cups":      "the cup",
+  "Page of Cups":       ["the fish", "Your eyes are on the fish: you're curious about a feeling or idea surfacing in you."],
+  "Knight of Cups":     ["the cup", "Your eyes are on the cup you carry: you follow what your heart offers."],
+  "Queen of Cups":      ["the cup", "Your eyes are on the closed cup: you listen to your feelings before they have words."],
 
   // ── Swords ──
   "Two of Swords":      "blind",
@@ -199,13 +200,13 @@ const EYES = {
   "King of Swords":     "you",
 
   // ── Pentacles ──
-  "Two of Pentacles":   "the coins",
+  "Two of Pentacles":   ["the coins", "Your eyes are on the coins: you keep your balance by minding what's in the air."],
   "Four of Pentacles":  "you",
-  "Seven of Pentacles": "the harvest",
-  "Eight of Pentacles": "the work",
-  "Nine of Pentacles":  "the falcon",
-  "Page of Pentacles":  "the coin",
-  "Knight of Pentacles": "the coin",
-  "Queen of Pentacles": "the coin",
-  "King of Pentacles":  "the coin",
+  "Seven of Pentacles": ["the harvest", "Your eyes are on the harvest: you pause to see what your effort has grown."],
+  "Eight of Pentacles": ["the work", "Your eyes are on the work: you're absorbed in your craft, better with each piece."],
+  "Nine of Pentacles":  ["the falcon", "Your eyes are on the falcon: you've trained your own wild thoughts, and they rest calmly with you."],
+  "Page of Pentacles":  ["the coin", "Your eyes are on the coin: you study a seed of something real you could grow."],
+  "Knight of Pentacles": ["the coin", "Your eyes are on the coin: you tend what matters steadily, without hurry."],
+  "Queen of Pentacles": ["the coin", "Your eyes are on the coin in your lap: you care for what you have, and it nourishes you."],
+  "King of Pentacles":  ["the coin", "Your eyes rest on the coin: you enjoy what you've built, secure in your own worth."],
 };
