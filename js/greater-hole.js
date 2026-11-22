@@ -73,17 +73,27 @@ const GREAT_DUST = { grains: LITE ? 1400 : 3200, fallMs: [650, 1150] };
 const CARD_DUST = { from: 120, stagger: 110, crumble: 760, perPx: LITE ? 34 : 16, most: LITE ? 260 : 560 };
 
 let swallowing = false;
+// Where the hole leads: `land()` puts the screen there, the moment the last
+// grain is in, and `build(C, opts)` makes its pieces again with burnFronts.
+// Home is one way; the reading's summary is another (see summonSummary).
+const HOME_WAY = { land: () => landHome(), build: (C, o) => burnFronts(homeParts(), C, o) };
 async function swallowHome(btn) {
   if (swallowing) return;
   document.activeElement?.blur();   // (saves a note being written)
   if (calm) { landHome(); return; }
   swallowing = true;
   cardFlare(btn);
+  swallowPage(btn.closest(".sheet"), HOME_WAY);
+}
+// `page` (the screen or page showing) swallowed by the hole, which then
+// opens onto `way`. (Call with `swallowing` already set.)
+async function swallowPage(page, way) {
+  swallowing = true;
   // (The canvas over the whole screen is redrawn every frame: no more than
   // about 2.4 million pixels of it, however big and sharp the screen.)
   const dpr = Math.max(0.75, Math.min(PX(LITE ? 1.25 : 1.5), Math.sqrt(2.4e6 / (innerWidth * innerHeight))));
   // The still picture first (given a moment at most; without it, the live page goes in).
-  const sheet = btn.closest(".sheet");
+  const sheet = page;
   let snap = null, colours = null;
   if (sheet) {
     sheet.getAnimations().forEach((a) => a.cancel());   // (still sliding in: taken where it rests)
@@ -95,7 +105,7 @@ async function swallowHome(btn) {
     }
   }
   if (snap && !(snap.width && snap.height)) snap = null;
-  playGreatHole(snap, dpr, colours, snap ? cardsOn(sheet) : []);
+  playGreatHole(snap, dpr, colours, snap ? cardsOn(sheet) : [], way);
 }
 
 // The cards showing on a page (their pictures), where they are on the screen:
@@ -172,7 +182,7 @@ function pageColours() {
   };
 }
 
-function playGreatHole(snap, dpr, colours = null, cardRects = []) {
+function playGreatHole(snap, dpr, colours = null, cardRects = [], way = HOME_WAY) {
   const W = innerWidth, H = innerHeight, TAU = Math.PI * 2;
   const C = { x: W / 2, y: H / 2 };
   const far = Math.hypot(W / 2, H / 2) + 8, base = Math.min(W, H);
@@ -200,6 +210,7 @@ function playGreatHole(snap, dpr, colours = null, cardRects = []) {
   // Without a picture: every page and screen showing is pulled in itself,
   // each on a layer of its own and frozen as it is.
   const layers = snap ? [] : [...document.querySelectorAll("body > .screen:not([hidden]), body > .sheet:not([hidden]), body > .overlay:not([hidden])")]
+    .filter((node) => node.style.visibility !== "hidden")   // (a page waiting, out of sight, to be landed on)
     .map((node) => {
       node.getAnimations().forEach((a) => a.cancel());   // (a page still sliding in: measured where it rests)
       const b = node.getBoundingClientRect();
@@ -518,7 +529,7 @@ function playGreatHole(snap, dpr, colours = null, cardRects = []) {
       node.classList.remove("closing", "swallowed");
       node.style.transform = node.style.transformOrigin = node.style.clipPath = node.style.pointerEvents = "";
     });
-    landHome();
+    way.land();
     root.style.overflow = overflow;
     swallowing = false;
     release(holeR(SWALLOWED), swirlClock);
@@ -534,7 +545,7 @@ function playGreatHole(snap, dpr, colours = null, cardRects = []) {
   function release(R0, spin0) {
     cv.style.pointerEvents = "none";
     const COL = F.collapse;
-    const { end } = burnFronts(homeParts(), C, { mode: "build", at: COL + 90, fly: F.fly, build: F.build, z: 9501, flash: { at: COL * 0.4, ms: COL * 0.6 + 260 } });
+    const { end } = way.build(C, { mode: "build", at: COL + 90, fly: F.fly, build: F.build, z: 9501, flash: { at: COL * 0.4, ms: COL * 0.6 + 260 } });
     const t1 = performance.now();
     let gone = false;
     const done = () => { if (!gone) { gone = true; cv.remove(); } };

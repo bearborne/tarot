@@ -58,7 +58,7 @@ function sizeMagic() {
 }
 
 function resetMagic() {
-  MG.cards = []; MG.travels = []; MG.links = []; MG.finale = 0; MG.great = null; MG.portal = false;
+  MG.cards = []; MG.travels = []; MG.links = []; MG.finale = 0; MG.great = null; MG.portal = false; MG.cover = null;
   MG.flyers = []; MG.ghosts = []; MG.flares = []; MG.motes = []; MG.steps = []; MG.total = 0; MG.waitAt = null; MG.burst = false;
   if (MG.ctx) MG.ctx.clearRect(0, 0, MG.w, MG.h);
   if (MG.frx) MG.frx.clearRect(0, 0, MG.w, MG.h);
@@ -334,6 +334,12 @@ function startMagic() {
   MG.running = true;
   requestAnimationFrame(function frame(t) {
     if (!S || $("table").hidden || document.hidden) { MG.running = false; return; }
+    // (While the summary covers the whole table, nothing of it can be seen:
+    // it waits, untouched, until the summary starts to go.)
+    if (MG.cover) {
+      if (MG.cover.isConnected && !MG.cover.hidden) { requestAnimationFrame(frame); return; }
+      MG.cover = null;
+    }
     const now = calm ? performance.now() + 10000 : t;   // reduced motion: draw everything already settled
     drawMagic(now);
     clearTop();

@@ -1594,6 +1594,7 @@ let backSeen = false;   // (per visit: a fresh page load plays it in full again)
 function vanishWithMagic(sheet) {
   const k = backSeen ? 3 : 1;
   backSeen = true;
+  MG.cover = null;   // (the table's circle shows again as the page burns away)
   const C = circleMiddle();
   sheet.style.pointerEvents = "none";
   // (each card goes whole, picture and labels, as one piece)
@@ -1615,39 +1616,44 @@ function tableParts() {
     .filter((p) => p && p.getClientRects().length && (p.id !== "hint" || p.textContent.trim()));
 }
 
-// Before the summary opens: the cards' light converges in the middle of
-// the screen, the arcane circle spins up there, and the summary appears
-// through it (arcanePortal, below).
-// The first time a summary opens in a visit, the portal plays in full; after
-// that, for any reading, it takes half as long, its circle still turning at
-// its first pace. A fresh page load plays it in full again. `key` names the
-// reading (its id in the history, or the reading itself before it's saved).
-// portalPace is read by arcanePortal, emergeCards and appearWithMagic. (The way back keeps its own count.)
+// Opening the summary: the black hole that takes you home (playGreatHole,
+// in js/greater-hole.js) swallows the table (or the History) and its cards,
+// crumbling them to dust; the moment the last grain is in, the summary is
+// there, and its pieces are laid down by burning fronts out of the closing
+// hole, as home's are. `key` names the reading (its id in the history, or the
+// reading itself before it's saved).
+// (arcanePortal, in js/portal.js, was the way in before: no longer used.)
+// (portalPace: read by appearWithMagic and the old portal; always the first pace now.)
 let summoning = false, portalPace = 1;
-let portalSeen = false;
 function summonSummary(open, key = null) {
   if (calm) { open(false); return; }
-  if (summoning) return;   // already on its way
+  if (summoning || swallowing) return;   // already on its way
   summoning = true;
-  portalPace = portalSeen ? 2 : 1;
-  portalSeen = true;
-  // The turned cards on the table; from the History there are none on screen.
+  swallowing = true;
+  document.activeElement?.blur();
+  // What's showing: the table, or the page the summary was asked from.
   const onTable = S && !$("table").hidden;
-  const points = onTable ? S.slots.map((s, i) => {
-    const g = cardGeom(i);
-    return { x: g.x, y: g.y, w: g.rx * 2, h: g.ry * 2, el: s.tcard };
-  }) : [];
-  // The page is built now, before the light starts, and kept out of sight
-  // until the window opens: built mid-flight, it froze the portal for a
-  // moment. Its card pictures start decoding now too, so they're ready.
+  const from = onTable ? $("table")
+    : [...document.querySelectorAll("body > .sheet:not([hidden]), body > .overlay:not([hidden])")].pop() || null;
+  // The page is built now, kept out of sight until the hole has eaten
+  // everything; its card pictures start decoding now too, so they're ready.
   const sheet = open("later");
   sheet.readingKey = key;   // (for the way back: see vanishWithMagic)
   sheet.style.visibility = "hidden";
   sheet.querySelectorAll("img").forEach((img) => img.decode?.().catch(() => {}));
-  const total = arcanePortal(points, (C) => {
-    sheet.style.visibility = "";
-    sheet.appear?.(C);
-    return sheet;
+  // (the table's circle, under the hole, needn't be drawn meanwhile: see startMagic)
+  if (onTable) MG.cover = $("table");
+  const done = () => { summoning = false; };
+  swallowPage(from, {
+    land: () => {
+      sheet.hidden = false;
+      sheet.style.visibility = "";
+      sheet.style.zIndex = ++Z;
+      sheet.scrollTop = 0;
+      if (onTable) MG.cover = sheet;   // (hidden under the summary until it goes)
+      done();
+    },
+    build: (C, o) => burnFronts(summaryParts(sheet), C, { ...o, host: sheet, z: 50 }),
   });
-  setTimeout(() => { summoning = false; }, total);
+  setTimeout(done, 6000);   // (whatever happens)
 }
