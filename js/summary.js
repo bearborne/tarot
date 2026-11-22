@@ -519,24 +519,47 @@ function facingOf(e) {
   return f === "left" ? "right" : f === "right" ? "left" : f;
 }
 
+// What the eyes rest on (symbols.js): you, a blindfold, a hidden face,
+// closed eyes, or a thing held. Each with its glyph and a brief meaning.
+const EYE_MARK = {
+  you:    ["◉", "at you"],
+  blind:  ["⊘", "unseeing"],
+  hidden: ["◌", "hiding"],
+  closed: ["◡", "within"],
+};
+function eyesOf(e) { return (typeof EYES !== "undefined" && EYES[e.card.name]) || ""; }
+
 function gazePart(entries, nameOf) {
   const n = entries.length;
   const f = entries.map(facingOf);
-  if (n < 2 || !f.some(Boolean)) return null;
-  const tiles = f.map((d, i) => ({
-    top: nameOf(i),
-    main: { left: "←", right: "→", back: "↑" }[d] || "·",
-    note: d === "left" ? (i ? "back" : "outward")
-      : d === "right" ? (i < n - 1 ? "ahead" : "beyond")
-      : d === "back" ? "away" : "",
-    tone: d ? "" : "quiet",
-    cards: d === "left" && i ? [i - 1, i] : d === "right" && i < n - 1 ? [i, i + 1] : [i],
-  }));
+  const eyes = entries.map(eyesOf);
+  if (n < 2 || !f.some(Boolean) && !eyes.some(Boolean)) return null;
+  const tiles = f.map((d, i) => {
+    const y = eyes[i], mark = EYE_MARK[y];
+    const arrow = { left: "←", right: "→", back: "↑" }[d];
+    // Where the figure looks, as a brief meaning.
+    const way = d === "left" ? (i ? "what came" : "the past")
+      : d === "right" ? (i < n - 1 ? "what's next" : "the future")
+      : d === "back" ? "away" : "";
+    return {
+      top: nameOf(i),
+      main: arrow || (mark ? mark[0] : y ? "↓" : "·"),
+      note: mark ? mark[1] : y || way,
+      tone: d || y ? "" : "quiet",
+      cards: d === "left" && i ? [i - 1, i] : d === "right" && i < n - 1 ? [i, i + 1] : [i],
+    };
+  });
   const list = [];
   const lefts = whichCards(entries, (e, i) => f[i] === "left");
   const rights = whichCards(entries, (e, i) => f[i] === "right");
   if (n >= 3 && lefts.length >= Math.ceil(n * 0.6)) list.push({ head: "Most look back", text: "The past holds the attention.", cards: lefts });
   else if (n >= 3 && rights.length >= Math.ceil(n * 0.6)) list.push({ head: "Most look ahead", text: "The reading leans forward.", cards: rights });
+  const atYou = whichCards(entries, (e, i) => eyes[i] === "you");
+  const blind = whichCards(entries, (e, i) => eyes[i] === "blind" || eyes[i] === "hidden");
+  const onThings = whichCards(entries, (e, i) => eyes[i] && !EYE_MARK[eyes[i]]);
+  if (atYou.length >= 2) list.push({ head: "Looking at you", text: "The reading speaks to you directly.", cards: atYou });
+  if (blind.length) list.push({ head: "Eyes unseeing",text: "Something isn't seen yet; trust what you sense.", cards: blind });
+  if (onThings.length >= 2) list.push({ head: "Eyes on what's held", text: "Your attention rests on what's in hand.", cards: onThings });
   for (let i = 0; i < n - 1; i++) {
     if (f[i] === "right" && f[i + 1] === "left") list.push({ head: `${nameOf(i)} → ← ${nameOf(i + 1)}`, text: "Face to face: read them together.", cards: [i, i + 1] });
     if (f[i] === "left" && f[i + 1] === "right") list.push({ head: `${nameOf(i)} ← → ${nameOf(i + 1)}`, text: "Back to back: not yet speaking.", cards: [i, i + 1] });

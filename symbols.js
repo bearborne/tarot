@@ -149,3 +149,63 @@ const PICTURES = {
   "Queen of Pentacles": { facing: "",      symbols: ["flowers", "trees", "thrones", "crowns", "mountains", "goldsky"] },
   "King of Pentacles":  { facing: "",      symbols: ["harvest", "homes", "thrones", "crowns", "goldsky"] },
 };
+
+// ───────────────────────────────────────────────────────────────
+//  EYES – what the main figure's eyes rest on, where it matters:
+//    "you"    – looks straight out at the reader
+//    "blind"  – blindfolded
+//    "hidden" – face covered or turned down, eyes out of sight
+//    "closed" – eyes shut
+//    anything else – the thing the figure looks at ("the cup")
+//  Cards not listed look nowhere in particular.
+// ───────────────────────────────────────────────────────────────
+
+const EYES = {
+  // ── Major Arcana ──
+  "The High Priestess": "you",
+  "The Empress":        "you",
+  "The Hierophant":     "you",
+  "The Chariot":        "you",
+  "Strength":           "the lion",
+  "The Hermit":         "the lantern",
+  "Justice":            "you",
+  "The Hanged Man":     "you",
+  "Temperance":         "the cups",
+  "The Devil":          "you",
+  "The Star":           "the water",
+  "The Sun":            "you",
+
+  // ── Wands ──
+  "Two of Wands":       "the globe",
+  "Page of Wands":      "the wand",
+
+  // ── Cups ──
+  "Two of Cups":        "each other",
+  "Four of Cups":       "the cups",
+  "Five of Cups":       "spilled cups",
+  "Six of Cups":        "the gift",
+  "Nine of Cups":       "you",
+  "Page of Cups":       "the fish",
+  "Knight of Cups":     "the cup",
+  "Queen of Cups":      "the cup",
+
+  // ── Swords ──
+  "Two of Swords":      "blind",
+  "Four of Swords":     "closed",
+  "Five of Swords":     "you",
+  "Eight of Swords":    "blind",
+  "Nine of Swords":     "hidden",
+  "Ten of Swords":      "hidden",
+  "King of Swords":     "you",
+
+  // ── Pentacles ──
+  "Two of Pentacles":   "the coins",
+  "Four of Pentacles":  "you",
+  "Seven of Pentacles": "the harvest",
+  "Eight of Pentacles": "the work",
+  "Nine of Pentacles":  "the falcon",
+  "Page of Pentacles":  "the coin",
+  "Knight of Pentacles": "the coin",
+  "Queen of Pentacles": "the coin",
+  "King of Pentacles":  "the coin",
+};
