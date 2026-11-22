@@ -79,7 +79,9 @@ async function swallowHome(btn) {
   if (calm) { landHome(); return; }
   swallowing = true;
   cardFlare(btn);
-  const dpr = PX(LITE ? 1.25 : 1.5);
+  // (The canvas over the whole screen is redrawn every frame: no more than
+  // about 2.4 million pixels of it, however big and sharp the screen.)
+  const dpr = Math.max(0.75, Math.min(PX(LITE ? 1.25 : 1.5), Math.sqrt(2.4e6 / (innerWidth * innerHeight))));
   // The still picture first (given a moment at most; without it, the live page goes in).
   const sheet = btn.closest(".sheet");
   let snap = null, colours = null;
@@ -174,7 +176,10 @@ function playGreatHole(snap, dpr, colours = null, cardRects = []) {
   const W = innerWidth, H = innerHeight, TAU = Math.PI * 2;
   const C = { x: W / 2, y: H / 2 };
   const far = Math.hypot(W / 2, H / 2) + 8, base = Math.min(W, H);
-  const HR = 72, art = holeArt(HR);   // drawn for radius HR, scaled to the size it is
+  // Drawn for radius HR, scaled to the size it is. (Its working pictures at
+  // most 960 pixels across: redrawn whole every frame, at the screen's full
+  // sharpness they were up to three million pixels each, for soft light.)
+  const HR = 72, art = holeArt(HR, 960 / (HR * 8));
   // SWALLOWED: the latest it's over, every grain in; EATEN: the picture is all crumbled.
   const F = GREAT_FX, SWALLOWED = F.pullFrom + F.pullMs, EATEN = SWALLOWED - F.tailMs;
   const smooth = (v) => v * v * (3 - 2 * v);
@@ -434,11 +439,11 @@ function playGreatHole(snap, dpr, colours = null, cardRects = []) {
     ctx.save();
     ring();
     ctx.clip();
+    // darkening as it's pulled towards the dark (drawn fainter over the deep
+    // space behind it, rather than a dark layer over the whole screen)
+    ctx.globalAlpha = 1 - 0.55 * pull(t);
     ctx.drawImage(page, 0, 0, W, H);
     drawCards(t, g);
-    // darkening as it's pulled towards the dark
-    ctx.fillStyle = `rgba(3, 1, 8, ${(0.55 * pull(t)).toFixed(3)})`;
-    ctx.fillRect(0, 0, W, H);
     ctx.restore();
     // The front glows as it eats in: a ragged line of embers.
     ctx.save();
@@ -460,8 +465,12 @@ function playGreatHole(snap, dpr, colours = null, cardRects = []) {
   }
   // The grains: blown out a little by the crumbling, then caught, each
   // spiralling in, quicker and quicker, until it's gone into the dark.
+  // (Their glows are gathered and all added after the grains, in one go:
+  // changing how the canvas blends, twice for every grain, was slow.)
+  const glows = [];
   function drawDust(t) {
     const R = holeR(t);
+    glows.length = 0;
     for (let j = 0; j < dust.length; j++) {
       const d = dust[j];
       const u = (t - d.born) / d.ms;
@@ -485,15 +494,17 @@ function playGreatHole(snap, dpr, colours = null, cardRects = []) {
       ctx.fillStyle = `rgba(${col[0] | 0}, ${col[1] | 0}, ${col[2] | 0}, ${al.toFixed(3)})`;
       ctx.fillRect(x - size / 2, y - size / 2, size, size);
       const gl = d.glow ? Math.max(heat * 0.5, 0.3 * Math.sin(Math.PI * u)) : heat * 0.25;
-      if (gl > 0.03) {
-        const gr = size * 3 + 2;
-        ctx.globalCompositeOperation = "lighter";
-        ctx.globalAlpha = Math.min(1, gl * al);
-        ctx.drawImage(spot, x - gr, y - gr, gr * 2, gr * 2);
-        ctx.globalAlpha = 1;
-        ctx.globalCompositeOperation = "source-over";
-      }
+      if (gl > 0.03) glows.push(x, y, size * 3 + 2, Math.min(1, gl * al));
     }
+    if (!glows.length) return;
+    ctx.globalCompositeOperation = "lighter";
+    for (let j = 0; j < glows.length; j += 4) {
+      const gr = glows[j + 2];
+      ctx.globalAlpha = glows[j + 3];
+      ctx.drawImage(spot, glows[j] - gr, glows[j + 1] - gr, gr * 2, gr * 2);
+    }
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = "source-over";
   }
 
   let finished = false, swirlClock = 0, last = 0;

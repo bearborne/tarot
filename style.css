@@ -674,10 +674,30 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 /* Once the fan has opened (see fanOut, in js/table.js): a slow glint of
    gold runs along it, card by card, while it waits for a pick. */
-.fan.ready .fan-card { animation: fan-glint 3.6s ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
+/* (The glint is a glow of its own over the card that only fades in and out:
+   animating the card's shadow repainted every card, every frame, forever.) */
+.fan-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  box-shadow: 0 0 10px 2px rgba(255, 215, 140, .55);
+  opacity: 0;
+  pointer-events: none;
+}
+.fan.ready .fan-card::after { animation: fan-glint 3.6s ease-in-out infinite; animation-delay: calc(var(--i) * 70ms); }
 @keyframes fan-glint {
-  0%, 30%, 100% { box-shadow: 0 4px 12px rgba(0, 0, 0, .45), 0 0 0 0 rgba(255, 215, 140, 0); }
-  12%           { box-shadow: 0 4px 12px rgba(0, 0, 0, .45), 0 0 10px 2px rgba(255, 215, 140, .55); }
+  0%, 30%, 100% { opacity: 0; }
+  12%           { opacity: 1; }
+}
+/* The glow round a card as the fan sweeps out (see fanOut). */
+.fan-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  box-shadow: 0 0 18px 5px rgba(255, 215, 140, .8);
+  opacity: 0;
+  pointer-events: none;
 }
 .deck-flare {
   position: fixed;

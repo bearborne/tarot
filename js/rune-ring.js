@@ -151,10 +151,13 @@ function holeSheets(px) {
   }
   return HOLE_SHEETS.get(px);
 }
-function holeArt(hr) {
+// (`sharp`: at most how many pixels to a point its working pictures are
+// drawn at, which are redrawn whole every frame: no sharper than the canvas
+// they're drawn onto.)
+function holeArt(hr, sharp = 3) {
   const TAU = Math.PI * 2, TILT = 0.32, TIP = -0.22;
   // (at most three times the page's sharpness: the light is soft, and a phone has to keep up)
-  const box = Math.ceil(hr * 8), k = Math.min(3, Math.min(devicePixelRatio || 1, 2) * 2), px = Math.ceil(box * k);
+  const box = Math.ceil(hr * 8), k = Math.min(3, sharp, Math.min(devicePixelRatio || 1, 2) * 2), px = Math.ceil(box * k);
   const [[D, dx], [N, nx]] = holeSheets(px);
   const conic = !!dx.createConicGradient;
   const arms = Array.from({ length: 10 }, (_, i) => ({
@@ -297,8 +300,11 @@ function holeArt(hr) {
 
 // The hole as an element at C, drawn every frame for as long as
 // `state(ms)` returns { h, grow } (null: it's over, and it goes).
+// (How sharp a small hole is drawn: half again the screen's sharpness, for
+// its thin rims, but no more than twice, as it's redrawn every frame.)
+const miniSharp = () => (LITE ? PX() : Math.min(PX() * 1.5, 2));
 function miniHole(C, hr, state) {
-  const art = holeArt(hr), k = LITE ? PX() : PX() * 1.5;
+  const k = miniSharp(), art = holeArt(hr, k);
   const cv = document.createElement("canvas");
   cv.className = "mini-hole";
   cv.width = cv.height = Math.ceil(art.box * k);

@@ -39,6 +39,29 @@ const heavyFilter = /blur|drop-shadow/;
   };
 }
 
+// The card back is a drawing (card-back-art.svg) with a grain and a shine
+// filter in it, which the browser draws again from scratch each time a card
+// back is repainted: in the fan's sweep, the home fan's float and a card's
+// flight, that was every frame, for every card. So it's drawn once, as a
+// plain picture as sharp as the biggest card back on this screen needs, and
+// every card back uses that. (Until it's ready, the drawing itself shows.)
+{
+  const art = new Image();
+  art.onload = () => {
+    const h = Math.min(art.naturalHeight || 1358, Math.ceil(310 * Math.min(devicePixelRatio || 1, 2.5)));
+    const w = Math.round((h * (art.naturalWidth || 784)) / (art.naturalHeight || 1358));
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    const x = c.getContext("2d");
+    x.imageSmoothingQuality = "high";
+    try {
+      x.drawImage(art, 0, 0, w, h);
+      c.toBlob((b) => b && document.documentElement.style.setProperty("--card-back", `url("${URL.createObjectURL(b)}")`));
+    } catch {}
+  };
+  art.src = "card-back-art.svg";
+}
+
 const DECK_LOOK = 10;   // how many card backs make up the deck pile
 const FAN_MAX = 22;     // most cards shown in the fan to pick from
 

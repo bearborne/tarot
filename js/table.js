@@ -282,7 +282,7 @@ async function fanOut() {
   pile.hidden = true;
 
   const mid = (count - 1) / 2, step = S.quick ? 8 : 26, ms = S.quick ? 360 : 760;
-  let last = 0;
+  let last = 0, geo = null;
   for (let i = 0; i < count; i++) {
     const a = (count === 1 ? 0 : -width / 2 + (width * i) / (count - 1)) + wobble(0.6);
     const c = el("div", "cback fan-card");
@@ -297,20 +297,36 @@ async function fanOut() {
     } else {
       // The middle cards go first, the outer ones last, each sweeping out
       // past its place and easing back onto it, lifted and glowing on the way.
-      const delay = Math.abs(i - mid) * step;
+      // (Its glow is a layer of its own that only fades, kept in step with
+      // the card: animating the card's own shadow repainted every card,
+      // every frame.)
+      const delay = vary(Math.abs(i - mid) * step, 0.18), dur = vary(ms);
+      const timing = { duration: dur, delay, easing: "cubic-bezier(.25, .8, .3, 1)", fill: "backwards", id: "exact" };
       c.animate([
-        { transform: "translateY(-10px) rotate(0deg) scale(.96)", boxShadow: "0 4px 12px rgba(0, 0, 0, .45), 0 0 18px 5px rgba(255, 215, 140, .8)" },
-        { transform: `translateY(-16px) rotate(${a * 1.1}deg) scale(1.02)`, boxShadow: "0 4px 12px rgba(0, 0, 0, .45), 0 0 14px 4px rgba(255, 215, 140, .6)", offset: 0.6 },
-        { transform: `rotate(${a}deg)`, boxShadow: "0 4px 12px rgba(0, 0, 0, .45), 0 0 0 0 rgba(255, 215, 140, 0)" },
-      ], { duration: ms, delay, easing: "cubic-bezier(.25, .8, .3, 1)", fill: "backwards" });
+        { transform: "translateY(-10px) rotate(0deg) scale(.96)" },
+        { transform: `translateY(-16px) rotate(${a * 1.1}deg) scale(1.02)`, offset: 0.6 },
+        { transform: `rotate(${a}deg)` },
+      ], timing);
+      const glow = el("span", "fan-glow");
+      c.append(glow);
+      glow.animate([{ opacity: 1 }, { opacity: 0.72, offset: 0.6 }, { opacity: 0 }], timing)
+        .finished.then(() => glow.remove(), () => {});
       // Every other card leaves a spark at its tip as it passes.
       if (i % 2 === (count % 2 ? 0 : 1) || i === 0 || i === count - 1) {
-        setTimeout(() => { if (c.isConnected && !c.dataset.taken) tipSpark(c, a); }, delay + ms * 0.5);
+        setTimeout(() => { if (c.isConnected && !c.dataset.taken && geo) tipSpark(geo, a); }, delay + dur * 0.5);
       }
-      last = Math.max(last, delay + ms);
+      last = Math.max(last, delay + dur);
     }
     c.addEventListener("click", () => pick(c));
     fan.append(c);
+  }
+  // Where the fan's cards turn about, measured once (as laid out, unturned),
+  // so the sparks needn't measure a card mid-sweep.
+  const first = fan.firstElementChild;
+  if (first && !calm) {
+    const p = first.offsetParent?.getBoundingClientRect() || { left: 0, top: 0 };
+    const h = first.offsetHeight;
+    geo = { x: p.left + first.offsetLeft + first.offsetWidth / 2, y: p.top + first.offsetTop + 3 * h, reach: 3 * h - 6 };
   }
   const reading = S;
   await wait(last);
@@ -333,10 +349,10 @@ function deckFlare(pile) {
 
 // A spark of light at the top of a fan card as it sweeps past, drifting
 // outward and up, and fading.
-function tipSpark(card, a) {
-  const r = card.getBoundingClientRect();
-  const rad = (a * Math.PI) / 180;
-  const x = r.left + r.width / 2, y = r.top + 4;
+// (`geo`: the point the fan turns about, and how far its cards' tips are from it.)
+function tipSpark(geo, a) {
+  const rad = (a * Math.PI) / 180, turned = rad * 1.05;   // (still a little past its place, mid-sweep)
+  const x = geo.x + Math.sin(turned) * geo.reach, y = geo.y - Math.cos(turned) * geo.reach - 12;
   const m = el("span", "deck-mote");
   Object.assign(m.style, { left: `${x}px`, top: `${y}px`, zIndex: 30 });
   document.body.append(m);

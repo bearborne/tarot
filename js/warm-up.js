@@ -57,7 +57,7 @@
         holeSize(size(".spread-btn", { width: 80, height: 90 })),
       ].map(Math.round));
       sizes.forEach((hr) => {
-        const art = holeArt(hr);
+        const art = holeArt(hr, miniSharp());
         x.setTransform(0.1, 0, 0, 0.1, 32, 32);
         [[0, 0.5, 0.4], [400, 1, 1]].forEach(([ms, h, g]) => art.draw(x, ms, h, g));
       });
