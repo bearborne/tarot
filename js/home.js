@@ -190,18 +190,58 @@ const homeShown = () => !$("home").hidden && !document.hidden;
 
 // Twinkling stars and gold dust drifting upward, on a canvas that runs
 // while shown() is true. The home screen has one, and so does Sky now.
+// The beacon stars' soft glow and cross of light, drawn once and reused.
+function starSprite(paint) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  paint(c.getContext("2d"));
+  return c;
+}
+const GLOW = starSprite((g) => {
+  const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, "rgba(255,232,185,.7)");
+  r.addColorStop(0.25, "rgba(236,211,160,.22)");
+  r.addColorStop(1, "rgba(236,211,160,0)");
+  g.fillStyle = r; g.fillRect(0, 0, 64, 64);
+});
+const GLINT = starSprite((g) => {
+  for (const [x0, y0, x1, y1] of [[0, 32, 64, 32], [32, 0, 32, 64]]) {
+    const l = g.createLinearGradient(x0, y0, x1, y1);
+    l.addColorStop(0, "rgba(255,240,210,0)");
+    l.addColorStop(0.5, "rgba(255,240,210,1)");
+    l.addColorStop(1, "rgba(255,240,210,0)");
+    g.strokeStyle = l; g.lineWidth = 3;
+    g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+  }
+});
+
 function makeStarfield(canvas, shown) {
-  const f = { stars: [], dust: [], running: false };
+  const f = { stars: [], beacons: [], dust: [], running: false, next: 0, shoot: null };
   f.size = () => {
     const r = LITE ? 1 : PX(2);   // (stars are dots: a phone needs no more)
     canvas.width = innerWidth * r;
     canvas.height = innerHeight * r;
     canvas.getContext("2d").setTransform(r, 0, 0, r, 0, 0);
     const n = Math.round((innerWidth * innerHeight) / 9000);
-    f.stars = Array.from({ length: Math.min(n, 140) }, () => ({
-      x: Math.random(), y: Math.random(),
-      s: Math.random() * 1.1 + 0.3, p: Math.random() * 6, v: 0.5 + Math.random(),
-    }));
+    // Depth: most stars tiny and dim, a few near and bright. About one in
+    // eight twinkles fully; the rest hold steady with a faint shimmer.
+    // Each is tinted a little: mostly warm white, some cool, some gold.
+    f.stars = Array.from({ length: Math.min(n, 140) }, () => {
+      const tw = Math.random() < 0.13;
+      const d = tw ? 0.45 + Math.random() * 0.55 : Math.random() ** 2.5;
+      const c = Math.random();
+      return {
+        x: Math.random(), y: Math.random(), tw,
+        s: 0.3 + d * 1.3, a: 0.25 + d * 0.6,
+        c: c < 0.7 ? "#e9e2d3" : c < 0.85 ? "#d3dcec" : "#ecd3a0",
+        p: Math.random() * 6, v: 0.5 + Math.random(),
+      };
+    }).sort((p, q) => (p.c < q.c ? -1 : 1));   // (fewer colour changes per frame)
+    // A few of the twinklers are beacons: brighter, warm, giving off a soft
+    // glow and a thin cross of light as they peak.
+    let beacons = Math.max(3, Math.min(6, Math.round(n / 25)));
+    for (const s of f.stars) if (s.tw && beacons > 0) { s.b = true; s.s = 1.5; beacons--; }
+    f.beacons = f.stars.filter((s) => s.b);
     f.dust = Array.from({ length: Math.min(Math.round(n / 4), 30) }, () => ({
       x: Math.random(), y: Math.random(),
       s: Math.random() * 1.4 + 0.7, v: 0.00025 + Math.random() * 0.0004,
@@ -211,10 +251,46 @@ function makeStarfield(canvas, shown) {
     const x = canvas.getContext("2d");
     const W = innerWidth, H = innerHeight;
     x.clearRect(0, 0, W, H);
-    x.fillStyle = "#e9e2d3";
     for (const s of f.stars) {
-      x.globalAlpha = calm ? 0.6 : 0.2 + 0.8 * Math.abs(Math.sin(t / 1100 * s.v + s.p));
+      x.fillStyle = s.c;
+      const w = Math.abs(Math.sin(t / 1100 * s.v + s.p));
+      x.globalAlpha = calm ? s.a : s.tw ? 0.15 + 0.85 * w : s.a * (0.85 + 0.15 * w);
       x.beginPath(); x.arc(s.x * W, s.y * H, s.s, 0, 7); x.fill();
+    }
+    for (const s of f.beacons) {
+      const w = calm ? 0.6 : Math.abs(Math.sin(t / 1100 * s.v + s.p));
+      const X = s.x * W, Y = s.y * H, g = 12 + 6 * w, k = 5 + 9 * w * w;
+      x.globalAlpha = 0.25 + 0.3 * w;
+      x.drawImage(GLOW, X - g, Y - g, g * 2, g * 2);
+      x.globalAlpha = 0.8 * w * w * w;
+      x.drawImage(GLINT, X - k, Y - k, k * 2, k * 2);
+    }
+    if (!calm) {
+      // Now and then, a shooting star: a short gold streak, gone in a moment.
+      if (t > f.next) {
+        if (f.next && t - f.next < 1000) {
+          const dir = Math.random() < 0.5 ? 1 : -1, a = (0.35 + Math.random() * 0.3);
+          f.shoot = { t0: t, x: (0.15 + Math.random() * 0.7) * W, y: Math.random() * 0.45 * H,
+            dx: Math.cos(a) * dir, dy: Math.sin(a), d: 220 + Math.random() * 160 };
+        }
+        f.next = t + (f.next ? 25000 + Math.random() * 35000 : 6000 + Math.random() * 8000);
+      }
+      const sh = f.shoot;
+      if (sh) {
+        const p = (t - sh.t0) / 900;
+        if (p >= 1) f.shoot = null;
+        else {
+          const hd = sh.d * (1 - (1 - p) ** 2), tl = Math.max(0, hd - 90 * Math.min(1, p * 3));
+          const hx = sh.x + sh.dx * hd, hy = sh.y + sh.dy * hd;
+          const tx = sh.x + sh.dx * tl, ty = sh.y + sh.dy * tl;
+          const gr = x.createLinearGradient(tx, ty, hx, hy);
+          gr.addColorStop(0, "rgba(236,211,160,0)");
+          gr.addColorStop(1, "rgba(255,240,210,1)");
+          x.globalAlpha = 0.75 * Math.sin(p * Math.PI);
+          x.strokeStyle = gr; x.lineWidth = 1.2; x.lineCap = "round";
+          x.beginPath(); x.moveTo(tx, ty); x.lineTo(hx, hy); x.stroke();
+        }
+      }
     }
     if (!calm) {
       x.fillStyle = "#e3c98f";
