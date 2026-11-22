@@ -60,6 +60,49 @@ const SYMBOLS = {
   butterflies: { name: "butterflies", meaning: "new thinking" },
 };
 
+// What each symbol means for you, in a sentence: shown when its tile in
+// the reading summary is hovered or tapped, and in the list below the tiles.
+const SYMBOL_TIPS = {
+  water:       "Flowing water is the part of you below thought; what's stirring there wants attention.",
+  sea:         "The sea is feeling too deep to measure; you may be feeling more than you show.",
+  moon:        "The moon lights things dimly; trust what you sense before you can prove it.",
+  sun:         "Sunlight makes things plain; something is ready to be seen clearly.",
+  stars:       "Stars shine in the dark; there is still hope to steer by.",
+  mountains:   "Mountains are the climb ahead: a challenge that will leave you stronger.",
+  cliff:       "An edge is the moment before a leap; you may be closer to jumping than you think.",
+  clouds:      "Clouds hide what's above; not everything is visible to you yet.",
+  hand:        "A hand from the clouds is something given, not earned; let yourself receive it.",
+  trees:       "Trees grow slowly and surely, and so do you.",
+  harvest:     "A harvest is effort paying off; notice what you've already grown.",
+  flowers:     "Flowers are desire at its purest; what you want is innocent and alive.",
+  sunflowers:  "Sunflowers turn toward the light, as you are turning toward what makes you glad.",
+  crowns:      "A crown is mastery; you have more say over your life than you claim.",
+  thrones:     "A throne is the seat of authority; you're being asked to take your place.",
+  wreaths:     "A wreath is a victory recognised; let yourself feel what you've won.",
+  lions:       "Lions are courage and raw strength; yours is ready to be used gently.",
+  horses:      "Horses carry you forward; your drive is gathering speed.",
+  dogs:        "Dogs are loyalty; ask what you are faithful to, yourself included.",
+  birds:       "Birds carry messages; something is trying to reach you.",
+  fish:        "Fish rise from deep water; an idea or feeling is surfacing from your imagination.",
+  serpents:    "Serpents shed their skin; old wisdom and renewal are close.",
+  creatures:   "The four creatures are all of you at once, every element together.",
+  angels:      "Angels are guidance from beyond yourself; you're less alone than you feel.",
+  children:    "Children are innocence; let a simpler, younger part of you speak.",
+  nakedness:   "Bare figures have nothing to hide; honesty is asked of you, with yourself first.",
+  pillars:     "Pillars mark a threshold; you are standing in a doorway.",
+  veils:       "A veil keeps something sacred hidden; there is more to learn before all is shown.",
+  towers:      "Towers are ambition built high; check what yours stands on.",
+  homes:       "Homes are safety and belonging; notice where you feel secure, and where you don't.",
+  paths:       "A path is the way ahead; it is there even if you can't see where it ends.",
+  bonds:       "Bindings are restraint; some ties are yours to loosen.",
+  infinity:    "The infinity sign is endless flow; your energy renews itself.",
+  scales:      "Scales weigh things fairly; be fair to yourself as well.",
+  goldsky:     "A golden sky is optimism; things are brighter around you than they may feel.",
+  darksky:     "A dark sky is a hard season, and seasons pass.",
+  fire:        "Flames are passion and will; something has caught fire for you.",
+  butterflies: "Butterflies are change in the mind; a new way of thinking is emerging.",
+};
+
 const PICTURES = {
   // ── Major Arcana ──
   "The Fool":           { facing: "left",  symbols: ["sun", "mountains", "cliff", "flowers", "dogs", "goldsky"] },

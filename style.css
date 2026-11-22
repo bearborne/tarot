@@ -797,16 +797,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .summary-page .sum-asks > .asks:not([hidden]):first-child:has(+ .asks[hidden]),
   .summary-page .sum-asks > .asks[hidden] + .asks,
   .summary-page .sum-asks > .asks:only-child { grid-column: 1 / -1; }
-  /* the columns run to the same bottom; the question box closing each
-     one grows to fill what's left, its questions centred in it */
-  .summary-page .sum-col { align-self: stretch; display: flex; flex-direction: column; }
-  .summary-page .sum-col > .summary-asks {
-    flex: 1 0 auto;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    margin-bottom: 0;
-  }
+  /* the question box closing a column keeps its own height: stretched to
+     the other column's bottom it was mostly empty space round a few lines */
+  .summary-page .sum-col > .summary-asks { margin-bottom: 0; }
   .summary-page .sum-col > .summary-asks[hidden] { display: none; }
 }
 .summary-part ul { margin: 0; padding: 0; list-style: none; }
@@ -852,6 +845,37 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .summary-part li.card-entry > .entry-body > span:first-child { display: block; }
 .summary-part li.card-entry .summary-idea[data-cards] { margin-left: -6px; }
+/* A stacked entry (the Gaze lines): one heading line, left-aligned, the
+   place small and muted, the card's name in gold, its gaze mark after;
+   the meaning below at full width beside a gold hairline. */
+.summary-part li.stack-entry { text-align: left; margin-bottom: 1em; }
+/* "See all 9 ▾" under a folded list, at its left edge like the lines */
+.summary-part .list-more { display: block; margin: 2px 0 0; padding: 4px 10px; text-align: left; }
+.stack-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 .5em;
+}
+.stack-place {
+  font-family: "IM Fell English SC", var(--read);
+  font-size: .9rem;
+  letter-spacing: .04em;
+  color: var(--muted);
+}
+.summary-part li.stack-entry .stack-head > strong { display: inline; font-size: 1.06rem; }
+.summary-page .summary-part li.stack-entry[data-cards] .stack-head::after {
+  content: "✦"; color: var(--gold); font-size: .6rem; align-self: center; opacity: .5;
+}
+.stack-tag { font-size: .88rem; color: var(--muted); }
+.stack-text {
+  margin: .25em 0 0;
+  padding-left: 10px;
+  border-left: 1px solid rgba(201, 169, 110, .4);
+  font-size: 1rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
 .summary-asks { margin-top: 18px; }
 .summary-q { display: block; margin-top: 3px; color: var(--muted); font-size: .92rem; }
 /* the shared words' tiles, right under the reading's title */
@@ -1018,6 +1042,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
   margin-right: -.32em;   /* keeps the dots centred despite the spacing */
   color: var(--gold);
 }
+/* In the summary the questions read left-aligned, like the sections
+   above: the strength pips in a gutter on the left, level with the
+   question's first line, and the question beside them. */
+.summary-asks li { text-align: left; }
+.summary-asks li:has(> .ask-pips) {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: baseline;
+}
+.summary-asks .ask-pips { margin: 0; letter-spacing: .18em; margin-right: -.18em; }
 .empty-note { color: var(--muted); font-style: italic; }
 #quickClose { margin-top: 6px; }
 /* Longer reading text everywhere in the screen-reading font */

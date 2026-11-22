@@ -5,14 +5,14 @@
 // so a card you've never drawn still shows without internet. The fonts
 // (from Google) are saved the first time they load.
 
-const CACHE = "tarot-v79";
+const CACHE = "tarot-v80";
 
 importScripts("cards.js");   // for the list of card pictures
 
 const APP_FILES = [
   "./", "index.html", "style.css", "manifest.json", "card-back-art.svg",
   "icon-180.png", "icon-512.png", "icon.svg",
-  "cloud.js", "cards.js", "symbols.js", "spreads.js", "pairs.js", "pairs-reversed.js", "pickfx.js", "astronomy.js",
+  "cloud.js", "cards.js", "symbols.js", "spreads.js", "pairs.js", "pairs-reversed.js", "theme-lines.js", "pickfx.js", "astronomy.js",
   "js/core.js", "js/home.js", "js/table.js", "js/table-magic.js", "js/arcane-circle.js", "js/rune-ring.js", "js/burn-fronts.js",
   "js/summary.js", "js/portal.js", "js/card-pages.js", "js/snapshot.js", "js/greater-hole.js", "js/browse.js", "js/sky.js",
   "js/history.js", "js/drive.js", "js/reading-notes.js", "js/patterns.js", "js/own-themes.js", "js/share.js", "js/warm-up.js",
