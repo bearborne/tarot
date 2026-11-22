@@ -64,7 +64,7 @@ async function closeQuick() {
 $("quickClose").addEventListener("click", closeQuick);
 $("quick").addEventListener("click", (e) => { if (e.target === $("quick")) closeQuick(); });
 // From a reading, the card page can swipe through the reading's cards.
-function openReadingCard(i) {
+function openReadingCard(i, magic = false) {
   openIndex = i;
   const items = S.slots.map((s) => {
     const label = el("p"), question = el("p");
@@ -74,7 +74,7 @@ function openReadingCard(i) {
     if (S.n === 1 && S.theme) item.reading = themedReading(item, S.theme.name);
     return item;
   });
-  openDetails(items, i);
+  return openDetails(items, i, magic);
 }
 $("moreBtn").addEventListener("click", () => openReadingCard(openIndex));
 
@@ -157,7 +157,14 @@ function meaning(card, rev, fell) {
       tile.append(el("dt", "", k), el("dd", "", cap(x.trim())));
       dl.append(tile);
     });
-    box.append(dl);
+    // The last tile stretches over whatever its row leaves empty, in three
+    // columns or in two (see .in-reading in style.css).
+    const n = said.length;
+    dl.lastChild.style.setProperty("--span3", 3 - ((n - 1) % 3));
+    dl.lastChild.style.setProperty("--span2", 2 - ((n - 1) % 2));
+    const wrap = el("div", "ir-wrap");
+    wrap.append(dl);
+    box.append(wrap);
   }
   const { ideas, nuances } = ideasFor(card, rev);
   if (ideas.length || nuances.length) {
@@ -168,6 +175,9 @@ function meaning(card, rev, fell) {
       sec.append(el("p", "sub-title", title));
       const ul = el("ul");
       list.forEach((x) => ul.append(el("li", cls, x)));
+      // The last tile fills its row (see .key-ideas in style.css).
+      ul.lastChild.style.setProperty("--span3", 3 - ((list.length - 1) % 3));
+      ul.lastChild.style.setProperty("--span2", 2 - ((list.length - 1) % 2));
       sec.append(ul);
     });
     box.append(sec);
@@ -484,7 +494,10 @@ function detailsBody({ card, reversed, label, question, reading }) {
   return body;
 }
 
-function openDetails(items, index = 0) {
+// magic: a one-card reading's page, opened as the summaries are: through
+// the arcane portal ("later": built now, shown by sheet.appear; see
+// summonSummary), and back to the table by fire (vanishWithMagic).
+function openDetails(items, index = 0, magic = false) {
   const sheet = el("div", "sheet details");
   const bar = el("header", "bar");
   const back = el("button", "link", "‹ Back");
@@ -554,6 +567,17 @@ function openDetails(items, index = 0) {
   update();
   sheet.append(bar, body);
   document.body.append(sheet);
+  if (magic) {
+    if (magic === "later") sheet.appear = (C) => appearWithMagic(sheet, body, C);
+    else if (!calm) appearWithMagic(sheet, body);
+    else slideIn(sheet);
+    back.addEventListener("click", async () => {
+      document.activeElement?.blur();
+      await (!calm ? vanishWithMagic(sheet) : slideOut(sheet));
+      sheet.remove();
+    });
+    return sheet;
+  }
   // Opened by tapping a card: the page blooms out of it, and goes back into it.
   const tap = takeTap();
   if (tap) bloomFrom(sheet, body, tap);
@@ -563,6 +587,7 @@ function openDetails(items, index = 0) {
     await (tap && !calm ? closeInto(sheet, tap) : slideOut(sheet));
     sheet.remove();
   });
+  return sheet;
 }
 
 // A card's page opening out of the card that was tapped: the card falls in

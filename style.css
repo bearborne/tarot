@@ -1110,9 +1110,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 /* On the card page, under each side's meaning: how a summary reads it,
    then its key ideas (the nuances a little dimmer). */
 /* In a reading, Advice, Challenge: a row of tiles */
+.ir-wrap { container-type: inline-size; }
 .in-reading {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin: 6px 0 18px;
   text-align: center;
@@ -1136,11 +1137,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
   opacity: .85;
 }
 .in-reading dd { margin: 0; }
-/* An odd tile out (reversed has no Challenge) spans the row, so no row is half-empty. */
-.in-reading .ir-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
+/* Two columns, three where there's room; the last tile spans what its row
+   leaves empty (--span2/--span3, set in js/card-pages.js), so no row has a gap. */
+.in-reading .ir-tile:last-child { grid-column: span var(--span2, 1); }
+@container (min-width: 470px) {
+  .in-reading { grid-template-columns: repeat(3, 1fr); }
+  .in-reading .ir-tile:last-child { grid-column: span var(--span3, 1); }
+}
 /* Key ideas, then Nuances: equal-width tiles in an even grid, the
    nuances dimmer */
 .key-ideas {
+  container-type: inline-size;
   margin: 0 0 14px;
   padding-top: 14px;
   border-top: 1px solid rgba(201, 169, 110, .2);
@@ -1149,11 +1156,22 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .key-ideas ul + .sub-title { margin-top: 16px; }
 .key-ideas ul {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: 1fr;
   gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+/* One column, then two, then three as room allows (tiles at least 220px);
+   the last tile spans what its row leaves empty (--span2/--span3, set in
+   js/card-pages.js), as in .in-reading above. */
+@container (min-width: 446px) {
+  .key-ideas ul { grid-template-columns: repeat(2, 1fr); }
+  .key-ideas li:last-child { grid-column: span var(--span2, 1); }
+}
+@container (min-width: 672px) {
+  .key-ideas ul { grid-template-columns: repeat(3, 1fr); }
+  .key-ideas li:last-child { grid-column: span var(--span3, 1); }
 }
 .key-ideas li {
   display: flex;
@@ -1179,12 +1197,18 @@ button { font: inherit; color: inherit; cursor: pointer; }
   line-height: 1.45;
 }
 /* The strongest written pair, under "The reading": names in gold, then the line */
+.summary-overview { margin: 0 0 16px; padding-bottom: 14px; border-bottom: 1px solid rgba(201, 169, 110, .25); text-align: center; font-family: var(--read); line-height: 1.55; color: var(--ink); }
 .summary-pair { margin: 0 0 14px; text-align: center; line-height: 1.45; }
 .summary-pair .pair-names { display: block; color: var(--gold); font-size: .8rem; letter-spacing: .06em; margin-bottom: 2px; }
 .summary-pair .pair-text { display: block; font-family: var(--read); font-style: italic; color: var(--ink); }
 .summary-idea { display: block; }
-.summary-idea + .summary-idea { margin-top: 6px; }
-.summary-link { display: block; color: var(--gold); font-size: .85em; }
+.summary-idea + .summary-idea { margin-top: 2px; }
+/* An idea that links to another card: tap to draw the thread between them */
+.summary-idea[data-cards] { cursor: pointer; border-radius: 8px; padding: 2px 6px; transition: background .15s, color .15s; }
+.summary-idea[data-cards]::after { content: "\00a0✦"; color: var(--gold); font-size: .6em; vertical-align: .3em; }
+@media (hover: hover) { .summary-idea[data-cards]:hover { color: var(--ink); } }
+.summary-idea[data-cards]:focus-visible { outline: 1px solid rgba(201, 169, 110, .6); }
+.summary-idea.on { color: var(--ink); background: rgba(201, 169, 110, .14); }
 .picture-guide ul { margin: 0; padding: 0; list-style: none; }
 .picture-guide li { margin: 0 0 .8em; line-height: 1.45; }
 .picture-guide strong {

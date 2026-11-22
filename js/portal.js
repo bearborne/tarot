@@ -217,7 +217,8 @@ function cardsToDust(src, C, dpr) {
 // and flares softly as it lands.
 function emergeCards(sheet, C) {
   const k = portalPace;
-  [...sheet.querySelectorAll(".summary-cards .related-pic")].forEach((pic, i) => {
+  // (a one-card reading's page: its one big card)
+  [...sheet.querySelectorAll(".summary-cards .related-pic, .card-page .details-card")].forEach((pic, i) => {
     const { c, x, y } = flyingCopy(pic, 9002);
     pic.style.visibility = "hidden";
     const turn = i % 2 ? 540 : -540;

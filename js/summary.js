@@ -314,12 +314,48 @@ function placeLine(entry, place, i, label) {
   return form.includes("{g}") ? withAdvice(line) : line;
 }
 
-// One card read in its themed place, for a one-card reading's page:
-// { title, text }, or null when the card has no theme place.
+// What a theme's question asks for, so the card can answer it with the
+// matching side of its meaning (cards.js inReading). First match wins.
+const ASKS_FOR = [
+  ["feeling",   /\bfeel|feeling|emotion|heart|body|grief|anger|mood/i],
+  ["challenge", /\bfear|worr|block|hold(s|ing)? me back|grip|cost|avoid|obstacle|challenge|stuck|protect/i],
+  ["action",    /\bstep|what can i do|how can i|act\b|action|meet (it|that)|release|let it move|practice|begin/i],
+  ["advice",    /\bhelp|support|advice|guid|trust|courage|need from me|what would/i],
+  ["you",       /\bwho am i|part of me|myself|my self|strength|gift|worth|value/i],
+];
+const ANSWER = {
+  feeling:   (x) => `Beneath the surface, you may be feeling ${x}.`,
+  challenge: (x) => `What asks you to grow here: ${x}.`,
+  action:    (x) => `A way in: ${x}.`,
+  advice:    (x) => `What helps: ${x}.`,
+  you:       (x) => `It speaks to ${x}.`,
+};
+
+const lower1 = (s) => s.charAt(0).toLowerCase() + s.slice(1);
+
+// One card read in its themed place, for a one-card reading's page: the
+// place's question answered by the card, then what the card brings, then
+// its advice. { title, text }, or null when the card has no theme place.
 function themedReading(item, title) {
   if (!item.label || item.label === "Your card") return null;
-  const t = placeLine(item, placeOf(item.label) || "own", 0, item.label).replace(/^[^:]+:\s*/, "");
-  return { title: title || "The reading", text: cap(t) };
+  const r = item.card.inReading || {}, rev = item.reversed;
+  const { g, a } = phrases(item.card, rev);
+  const side = {
+    feeling: rev ? r.reversedFeeling : r.feeling,
+    challenge: r.challenge,
+    action: rev ? r.reversedAction : r.action,
+    advice: a,
+    you: rev ? r.reversedYou : r.you,
+  };
+  const ask = `${item.label} ${item.question || ""}`;
+  const hit = ASKS_FOR.find(([k, re]) => re.test(ask) && (side[k] || "").trim());
+  const out = [];
+  // (No matching side: the card read as the place itself, "As the worry, …")
+  const place = /^(the|a|an|its|my|your)\b/i.test(item.label) ? lower1(item.label) : item.label;
+  if (hit) out.push(ANSWER[hit[0]](side[hit[0]].trim()), `The ${item.card.name} sees it as ${g}.`);
+  else out.push(`As ${place}, the ${item.card.name} brings ${g}.`);
+  if (!hit || hit[0] !== "advice") out.push(`Let it guide you: ${a}.`);
+  return { title: title || "The reading", text: out.join(" ") };
 }
 
 const placeName = (lens, i, entry) => (lens.own ? (lens.labels ? lens.labels[i] : entry.label) : PLACES[lens.places[i]][0]);
@@ -1117,6 +1153,31 @@ function strongestPair(entries) {
   return best;
 }
 
+// The whole reading in one paragraph, before the cards one by one: what
+// it is about (its strongest themes), where it moves (first card to last),
+// the strongest pair's line, and its weight (Major cards, reversals,
+// a leading element). Turned toward the self, as the card lines are.
+function readingOverview(entries, pair) {
+  const n = entries.length;
+  if (n < 2) return "";
+  const lower = (s) => s.charAt(0).toLowerCase() + s.slice(1);
+  const out = [];
+  const { themes, topEl, els, majors, revs } = patternParts(entries);
+  const top = (themes.length ? themes : readingThemes(entries)).slice(0, 2).map((t) => lower(THEME_TEXT[t][0]));
+  if (top.length === 2) out.push(`At its heart, this reading is about ${top[0]} and ${top[1]}, and where the two meet in you.`);
+  else if (top.length) out.push(`At its heart, this reading is about ${top[0]}, and what it asks of you.`);
+  // (A phrase with its own comma gets one after it too, so the sentence still parses.)
+  const g = (e) => { const s = phrases(e.card, e.reversed).g.replace(/[.;]+$/, ""); return s.includes(",") ? `${s},` : s; };
+  out.push(n === 2
+    ? `It moves from ${g(entries[0])} toward ${g(entries[1]).replace(/,$/, "")}.`
+    : `It begins with ${g(entries[0])} and leads toward ${g(entries[n - 1]).replace(/,$/, "")}.`);
+  if (pair) out.push(`${pair.text.replace(/\s*$/, "")}`.replace(/([^.!?])$/, "$1."));
+  if (majors >= Math.ceil(n / 2) && majors >= 2) out.push("With so many Major cards, this is a lesson for you, not a passing moment.");
+  else if (revs >= Math.ceil(n / 2) && revs >= 2) out.push("Several cards are reversed: much of this is still forming in you.");
+  else if (topEl && els[topEl] >= 2 && els[topEl] > n / 2) out.push(`${topEl} leads, so look first to ${lower(ELEMENT_TEXT[topEl].replace(", ", " and "))}.`);
+  return out.join(" ");
+}
+
 // entries: [{ card, reversed, label, question }]
 // magic = arrive out of the light of the summon, instead of sliding up.
 // named: { id, onRename } for a saved reading, so its name can be changed here too.
@@ -1275,8 +1336,12 @@ function openSummary(entries, title, magic = false, named = null) {
   // The strongest written pair, under the reading's title: the two cards'
   // names in gold, then their line. Tap to light the two cards up.
   const pair = strongestPair(entries);
+  // The whole reading in a paragraph, first under the title; it carries the
+  // pair's line, so the pair block is only shown when there is no paragraph.
+  const overview = readingOverview(entries, pair);
+  const overviewEl = () => overview && el("p", "summary-overview", overview);
   const pairEl = () => {
-    if (!pair) return null;
+    if (!pair || overview) return null;
     const p = el("p", "summary-pair");
     threadable(p, [pair.i, pair.j], "");
     const nm = (e) => `${e.card.name}${e.reversed ? ", reversed" : ""}`;
@@ -1326,12 +1391,16 @@ function openSummary(entries, title, magic = false, named = null) {
       const pl = pairEl();
       if (pl) title.after(pl);
       if (sw) title.after(sw);
+      const ov = overviewEl();
+      if (ov) title.after(ov);
       lensPart.append(sec);
     } else {
       // No theme: each card by its name, with what it brings (and, reversed,
       // its advice) and its connecting ideas.
       const sec = el("section", "summary-part");
       sec.append(el("p", "asks-title", "The reading"));
+      const ov = overviewEl();
+      if (ov) sec.append(ov);
       const sw = sharedTiles();
       if (sw) sec.append(sw);
       const pl = pairEl();
@@ -1486,7 +1555,9 @@ async function copyText(text, note = "Copied") {
 // bar's buttons and title, the name, the cards' labels, each part of the reading.
 // (The cards' pictures fly in and out on their own: see emergeCards.)
 const summaryParts = (sheet) => [...sheet.querySelectorAll(
-  ".bar > *, .col-side > :not(.summary-cards), .related-label, .related-name, .summary-kw, .sum-col > *, .sum-asks > *")];
+  ".bar > *, .col-side > :not(.summary-cards):not(.details-card), .related-label, .related-name, .summary-kw, .sum-col > *, .sum-asks > *, " +
+  // (a one-card reading's card page: each part of its main column)
+  ".card-page .col-main > :not(.meanings), .card-page .meanings > *")];
 // The middle of the great circle behind the spread (or of the screen, without one).
 const circleMiddle = () => (MG.great ? { x: MG.great.cx, y: MG.great.cy } : { x: innerWidth / 2, y: innerHeight * 0.46 });
 
@@ -1526,7 +1597,7 @@ function vanishWithMagic(sheet) {
   const C = circleMiddle();
   sheet.style.pointerEvents = "none";
   // (each card goes whole, picture and labels, as one piece)
-  const pieces = [...summaryParts(sheet).filter((p) => !p.closest(".related-card")), ...sheet.querySelectorAll(".related-card")];
+  const pieces = [...summaryParts(sheet).filter((p) => !p.closest(".related-card")), ...sheet.querySelectorAll(".related-card, .details-card")];
   const { end } = burnFronts(pieces, C, { mode: "burn", fly: BACK_FX.fly / k, build: BACK_FX.burn / k, z: ++Z });
   const onTable = S && !$("table").hidden;
   return new Promise((done) => setTimeout(() => {

@@ -1265,6 +1265,8 @@ startSky();
 $("backBtn").addEventListener("click", showHome);
 $("newBtn").addEventListener("click", showHome);
 $("summaryBtn").addEventListener("click", () => {
+  // One card: its page, with the theme's reading, summoned as a summary is.
+  if (S.n === 1) { const reading = S; summonSummary((magic) => openReadingCard(0, magic), reading.readingId || reading); return; }
   const entries = tableEntries(), title = S.title || S.spread.name, reading = S;
   summonSummary((magic) => openSummary(entries, title, magic, reading.readingId && {
     id: reading.readingId,
