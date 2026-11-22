@@ -817,6 +817,41 @@ button { font: inherit; color: inherit; cursor: pointer; }
   color: var(--gold);
 }
 .summary-part li strong::first-letter { text-transform: uppercase; }
+/* A card's entry in "The reading": its name hangs on the left on two
+   lines, right-aligned against a gold hairline; the line, its ideas (each
+   on its own full line, never shortened) and its question sit beside it,
+   left-aligned. */
+/* one name column for the whole list, as wide as its longest name, so
+   the hairlines line up from card to card */
+.summary-part ul:has(> li.card-entry) {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 10px;
+}
+.summary-part ul:has(> li.card-entry) > li { grid-column: 1 / -1; }
+.summary-part li.card-entry {
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: start;
+  text-align: left;
+}
+.summary-page .summary-part li.card-entry > strong {
+  margin: 0;
+  padding-top: .2em;
+  text-align: right;
+  min-width: 4.6em;
+  font-size: .82em;
+  line-height: 1.2;
+}
+.summary-part li.card-entry > strong .nowrap { white-space: nowrap; }
+.summary-part li.card-entry .summary-ideas { font-size: .84em; }
+.summary-part li.card-entry .entry-body {
+  min-width: 0;
+  padding-left: 10px;
+  border-left: 1px solid rgba(201, 169, 110, .4);
+}
+.summary-part li.card-entry > .entry-body > span:first-child { display: block; }
+.summary-part li.card-entry .summary-idea[data-cards] { margin-left: -6px; }
 .summary-asks { margin-top: 18px; }
 .summary-q { display: block; margin-top: 3px; color: var(--muted); font-size: .92rem; }
 /* the shared words' tiles, right under the reading's title */
@@ -971,6 +1006,17 @@ button { font: inherit; color: inherit; cursor: pointer; }
   margin: 0 0 .75em;
   font-size: 1.08rem;
   line-height: 1.5;
+}
+/* How strongly a question runs through the spread, as five pips above
+   it (like the tiles' dots): one filled is a little, five is full. */
+.ask-pips {
+  display: block;
+  margin-bottom: 2px;
+  font-size: .62rem;
+  line-height: 1.2;
+  letter-spacing: .32em;
+  margin-right: -.32em;   /* keeps the dots centred despite the spacing */
+  color: var(--gold);
 }
 .empty-note { color: var(--muted); font-style: italic; }
 #quickClose { margin-top: 6px; }
@@ -1225,7 +1271,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .summary-idea + .summary-idea { margin-top: 2px; }
 /* An idea that links to another card: tap to draw the thread between them */
 .summary-idea[data-cards] { cursor: pointer; border-radius: 8px; padding: 2px 6px; transition: background .15s, color .15s; }
-.summary-idea[data-cards]::after { content: "\00a0✦"; color: var(--gold); font-size: .6em; vertical-align: .3em; }
+/* the star leads the line; a wrapped line hangs clear of it */
+.summary-idea[data-cards] { padding-left: calc(6px + 1em); text-indent: -1em; }
+.summary-idea[data-cards]::before { content: "✦"; display: inline-block; width: 1.667em; text-indent: 0; color: var(--gold); font-size: .6em; vertical-align: .3em; }
 @media (hover: hover) { .summary-idea[data-cards]:hover { color: var(--ink); } }
 .summary-idea[data-cards]:focus-visible { outline: 1px solid rgba(201, 169, 110, .6); }
 .summary-idea.on { color: var(--ink); background: rgba(201, 169, 110, .14); }

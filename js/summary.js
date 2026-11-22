@@ -671,13 +671,13 @@ function summaryQuestions(entries, lens) {
   const { themes, topEl, els, majors, revs } = patternParts(entries);
   const sets = themeSets(entries);
   const lower = (q) => q[0].toLowerCase() + q.slice(1);
-  // "One card", "2 of the 5 cards", "Both cards", "All 3 cards" — never names.
-  const who = (idx) => (idx.length === n ? (n === 2 ? "both cards" : `all ${n} cards`) : idx.length === 1 ? "one card" : `${idx.length} of the ${n} cards`);
   const kw = (e) => (filled(keywordsFor(e.card, e.reversed))[0] || "").toLowerCase();
   // Every question is one plain sentence, with how strongly it belongs to
   // this spread (how many cards stand behind it).
   const whole = [];
-  const ask = (q, score) => whole.push({ q, score });
+  // idx: the cards that raised it, shown above the question as a meter of
+  // how strongly it runs through the spread (1 to 5 pips), in place of "3 of the 5 cards".
+  const ask = (q, score, idx) => whole.push({ q, score, idx });
 
   // The two cards most strongly linked, and the question their shared tag
   // raises: "Imagination and choice: what choice are you circling…?"
@@ -690,8 +690,8 @@ function summaryQuestions(entries, lens) {
     const { i, j, tag } = bridge;
     // Each card's own keyword for what they share. When both cards have
     // one (and they differ), they lead: "Imagination and choice: …".
-    // Otherwise, how many cards speak of it: "With 2 of the 3 cards
-    // speaking of choosing, …".
+    // Otherwise the shared idea leads ("Choosing: …"), with pips for the
+    // cards that speak of it.
     const word = (e) => (filled(keywordsFor(e.card, e.reversed)).find((k) => linkTagsOf(k).includes(tag)) || "").toLowerCase();
     const [w1, w2] = [word(entries[i]), word(entries[j])];
     const idx = whichCards(entries, (e) => {
@@ -700,17 +700,17 @@ function summaryQuestions(entries, lens) {
     });
     const q = w1 && w2 && w1 !== w2
       ? `${cap(w1)} and ${w2}: ${lower(LINK_TEXT[tag][1])}`
-      : `With ${who(idx)} speaking of ${LINK_TEXT[tag][0]}, ${lower(LINK_TEXT[tag][1])}`;
-    ask(q, 10);
+      : `${cap(LINK_TEXT[tag][0])}: ${lower(LINK_TEXT[tag][1])}`;
+    ask(q, 10, idx);
     bridge.themes = themesOf(q);
   }
 
   // The lens's challenge and advice, in the card's own words.
   const placeAt = (p) => (lens ? lens.places.indexOf(p) : -1);
   const ci = placeAt("challenge"), ai = placeAt("advice");
-  if (ci >= 0) ask(`Where is ${phrases(entries[ci].card, entries[ci].reversed).c} asking the most of you right now?`, 8);
+  if (ci >= 0) ask(`Where is ${phrases(entries[ci].card, entries[ci].reversed).c} asking the most of you right now?`, 8, [ci]);
   if (ai >= 0) {
-    ask(`What would it look like this week to ${phrases(entries[ai].card, entries[ai].reversed).a}?`, 8);
+    ask(`What would it look like this week to ${phrases(entries[ai].card, entries[ai].reversed).a}?`, 8, [ai]);
   } else if (n >= 2) {
     // No advice place: the first and last cards' advice, side by side.
     const [a1, a2] = [entries[0], entries[n - 1]].map((e) => (e.card.inReading || {})[e.reversed ? "reversedAdvice" : "advice"] || (e.card.inReading || {}).advice);
@@ -721,8 +721,8 @@ function summaryQuestions(entries, lens) {
       || /delay|setback|obstacle|unfinished|restless|hesitat/.test(k);
     const short = (x) => x && x.split(/\s+/).length <= 7 && !/[;,]/.test(x.replace(/[.;\s]+$/, ""));
     if (a1 && a2 && a1 !== a2) {
-      if (short(a1) && short(a2)) ask(`Is it time to ${a1.replace(/[.;\s]+$/, '')}, or to ${a2.replace(/[.;\s]+$/, '')}?`, 6);
-      else if (kw(entries[0]) && kw(entries[n - 1]) && kw(entries[0]) !== kw(entries[n - 1]) && !hard(kw(entries[0])) && !hard(kw(entries[n - 1]))) ask(`Is it time for ${kw(entries[0])}, or for ${kw(entries[n - 1])}?`, 6);
+      if (short(a1) && short(a2)) ask(`Is it time to ${a1.replace(/[.;\s]+$/, '')}, or to ${a2.replace(/[.;\s]+$/, '')}?`, 6, [0, n - 1]);
+      else if (kw(entries[0]) && kw(entries[n - 1]) && kw(entries[0]) !== kw(entries[n - 1]) && !hard(kw(entries[0])) && !hard(kw(entries[n - 1]))) ask(`Is it time for ${kw(entries[0])}, or for ${kw(entries[n - 1])}?`, 6, [0, n - 1]);
     }
   }
 
@@ -730,32 +730,32 @@ function summaryQuestions(entries, lens) {
     if (bridge && bridge.themes.includes(t)) return;   // already asked, by the two linked cards
     const idx = whichCards(entries, (e, i) => sets[i].has(t));
     const what = t === "heart" ? "the heart" : THEME_TEXT[t][0].toLowerCase();
-    if (idx.length < n || n <= 3) ask(`With ${who(idx)} speaking of ${what}, ${lower(THEME_TEXT[t][2])}`, idx.length * 2 + (idx.length === n ? 1 : 0));
+    if (idx.length < n || n <= 3) ask(`${cap(what)}: ${lower(THEME_TEXT[t][2])}`, idx.length * 2 + (idx.length === n ? 1 : 0), idx);
   });
   const t = tensionsOf(entries)[0];
-  if (t) ask(cap(t.ask), 5);
+  if (t) ask(cap(t.ask), 5, t.cards);
   if (n >= 3) {
     // By the first and last cards' key words ("How could conflict lead to teamwork?").
     const [f0, fN] = [kw(entries[0]), kw(entries[n - 1])];
-    if (f0 && fN && f0 !== fN) ask(`How could ${f0} lead to ${fN}?`, 4);
+    if (f0 && fN && f0 !== fN) ask(`How could ${f0} lead to ${fN}?`, 4, [0, n - 1]);
   }
   if (topEl && els[topEl] >= 2) {
     const idx = whichCards(entries, (e) => elementFor(e.card) === topEl);
-    ask(`With ${who(idx)} carrying ${topEl}, ${ELEMENT_ASK[topEl][0]}`, idx.length * 1.5);
+    ask(`${topEl}: ${ELEMENT_ASK[topEl][0]}`, idx.length * 1.5, idx);
   }
   const missing = Object.keys(ELEMENT_ASK).filter((x) => !els[x]);
-  if (n >= 4 && missing.length === 1) ask(`With no ${missing[0]} among ${n} cards, ${ELEMENT_ASK[missing[0]][1]}`, 3);
+  if (n >= 4 && missing.length === 1) ask(`No ${missing[0]}: ${ELEMENT_ASK[missing[0]][1]}`, 3, entries.map((_, i) => i));   // every card lacks it
   if (majors >= 2 && majors >= Math.ceil(n / 2)) {
-    ask(`With ${who(whichCards(entries, (e) => isMajorCard(e.card)))} in the Major Arcana, what larger lesson is this chapter teaching?`, majors * 1.5);
+    ask("Major Arcana: what larger lesson is this chapter teaching?", majors * 1.5, whichCards(entries, (e) => isMajorCard(e.card)));
   }
   if (revs && revs >= Math.ceil(n / 2)) {
-    ask(`With ${who(whichCards(entries, (e) => e.reversed))} reversed, what is still forming, and needs time rather than pressure?`, revs * 1.5);
+    ask("Reversed: what is still forming, and needs time rather than pressure?", revs * 1.5, whichCards(entries, (e) => e.reversed));
   }
   // Two figures facing each other.
   const nameOf = (i) => (lens ? placeName(lens, i, entries[i]) : entries[i].label || "");
   const f = entries.map(facingOf);
   const meet = f.findIndex((d, i) => d === "right" && f[i + 1] === "left");
-  if (meet >= 0 && nameOf(meet) && nameOf(meet + 1)) ask(`What are ${nameOf(meet)} and ${nameOf(meet + 1)} saying to each other?`.replace(/ The /g, " the "), 5);
+  if (meet >= 0 && nameOf(meet) && nameOf(meet + 1)) ask(`What are ${nameOf(meet)} and ${nameOf(meet + 1)} saying to each other?`.replace(/ The /g, " the "), 5, [meet, meet + 1]);
 
   // The cards' own questions join the same list, scored by how many of the
   // other cards share their themes (keywords, key ideas, how they read),
@@ -770,8 +770,8 @@ function summaryQuestions(entries, lens) {
     const mine = new Set(linked[i].flatMap(themesOf));
     filled(questionsFor(e.card, e.reversed)).forEach((q) => {
       const ts = themesOf(q);
-      const others = rich.filter((r, j) => j !== i && ts.some((t) => r.has(t))).length;
-      whole.push({ q, score: others * 2 + (ts.some((t) => mine.has(t)) ? 1 : 0), card: i });
+      const others = rich.map((r, j) => j).filter((j) => j !== i && ts.some((t) => rich[j].has(t)));
+      whole.push({ q, score: others.length * 2 + (ts.some((t) => mine.has(t)) ? 1 : 0), card: i, idx: [i, ...others] });
     });
   });
 
@@ -788,12 +788,15 @@ function summaryQuestions(entries, lens) {
       if (s > bestScore || (s === bestScore && w.k < best.k)) { best = w; bestScore = s; }
     });
     if (!best) break;
-    picked.push(best.q);
+    picked.push(best);
     seen.add(best.q);
     if (best.card !== undefined) cardsUsed.add(best.card);
     best.ts.forEach((t) => covered.add(t));
   }
-  return picked;
+  // The most relevant on top: the question that runs through the most
+  // cards first (its pips), the stronger score breaking a tie.
+  picked.sort((x, y) => y.idx.length - x.idx.length || y.score - x.score);
+  return picked.map((w) => ({ q: w.q, idx: w.idx, n }));
 }
 // The questions, in one box: for one card, its own; for a spread, the
 // strongest of the reading's and the cards' questions together.
@@ -804,7 +807,18 @@ function fillSummaryAsks(box, entries, lens) {
   box.innerHTML = "";
   box.hidden = !qs.length;
   const ul = el("ul");
-  qs.forEach((q) => ul.append(el("li", "", q)));
+  // A question raised by certain cards: five pips above it, a scale of how
+  // strongly it runs through the spread, from one (a little) to five (it
+  // fills the spread): the share of the cards that raised it, out of five.
+  qs.forEach((q) => {
+    if (typeof q === "string") return ul.append(el("li", "", q));
+    const li = el("li");
+    const level = Math.min(5, Math.max(1, Math.round((5 * q.idx.length) / q.n)));
+    const pips = el("span", "ask-pips", Array.from({ length: 5 }, (_, i) => (i < level ? "●" : "○")).join("​"));
+    pips.setAttribute("aria-label", `strength ${level} of 5`);
+    li.append(pips, q.q);
+    ul.append(li);
+  });
   box.append(el("p", "asks-title", one ? "The card asks" : "The reading asks"), ul);
 }
 
@@ -850,8 +864,24 @@ function listItems(items) {
   items.forEach(({ head, text, ideas, sub, cards }) => {
     const li = el("li");
     threadable(li, cards, head);
-    if (head) li.append(el("strong", "", head));
-    if (text) li.append(el("span", "", text));
+    // A card's entry (it carries an ideas list, even an empty one): the name
+    // hangs in its own column on two lines, its line and ideas beside it.
+    const entry = Array.isArray(ideas);
+    let body = li;
+    if (entry) {
+      li.classList.add("card-entry");
+      body = el("div", "entry-body");
+    }
+    if (head) {
+      const name = el("strong");
+      if (entry) {
+        const m = head.match(/^(.+? of|The) (.+)$/);
+        if (m) name.append(m[1], el("br"), el("span", "nowrap", m[2])); else name.textContent = head;
+      } else name.textContent = head;
+      li.append(name);
+    }
+    if (entry) li.append(body);
+    if (text) body.append(el("span", "", text));
     // ideas: the card's key ideas that connect to the rest of the reading
     // (Plain strings, or { x, cards, head }: an idea that links to another
     // card; tapping it draws the thread between the two cards.)
@@ -862,9 +892,9 @@ function listItems(items) {
         if (d.cards) threadable(one, d.cards, d.head);
         box.append(one);
       });
-      li.append(box);
+      body.append(box);
     }
-    if (sub) li.append(el("em", "summary-q", sub));
+    if (sub) body.append(el("em", "summary-q", sub));
     ul.append(li);
   });
   return ul;
@@ -1267,8 +1297,27 @@ function readingOverview(entries, pair) {
   const { themes, topEl, els, majors, revs } = patternParts(entries);
   // Straight into the themes: the section's title already says this is the reading as a whole.
   const top = (themes.length ? themes : readingThemes(entries)).slice(0, 2).map((t) => THEME_TEXT[t][0]);
-  if (top.length === 2) out.push(`${top[0]} and ${lower(top[1])} meet in you.`);
-  else if (top.length) out.push(`${top[0]} asks something of you.`);
+  // The opening varies from reading to reading (but stays the same for the
+  // same cards), so it never settles into one stock phrase.
+  const seed = entries.reduce((h, e) => [...`${e.card.name}${e.reversed ? "r" : ""}`].reduce((x, c) => (x * 31 + c.charCodeAt(0)) >>> 0, h), 7);
+  const one = (list) => list[seed % list.length];
+  if (top.length === 2) {
+    const [a, b] = [top[0], lower(top[1])];
+    out.push(one([
+      `${a} and ${b} meet in you.`,
+      `Two threads run through you here: ${lower(a)} and ${b}.`,
+      `This reading turns on ${lower(a)} and ${b}, and how you hold both.`,
+      `You are carrying ${lower(a)} and ${b} at once.`,
+      `At its heart are ${lower(a)} and ${b}, both of them yours.`,
+      `${a} sits beside ${b} in you.`,
+    ]));
+  } else if (top.length) {
+    out.push(one([
+      `${top[0]} asks something of you.`,
+      `This reading circles ${lower(top[0])} in you.`,
+      `${top[0]} runs through you here.`,
+    ]));
+  }
   // (A phrase with its own comma gets one after it too, so the sentence still parses.)
   const g = (e) => { const s = phrases(e.card, e.reversed).g.replace(/[.;]+$/, ""); return s.includes(",") ? `${s},` : s; };
   out.push(n === 2
