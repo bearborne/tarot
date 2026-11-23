@@ -29,10 +29,23 @@ SPREADS.forEach((spread) => {
   b.setAttribute("aria-label", spread.name);
   b.innerHTML = spreadFan(n);
   b.append(el("span", "spread-num", ROMAN[n - 1] || String(n)), el("span", "spread-word", n === 1 ? "card" : "cards"));
-  b.addEventListener("click", () => startReading(spread, b));
+  // Shift-click: straight to a summary of random cards for this spread (for checking summaries).
+  b.addEventListener("click", (e) => (e.shiftKey ? instantSummary(spread) : startReading(spread, b)));
   wireSpreadButton(b);
   $("spreadList").append(b);
 });
+
+// A summary for the spread at once, with cards drawn at random from the deck
+// in use: no table, no black hole, and nothing saved to the history.
+function instantSummary(spread) {
+  const deck = activeDeck(), n = spread.positions.length;
+  if (deck.length < n) return;
+  const order = shuffledOrder(deck.length);
+  const entries = spread.positions.map((pos, i) => ({
+    card: deck[order[i]], reversed: SET.reversals && rand(2) === 1, label: pos.label, question: pos.question || "",
+  }));
+  openSummary(entries, nameReading(entries) || spread.name);
+}
 
 // ── The spread buttons come alive ───────────────────────
 // Hover or focus: two lines of light run round the button's edge from the
