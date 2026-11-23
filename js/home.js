@@ -1356,7 +1356,7 @@ document.fonts?.ready.then(placeCotdWords);   // the words' widths change once t
 startSky();
 
 $("backBtn").addEventListener("click", showHome);
-$("newBtn").addEventListener("click", showHome);
+$("newBtn").addEventListener("click", () => flareHome());
 $("summaryBtn").addEventListener("click", () => {
   // One card: its page, with the theme's reading, summoned as a summary is.
   if (S.n === 1) { const reading = S; summonSummary((magic) => openReadingCard(0, magic), reading.readingId || reading); return; }

@@ -77,6 +77,21 @@ let swallowing = false;
 // grain is in, and `build(C, opts)` makes its pieces again with burnFronts.
 // Home is one way; the reading's summary is another (see summonSummary).
 const HOME_WAY = { land: () => landHome(), build: (C, o) => burnFronts(homeParts(), C, { ...o, glow: 1.8 }) };
+// New reading: the table fades, and home's menu flares to life as at the
+// hole's end (its flash at the middle, each piece burning in, brighter).
+function flareHome() {
+  if (swapping || swallowing) return;
+  if (calm) { showHome(); return; }
+  S = null;
+  resetMagic();
+  swapScreen($("table"), $("home"), () => {
+    placeCotdWords();
+    window.scrollTo(0, 0);
+    startSky();
+    const C = { x: innerWidth / 2, y: innerHeight / 2 }, COL = GREAT_FX.collapse;
+    HOME_WAY.build(C, { mode: "build", at: COL + 90, fly: GREAT_FX.fly, build: GREAT_FX.build, z: 9501, flash: { at: COL * 0.4, ms: COL * 0.6 + 260 } });
+  });
+}
 async function swallowHome(btn) {
   if (swallowing) return;
   document.activeElement?.blur();   // (saves a note being written)
