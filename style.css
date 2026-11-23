@@ -2390,7 +2390,24 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 /* As a page opens out of a black hole or is swallowed into one (see holeWindow):
    the shadowy dark eating in from its edge and cast beyond it, */
-.hole-shade { position: fixed; inset: 0; pointer-events: none; }
+/* (drawn once, its edge at 80% of the way out, 100px from the middle, and
+   only scaled and faded as it moves: see SHADE_R) */
+.hole-shade {
+  position: fixed;
+  width: 250px;
+  height: 250px;
+  pointer-events: none;
+  will-change: transform, opacity;
+  background: radial-gradient(closest-side, transparent 39%, rgba(4, 2, 10, .47) 66%,
+    rgba(3, 1, 8, .85) 80%, rgba(3, 1, 8, .5) 80.8%, rgba(3, 1, 8, 0) 96%);
+}
+/* (opening: the old page inside the ring darkening, the new one beyond it) */
+.hole-shade.out {
+  background: radial-gradient(closest-side, rgba(3, 1, 8, .7) 0%, rgba(3, 1, 8, .65) 57.6%,
+    rgba(3, 1, 8, .9) 79.5%, rgba(3, 1, 8, .35) 80.5%, rgba(3, 1, 8, 0) 92%);
+}
+/* The page itself, while a hole opens or swallows it: on a layer of its own. */
+.sheet.hole-moving { will-change: transform; contain: paint; }
 /* light bending round the edge: a band of what's behind, smeared and brightened
    as if through a lens, with a faint cool fringe inside and a warm one outside, */
 .hole-wave {
@@ -2402,6 +2419,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
   backdrop-filter: blur(1.8px) brightness(1.28) saturate(1.4);
   -webkit-mask: radial-gradient(closest-side, transparent 64%, #000 76%, #000 90%, transparent 100%);
   mask: radial-gradient(closest-side, transparent 64%, #000 76%, #000 90%, transparent 100%);
+}
+/* (wider than the screen, the blur is too slow: it just brightens) */
+.hole-wave.wide {
+  -webkit-backdrop-filter: brightness(1.28) saturate(1.4);
+  backdrop-filter: brightness(1.28) saturate(1.4);
 }
 .hole-wave::before, .hole-wave::after {
   content: "";
@@ -3082,7 +3104,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
    frame. Blurring over the drifting stars meant re-blurring the whole strip
    every frame; a blur that clears as a word fades in is a repaint per frame. */
 @media (pointer: coarse) {
-  .dawn-lens, .hole-wave, .thread-strip, .overlay {
+  .dawn-lens, .hole-wave, .hole-wave.wide, .thread-strip, .overlay {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }

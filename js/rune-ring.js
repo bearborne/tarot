@@ -311,8 +311,11 @@ function miniHole(C, hr, state) {
   Object.assign(cv.style, { left: `${C.x}px`, top: `${C.y}px`, width: `${art.box}px`, height: `${art.box}px`, zIndex: ++Z });
   document.body.append(cv);
   const ctx = cv.getContext("2d");
-  const t0 = performance.now();
-  const frame = (now) => {
+  // (its clock starts again on the first frame the browser draws, so a slow
+  // first frame, the new page being laid out, doesn't skip the start)
+  let t0 = performance.now(), first = true;
+  const frame = (now, fromRaf = true) => {
+    if (fromRaf && first) { first = false; t0 = now; }
     const s = cv.isConnected && state(now - t0);
     if (!s) { cv.remove(); return; }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -321,7 +324,7 @@ function miniHole(C, hr, state) {
     art.draw(ctx, now - t0, s.h, s.grow);
     requestAnimationFrame(frame);
   };
-  frame(t0);
+  frame(t0, false);
   return cv;
 }
 
@@ -423,16 +426,17 @@ function collapseInto(node, look) {
     return { grow, h: Math.min(1, p * 4) * (z > 0 ? 1 - z : 1) };
   });
   hole.style.zIndex = ++Z;   // above the collapsing copy: its centre is the hole
-  const t0 = performance.now();
+  let t0 = 0;
   const step = (now) => {
+    if (!t0) t0 = now;
     const ms = now - t0;
     fall.set(ms / CMS, ms);
     if (ms < CMS) requestAnimationFrame(step);
     else fall.remove();
   };
   requestAnimationFrame(step);
-  setTimeout(() => fall.remove(), CMS + 80);   // (even if the page's frames are paused)
-  setTimeout(() => hole.remove(), total + 80);
+  setTimeout(() => fall.remove(), CMS + 400);   // (even if the page's frames are paused)
+  setTimeout(() => hole.remove(), total + 400);
   setTimeout(() => { node.style.visibility = ""; }, lead + open);
   return { ms: lead, open, at, hole };
 }
@@ -450,14 +454,15 @@ function reformFrom(node, look, glow, ms = 460) {
     node.style.visibility = "";
     if (typeof cardFlare === "function") cardFlare(glow);
   };
-  const t0 = performance.now();
+  let t0 = 0;
   const step = (now) => {
+    if (!t0) t0 = now;
     const u = (now - t0) / ms;
     back.set(1 - Math.min(1, u), now - t0);
     if (u < 1) requestAnimationFrame(step);
     else finish();
   };
   requestAnimationFrame(step);
-  setTimeout(finish, ms + 80);
+  setTimeout(finish, ms + 300);
   return back;
 }

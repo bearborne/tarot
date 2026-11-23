@@ -520,45 +520,42 @@ function cardFlare(node, delay = 0) {
 // Resolves when it's over (by a timer, so a paused page never waits).
 function holeWindow(sheet, C, ms, delay, radius, pull, outside = false) {
   const twist = Math.random() < 0.5 ? -1 : 1;
-  const shade = el("div", "hole-shade"), wave = el("div", "hole-wave"), line = el("div", "rune-edge hole-edge");
+  const shade = el("div", `hole-shade${outside ? " out" : ""}`), wave = el("div", "hole-wave"), line = el("div", "rune-edge hole-edge");
   [shade, wave, line].forEach((n) => { n.setAttribute("aria-hidden", "true"); n.style.zIndex = ++Z; });
-  Object.assign(wave.style, { left: `${C.x}px`, top: `${C.y}px` });
-  Object.assign(line.style, { left: `${C.x}px`, top: `${C.y}px` });
+  for (const n of [shade, wave, line]) Object.assign(n.style, { left: `${C.x}px`, top: `${C.y}px` });
   const parts = [shade, wave, line];
   sheet.style.transformOrigin = `${C.x}px ${C.y}px`;
+  // (the page on a layer of its own while it moves, so its picture is kept
+  // and only cut and moved, not painted again every frame)
+  sheet.classList.add("hole-moving");
   const px = (v) => `${Math.max(0, v).toFixed(1)}px`;
+  // The shade is drawn once, small (SHADE_R: its edge), and only scaled and
+  // faded each frame: no full-screen gradient painted again every frame.
+  // The lens's blur is only kept while the ring is small enough for it to be
+  // cheap; wider, it just brightens what's behind.
+  const wide = Math.min(innerWidth, innerHeight) * 1.1;
+  let blurred = true;
   const draw = (u) => {
     const R = Math.max(0, radius(u)), p = Math.min(1, Math.max(0, pull(u)));
+    const W = R * 1.2 + 14;
+    wave.style.width = wave.style.height = px(2 * W);
+    wave.style.opacity = R < 4 ? 0 : 1;
+    if ((2 * W < wide) !== blurred) { blurred = !blurred; wave.classList.toggle("wide", !blurred); }
+    line.style.width = line.style.height = px(2 * R);
+    line.style.opacity = R < 2 ? 0 : 1;
+    shade.style.transform = `translate(-50%, -50%) scale(${(R / SHADE_R).toFixed(4)})`;
     if (outside) {
       // The page beyond the ring; inside it, the old one darkening as it's swallowed.
       const m = `radial-gradient(circle at ${C.x}px ${C.y}px, transparent ${px(R - 1)}, #000 ${px(R + 1)})`;
       sheet.style.maskImage = sheet.style.webkitMaskImage = m;
-      const band = Math.max(22, R * 0.28);
-      shade.style.background = `radial-gradient(circle at ${C.x}px ${C.y}px, `
-        + `rgba(3, 1, 8, ${(0.15 + 0.55 * p).toFixed(3)}) 0px, rgba(3, 1, 8, ${(0.2 + 0.45 * p).toFixed(3)}) ${px(R - band)}, `
-        + `rgba(3, 1, 8, ${(0.55 + 0.35 * p).toFixed(3)}) ${px(R - 1)}, rgba(3, 1, 8, .35) ${px(R + 1)}, rgba(3, 1, 8, 0) ${px(R + 18)})`;
-      const W = R * 1.2 + 14;
-      wave.style.width = wave.style.height = px(2 * W);
-      wave.style.opacity = R < 4 ? 0 : 1;
-      line.style.width = line.style.height = px(2 * R);
-      line.style.opacity = R < 2 ? 0 : 1;
+      shade.style.opacity = R < 1 ? 0 : (0.45 + 0.55 * p).toFixed(3);
       return;
     }
     const s = 1 - 0.42 * p;
     sheet.style.transform = `scale(${s.toFixed(4)}) rotate(${(twist * 11 * p).toFixed(2)}deg)`;
     sheet.style.clipPath = `circle(${px(R / s)} at ${C.x}px ${C.y}px)`;
     // The dark eating in from the edge, and the shadow cast beyond it.
-    const band = Math.max(26, R * 0.32), dark = 0.25 + 0.6 * p;
-    shade.style.background = R < 1 ? "none" : `radial-gradient(circle at ${C.x}px ${C.y}px, `
-      + `rgba(4, 2, 10, 0) ${px(R - band * 1.6)}, rgba(4, 2, 10, ${(dark * 0.55).toFixed(3)}) ${px(R - band * 0.55)}, `
-      + `rgba(3, 1, 8, ${dark.toFixed(3)}) ${px(R)}, rgba(3, 1, 8, ${(0.42 * (0.4 + p)).toFixed(3)}) ${px(R + 2)}, `
-      + `rgba(3, 1, 8, 0) ${px(R + 26 + R * 0.12)})`;
-    // The bending light, as a band straddling the edge.
-    const W = R * 1.2 + 14;
-    wave.style.width = wave.style.height = px(2 * W);
-    wave.style.opacity = R < 4 ? 0 : 1;
-    line.style.width = line.style.height = px(2 * R);
-    line.style.opacity = R < 2 ? 0 : 1;
+    shade.style.opacity = R < 1 ? 0 : ((0.25 + 0.6 * p) / 0.85).toFixed(3);
   };
   let t0 = 0, finished = false, done;
   const over = new Promise((r) => { done = r; });
@@ -566,6 +563,7 @@ function holeWindow(sheet, C, ms, delay, radius, pull, outside = false) {
     if (finished) return;
     finished = true;
     parts.forEach((n) => n.remove());
+    sheet.classList.remove("hole-moving");
     sheet.style.transform = sheet.style.transformOrigin = sheet.style.clipPath = "";
     sheet.style.maskImage = sheet.style.webkitMaskImage = "";
     done();
@@ -573,9 +571,11 @@ function holeWindow(sheet, C, ms, delay, radius, pull, outside = false) {
   draw(0);
   setTimeout(() => {
     document.body.append(shade, wave, line);
-    t0 = performance.now();
+    // (the clock starts on the first frame drawn, so a slow first frame,
+    // the new page being laid out, doesn't skip the start)
     const frame = (now) => {
       if (finished) return;
+      if (!t0) t0 = now;
       const u = Math.min(1, (now - t0) / ms);
       draw(u);
       if (u < 1) requestAnimationFrame(frame);
@@ -585,9 +585,11 @@ function holeWindow(sheet, C, ms, delay, radius, pull, outside = false) {
   }, delay);
   // (only if the frames haven't already finished it: drawing the last moment
   // again after that would put the page's cut-out back, and leave it there)
-  setTimeout(() => { if (!finished) { draw(1); finish(); } }, delay + ms + 120);
+  setTimeout(() => { if (!finished) { draw(1); finish(); } }, delay + ms + 400);
   return { over, draw, finish, parts };
 }
+// The radius the hole's shade is drawn at (see .hole-shade): scaled from there.
+const SHADE_R = 100;
 const easeOut3 = (v) => 1 - Math.pow(1 - v, 3);
 const easeInOut3 = (v) => (v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2);
 
