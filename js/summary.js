@@ -492,12 +492,17 @@ function patternParts(entries) {
   const els = {};
   entries.forEach((e) => { const x = elementFor(e.card); if (x) els[x] = (els[x] || 0) + 1; });
   const topEl = Object.keys(els).sort((a, b) => els[b] - els[a])[0];
+  // Shown as a compass (see compassSection): each card pulls a star toward its element.
   if (n >= 2) {
-    parts.push(part("Elements", [...ELEMENTS].sort((a, b) => (els[b] || 0) - (els[a] || 0)).map((x) => ({
-      n: els[x] || 0, main: x, note: els[x] ? ELEMENT_TEXT[x].split(",")[0] : "missing",
-      tone: els[x] ? (els[x] >= 2 && x === topEl ? "good" : "") : "quiet",
-      cards: whichCards(entries, (e) => elementFor(e.card) === x),
-    })), { tiles: true, cols: 4 }));
+    parts.push(part("Elements", ELEMENTS.map((x) => {
+      const cards = whichCards(entries, (e) => elementFor(e.card) === x);
+      const k = els[x] || 0;
+      return {
+        n: k, main: x, cards,
+        tip: k ? `${x}, ${ELEMENT_TEXT[x].replace(", ", " and ")}: in ${namesOf(cards)}.`
+          : `No ${x} in these cards: ${ELEMENT_TEXT[x].replace(", ", " and ")} are quiet in you for now.`,
+      };
+    }), { compass: true }));
   }
 
   // Symbolism: Major cards, numbers, ranks, stars, reversals.
@@ -967,6 +972,7 @@ function listSection(title, items) {
 // A section from part(): small tiles in a grid (one per card, lined up
 // like the row of cards, when perCard), or plain list lines.
 function partSection(p, cardCols) {
+  if (p.compass) return compassSection(p);
   if (!p.tiles) return listSection(p.title, p.items);
   const sec = el("section", "summary-part tile-part");
   sec.append(el("p", "asks-title", p.title));
@@ -1014,6 +1020,129 @@ function partSection(p, cardCols) {
   }
   return sec;
 }
+// ── The elements' compass ───────────────────────────────
+// The old square of the elements: each sits between two qualities.
+// Fire and Air act, Water and Earth hold; Fire and Earth are firm,
+// Air and Water flow. Each card pulls a star toward its element's corner,
+// so where the star rests is where the reading leans; its name and line
+// say what that lean means for you.
+const COMPASS_AT = { Fire: [-1, 1], Air: [1, 1], Water: [1, -1], Earth: [-1, -1] };   // x: firm → flow, y: hold → act
+const COMPASS_READS = [   // by the star's direction (degrees, 0 = flow, 90 = act)
+  { at: 90, name: "The Rising Sky", line: "You are all reach and motion: thinking, wanting, doing. What in you is asking to rest?" },
+  { at: 45, name: "The Open Air", line: "Your mind leads: you are weighing, naming and seeing clearly. Let your heart catch up." },
+  { at: 0, name: "The Mist", line: "You are flowing: imagining, feeling, linking one thing to the next. Little in you holds a firm shape yet." },
+  { at: -45, name: "The Deep Well", line: "Your feelings lead: you are turned inward, listening to what moves underneath." },
+  { at: -90, name: "The Quiet Garden", line: "You are holding and tending: patient, open, letting things grow at their own pace." },
+  { at: -135, name: "The Mountain", line: "Your body and your work lead: you are steady and building. Ask whether steady has become stuck." },
+  { at: 180, name: "The Forge", line: "You are shaping: will pressed into matter, firm choices, hard work. Little in you is flowing." },
+  { at: 135, name: "The Kindled Flame", line: "Your will leads: drive, courage and desire burn bright in you. Watch what they burn through." },
+];
+const COMPASS_STILL = { name: "The Still Point", line: "Your four sides are in balance: no one part of you is louder than the rest." };
+
+function compassReading(items) {
+  const total = items.reduce((s, t) => s + t.n, 0) || 1;
+  let x = 0, y = 0;
+  items.forEach((t) => { x += COMPASS_AT[t.main][0] * t.n; y += COMPASS_AT[t.main][1] * t.n; });
+  x /= total * Math.SQRT2; y /= total * Math.SQRT2;   // a corner sits on the unit circle
+  const r = Math.hypot(x, y);
+  if (r < 0.2) return { x, y, r, ...COMPASS_STILL, pull: "" };
+  const deg = Math.atan2(y, x) * 180 / Math.PI;
+  const off = (a) => Math.abs(((deg - a + 540) % 360) - 180);
+  const best = COMPASS_READS.reduce((a, b) => (off(b.at) < off(a.at) ? b : a));
+  return { x, y, r, ...best, pull: r > 0.55 ? "a strong pull" : "a gentle pull" };
+}
+
+function compassSection(p) {
+  const NS = "http://www.w3.org/2000/svg";
+  const s = (tag, attrs = {}, parent) => {
+    const node = document.createElementNS(NS, tag);
+    Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
+    if (parent) parent.append(node);
+    return node;
+  };
+  const C = 120, R = 62;   // centre, and the square's half-diagonal reach
+  const read = compassReading(p.items);
+  const sec = el("section", "summary-part compass-part");
+  sec.append(el("p", "asks-title", p.title));
+  const svg = s("svg", { viewBox: "0 0 240 240", class: "compass", role: "img",
+    "aria-label": `Elements compass: ${p.items.map((t) => `${t.main} ${t.n}`).join(", ")}. ${read.name}.` });
+  const defs = s("defs", {}, svg);
+  const glow = s("radialGradient", { id: "compass-glow" }, defs);
+  s("stop", { offset: "0", "stop-color": "#f3dca6", "stop-opacity": ".75" }, glow);
+  s("stop", { offset: ".4", "stop-color": "#c9a96e", "stop-opacity": ".22" }, glow);
+  s("stop", { offset: "1", "stop-color": "#c9a96e", "stop-opacity": "0" }, glow);
+
+  // The slow outer ring: a double circle with its ticks, turning.
+  const ring = s("g", { class: "compass-ring" }, svg);
+  s("circle", { cx: C, cy: C, r: 112, class: "c-line" }, ring);
+  s("circle", { cx: C, cy: C, r: 104, class: "c-line" }, ring);
+  for (let i = 0; i < 72; i++) {
+    const a = (i * 5) * Math.PI / 180, long = i % 9 === 0, r0 = long ? 101 : 104, r1 = long ? 115 : 108;
+    s("line", { x1: C + r0 * Math.cos(a), y1: C + r0 * Math.sin(a), x2: C + r1 * Math.cos(a), y2: C + r1 * Math.sin(a), class: long ? "c-tick long" : "c-tick" }, ring);
+  }
+  // The inner, counter-turning ring of small stars.
+  const inner = s("g", { class: "compass-inner" }, svg);
+  s("circle", { cx: C, cy: C, r: 40, class: "c-faint" }, inner);
+  for (let i = 0; i < 8; i++) {
+    const a = (i * 45 + 22.5) * Math.PI / 180;
+    s("circle", { cx: C + 40 * Math.cos(a), cy: C + 40 * Math.sin(a), r: 1.1, class: "c-dot" }, inner);
+  }
+
+  // The qualities, on the four sides.
+  [["act", C, 30], ["hold", C, 216], ["firm", 26, C + 3], ["flow", 214, C + 3]].forEach(([w, x, y]) => {
+    const t = s("text", { x, y, class: "c-quality", "text-anchor": "middle" }, svg);
+    t.textContent = w;
+  });
+
+  // The square of the elements, and a ray from the centre to each one present.
+  const at = (name, k = 1) => [C + COMPASS_AT[name][0] * R * k, C - COMPASS_AT[name][1] * R * k];
+  s("polygon", { points: ["Fire", "Air", "Water", "Earth"].map((e) => at(e).join(",")).join(" "), class: "c-square" }, svg);
+  p.items.forEach((t) => {
+    if (!t.n) return;
+    const [x, y] = at(t.main, 0.8);
+    s("line", { x1: C, y1: C, x2: x, y2: y, class: "c-ray", "stroke-width": 0.5 + t.n * 0.45, "stroke-opacity": Math.min(0.9, 0.25 + t.n * 0.18) }, svg);
+  });
+
+  // Each element as its alchemical sign: a triangle up for Fire and Air
+  // (barred for Air), down for Water and Earth (barred for Earth); larger
+  // for every card it is in. Tap one to light its cards.
+  p.items.forEach((t) => {
+    const [x, y] = at(t.main);
+    const g = s("g", { class: `c-el${t.n ? "" : " missing"}` }, svg);
+    g.dataset.tip = t.tip;
+    threadable(g, t.cards, t.main);
+    const up = t.main === "Fire" || t.main === "Air";
+    const h = 9 + Math.min(t.n, 4) * 2.2, w = h * 1.15, d = up ? -1 : 1;
+    s("circle", { cx: x, cy: y, r: h + 4, class: "c-hit" }, g);
+    s("polygon", { class: "c-glyph", points: [[x, y + d * h * 0.62], [x - w / 2, y - d * h * 0.38], [x + w / 2, y - d * h * 0.38]].map((q) => q.join(",")).join(" ") }, g);
+    if (t.main === "Air" || t.main === "Earth") s("line", { class: "c-glyph-bar", x1: x - w * 0.36, x2: x + w * 0.36, y1: y + d * h * 0.06, y2: y + d * h * 0.06 }, g);
+    const label = s("text", { x, y: y + (up ? h * 0.38 + 13 : -h * 0.38 - 7), class: "c-name", "text-anchor": "middle" }, g);
+    label.textContent = t.n ? `${t.main} ${"•".repeat(t.n)}` : t.main;
+  });
+
+  // The star: where the cards' pulls come to rest. It rises from the centre.
+  const sx = read.x * R * Math.SQRT2, sy = -read.y * R * Math.SQRT2;
+  if (read.r >= 0.2) s("line", { x1: C, y1: C, x2: C + sx, y2: C + sy, class: "c-trail" }, svg);
+  const home = s("g", { transform: `translate(${C} ${C})` }, svg);
+  const star = s("g", { class: "c-star" }, home);
+  star.style.setProperty("--sx", `${sx}px`);
+  star.style.setProperty("--sy", `${sy}px`);
+  s("circle", { r: 22, fill: "url(#compass-glow)", class: "c-halo" }, star);
+  const pts = [];
+  for (let i = 0; i < 16; i++) {
+    const rr = i % 2 ? 2.4 : (i % 4 ? 5.5 : 9), a = (i * 22.5 - 90) * Math.PI / 180;
+    pts.push(`${rr * Math.cos(a)},${rr * Math.sin(a)}`);
+  }
+  s("polygon", { points: pts.join(" "), class: "c-starshape" }, star);
+
+  sec.append(svg);
+  const name = el("p", "compass-name", read.name);
+  if (read.pull) name.append(el("span", "compass-pull", ` · ${read.pull}`));
+  sec.append(name, el("p", "compass-line", read.line));
+  sec.append(el("p", "tile-legend", "Each card pulls the star toward its element. Tap a sign to see its cards."));
+  return sec;
+}
+
 // Re-place the question box once a section's height changed (see openSummary).
 let placeAsksSoon = () => {};
 

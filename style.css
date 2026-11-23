@@ -3121,3 +3121,42 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .screen.swallowed { will-change: transform; contain: paint; }
 .swallowed { scrollbar-width: none; }
 .swallowed::-webkit-scrollbar { display: none; }
+
+/* ── The elements' compass (summary): the old square of the elements in
+   a turning ring; a star rests where the cards pull it ── */
+.compass-part { text-align: center; }
+.compass { display: block; width: 100%; max-width: 280px; margin: 0 auto; overflow: visible; }
+.compass .c-line { fill: none; stroke: rgba(201, 169, 110, .45); stroke-width: .6; }
+.compass .c-tick { stroke: rgba(201, 169, 110, .35); stroke-width: .5; }
+.compass .c-tick.long { stroke: rgba(201, 169, 110, .7); stroke-width: .7; }
+.compass .c-faint { fill: none; stroke: rgba(201, 169, 110, .18); stroke-width: .5; stroke-dasharray: 1 3; }
+.compass .c-dot { fill: rgba(201, 169, 110, .55); }
+.compass .c-square { fill: rgba(201, 169, 110, .03); stroke: rgba(201, 169, 110, .3); stroke-width: .5; }
+.compass .c-ray { stroke: var(--gold); stroke-linecap: round; }
+.compass .c-quality { font-family: var(--read); font-style: italic; font-size: 9px; letter-spacing: .08em; fill: var(--muted); }
+.compass .c-el { cursor: pointer; outline: none; }
+.compass .c-hit { fill: transparent; }
+.compass .c-glyph { fill: rgba(201, 169, 110, .1); stroke: var(--gold); stroke-width: 1; stroke-linejoin: round; transition: fill .2s; }
+.compass .c-glyph-bar { stroke: var(--gold); stroke-width: 1; }
+.compass .c-name { font-family: "IM Fell English SC", var(--serif); font-size: 10px; fill: var(--ink); letter-spacing: .04em; }
+.compass .c-el.missing { opacity: .35; }
+.compass .c-el.missing .c-glyph { fill: none; stroke-dasharray: 2 2; }
+@media (hover: hover) { .compass .c-el:hover .c-glyph { fill: rgba(201, 169, 110, .28); } }
+.compass .c-el:focus-visible .c-hit { stroke: rgba(201, 169, 110, .6); stroke-width: .6; }
+.compass .c-el.on .c-glyph { fill: rgba(201, 169, 110, .45); }
+.compass .c-trail { stroke: rgba(243, 220, 166, .55); stroke-width: .7; stroke-dasharray: 2 2.5; }
+.compass .c-starshape { fill: #f3dca6; stroke: #fff3d6; stroke-width: .4; }
+.compass .c-star { transform: translate(var(--sx), var(--sy)); animation: compass-rise 1.6s cubic-bezier(.2, .8, .2, 1) both; }
+.compass .c-halo { animation: compass-breathe 4s ease-in-out infinite; transform-origin: 0 0; }
+.compass-ring { transform-origin: 120px 120px; animation: compass-turn 180s linear infinite; }
+.compass-inner { transform-origin: 120px 120px; animation: compass-turn 90s linear infinite reverse; }
+@keyframes compass-rise { from { transform: translate(0, 0) scale(.2); opacity: 0; } }
+@keyframes compass-breathe { 50% { transform: scale(1.25); opacity: .7; } }
+@keyframes compass-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .compass .c-star, .compass .c-halo, .compass-ring, .compass-inner { animation: none; }
+}
+.compass-name { margin: 6px 0 2px; font-family: "IM Fell English SC", var(--serif); font-size: 1.05rem; color: var(--gold); }
+.compass-pull { font-family: var(--read); font-style: italic; font-size: .72rem; color: var(--muted); }
+.compass-line { margin: 0 auto; max-width: 34ch; font-family: var(--read); font-size: .85rem; line-height: 1.45; color: var(--ink); }
+@media (min-width: 900px) { .compass-name { font-size: 1.2rem; } .compass-line { font-size: .95rem; } }
