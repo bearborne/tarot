@@ -498,11 +498,8 @@ function refreshKeywords() {
     const key = spreadKeyword(s);
     s.kwEl.textContent = "";
     if (!all.length) { s.kwEl.textContent = " "; return; }
-    // The key word on its own line; the others (on wide screens only)
-    // in a block of fixed height, so every card's words line up.
+    // Only the one key word: the one that speaks to the whole reading.
     s.kwEl.append(el("b", "kw-key", key || all[0]));
-    const rest = all.filter((w) => w.toLowerCase() !== (key || all[0]).toLowerCase());
-    s.kwEl.append(el("span", "kw-rest", rest.join(" · ") || " "));
   });
 }
 

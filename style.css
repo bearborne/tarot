@@ -623,11 +623,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
   color: var(--gold);
   transition-delay: .25s;
 }
-.kw-key, .kw-rest { display: block; overflow: hidden; }
 /* the key word may use the gap beside its card before it is cut short */
-.kw-key { white-space: nowrap; text-overflow: ellipsis; height: 1.25em; margin-inline: -5px; }
-/* The other keywords only where there is room: always two lines high */
-.kw-rest { display: none; }
+.kw-key { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; height: 1.25em; margin-inline: -5px; }
 
 .hint {
   min-height: 1.4em;
@@ -1752,17 +1749,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   .slots-wrap { margin-top: 16px; padding-top: 88px; }
   /* room above the cards (padding) for the name that glows in when one
      is turned over, so it never runs into the header or the cards */
-  .slots { --gap: 24px; --row-gap: 18px; --text-h: 118px; --max-w: 300px; }
+  .slots { --gap: 24px; --row-gap: 18px; --text-h: 78px; --max-w: 300px; }
   .slot-name { margin-top: 10px; font-size: clamp(.9rem, 9cqi, 1.22rem); }
   .slot-kw { font-size: clamp(.8rem, 7.5cqi, 1rem); }
-  .kw-rest {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    height: 2.5em;
-    color: var(--gold);
-  }
   .slot-label { font-size: .9rem; margin-top: 6px; }
 
   .deck-area { height: 230px; --fw: 80px; --fh: 140px; }
