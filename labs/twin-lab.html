@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twin Word Looks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Literata:opsz,wght@7..72,400;7..72,500&display=swap">
+<style>
+  :root { --bg:#15131c; --ink:#e9e2d3; --muted:#a79f8f; --gold:#c9a96e; --line:rgba(201,169,110,.2);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; --read:"Literata",Georgia,serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#0d0c12; color:var(--ink); font-family:var(--serif); padding:20px 16px 48px; }
+  h1 { margin:0 0 4px; color:var(--gold); font-weight:normal; text-align:center; font-family:"IM Fell English SC", var(--serif); }
+  .intro { margin:0 auto 20px; color:var(--muted); text-align:center; font-size:.92rem; max-width:680px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(min(100%, 460px), 1fr)); gap:18px; max-width:1100px; margin:0 auto; }
+  .opt { background:#16131f; border:1px solid var(--line); border-radius:12px; padding:12px 12px 14px; }
+  .opt h2 { margin:0; color:var(--gold); font-weight:normal; font-size:1.1rem; }
+  .opt h2 span { color:var(--muted); font-size:.85rem; margin-right:6px; }
+  .opt p.desc { margin:2px 0 10px; color:var(--muted); font-size:.82rem; font-style:italic; min-height:2.4em; }
+  .stage { position:relative; background:var(--bg); border-radius:8px; padding:34px 10px 62px; overflow:hidden; }
+  .stage canvas { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .row { display:flex; justify-content:center; gap:4%; }
+  .slot { width:28%; container-type:inline-size; text-align:center; }
+  .slot img { display:block; width:100%; aspect-ratio:54/92; object-fit:cover; border-radius:5px; box-shadow:0 4px 14px rgba(0,0,0,.5); }
+  .slot-name { display:flex; align-items:center; justify-content:center; height:2.1em; margin:6px -4px 0;
+    font-family:"IM Fell English SC", var(--read); font-size:clamp(.7rem, 12cqi, 1rem); line-height:1.05; color:#ece0c6; }
+  .slot-kw { margin-top:2px; font-size:clamp(.72rem, 10.5cqi, .95rem); font-style:italic; color:var(--gold); }
+  .kw-key { display:inline-block; font-weight:600; color:#f3d99a;
+    text-shadow:0 0 3px rgba(12,11,17,.95), 0 0 6px rgba(255,214,130,.55), 0 0 14px rgba(255,196,90,.3); }
+  .breathe .kw-twin .kw-key { animation:kw-twin 3.2s ease-in-out infinite; }
+  @keyframes kw-twin { 50% { color:#fff0d0; text-shadow:0 0 3px rgba(12,11,17,.95), 0 0 8px rgba(255,220,140,.85), 0 0 18px rgba(255,196,90,.5); } }
+  .demo { display:block; margin:10px auto 0; font:inherit; font-size:12.5px; color:var(--ink); background:#241f31;
+    border:1px solid var(--line); border-radius:7px; padding:5px 10px; cursor:pointer; }
+  .demo:hover { border-color:var(--gold); }
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; } }
+</style>
+</head>
+<body>
+<h1>Twin words: looks</h1>
+<p class="intro">Two cards in a reading tell the same key word (Release), and something joins them. Each look is shown on its own copy of a three-card spread. "Again" replays it from the moment the words appear.</p>
+<div class="grid" id="grid"></div>
+
+<script>
+const GOLD = "201, 169, 110";
+const CARDS = [
+  { img: "death", name: "Death", kw: "Release" },
+  { img: "the-tower", name: "The Tower", kw: "Upheaval" },
+  { img: "eight-of-cups", name: "Eight of Cups", kw: "Release" },
+];
+const TWINS = [[0, 2]];
+
+const quad = ([a, c, b], u) => ({
+  x: (1 - u) * (1 - u) * a.x + 2 * (1 - u) * u * c.x + u * u * b.x,
+  y: (1 - u) * (1 - u) * a.y + 2 * (1 - u) * u * c.y + u * u * b.y,
+});
+const easeOut = (u) => 1 - Math.pow(1 - Math.min(1, Math.max(0, u)), 3);
+
+// A polyline you can walk along: point at fraction f, and stroke up to a fraction.
+function walker(pts) {
+  const cum = [0];
+  for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k].x - pts[k - 1].x, pts[k].y - pts[k - 1].y));
+  const total = cum[cum.length - 1] || 1;
+  const at = (f) => {
+    const s = f * total; let k = 1;
+    while (k < cum.length - 1 && cum[k] < s) k++;
+    const q = (s - cum[k - 1]) / Math.max(1e-6, cum[k] - cum[k - 1]);
+    return { x: pts[k - 1].x + (pts[k].x - pts[k - 1].x) * q, y: pts[k - 1].y + (pts[k].y - pts[k - 1].y) * q };
+  };
+  const stroke = (ctx, upTo) => {
+    ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+    for (let k = 1; k < pts.length && cum[k - 1] < upTo * total; k++) {
+      const p = cum[k] <= upTo * total ? pts[k] : at(upTo); ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+  };
+  return { cum, total, at, stroke, reach: (k) => cum[k] / total };
+}
+
+function star(ctx, p, r, a, blur = 7, cross = true) {
+  ctx.shadowColor = `rgba(255, 210, 130, ${0.9 * a})`; ctx.shadowBlur = blur;
+  ctx.fillStyle = `rgba(255, 240, 210, ${a})`;
+  ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+  if (!cross) return;
+  ctx.strokeStyle = `rgba(255, 236, 200, ${0.45 * a})`; ctx.lineWidth = 0.6;
+  const c = r * 2.6;
+  ctx.beginPath(); ctx.moveTo(p.x - c, p.y); ctx.lineTo(p.x + c, p.y); ctx.moveTo(p.x, p.y - c); ctx.lineTo(p.x, p.y + c); ctx.stroke();
+}
+function glint(ctx, p, a, r = 7) {
+  const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+  g.addColorStop(0, `rgba(255, 246, 220, ${a})`); g.addColorStop(1, "rgba(255, 214, 140, 0)");
+  ctx.fillStyle = g; ctx.fillRect(p.x - r, p.y - r, r * 2, r * 2);
+}
+function thread(ctx, w, grow, show, t) {
+  ctx.setLineDash([]); ctx.strokeStyle = `rgba(${GOLD}, ${0.22 * show})`; ctx.lineWidth = 0.8; w.stroke(ctx, grow);
+  ctx.setLineDash([2, 8]); ctx.lineDashOffset = -t / 45;
+  ctx.strokeStyle = `rgba(255, 228, 175, ${0.5 * show})`; ctx.lineWidth = 1.1; w.stroke(ctx, grow);
+  ctx.setLineDash([]);
+}
+
+// Each look: draw(ctx, t, u, g) where u = seconds since the words appeared,
+// g = { A, B (under the words), TA, TB (above the cards), WA, WB (word centres), l (per-pair randoms) }.
+const LOOKS = [
+  { title: "As now", desc: "Stars hang below the words on a jittered curve; light flows both ways along the thread.", breathe: true,
+    draw(ctx, t, u, { A, B, l }) {
+      const d = Math.hypot(B.x - A.x, B.y - A.y), show = Math.min(1, u * 1.6), grow = easeOut(u);
+      const ctrl = { x: (A.x + B.x) / 2, y: Math.max(A.y, B.y) + 14 + d * 0.12 };
+      const nx = -(B.y - A.y) / d, ny = (B.x - A.x) / d, n = Math.max(3, Math.min(8, Math.round(d / 55)));
+      const pts = [];
+      for (let k = 0; k <= n; k++) { const p = quad([A, ctrl, B], k / n), j = k && k < n ? 7 * l.jit[k % 9] : 0; pts.push({ x: p.x + nx * j, y: p.y + ny * j }); }
+      const w = walker(pts);
+      thread(ctx, w, grow, show, t);
+      pts.forEach((p, k) => {
+        if (w.reach(k) > grow + 1e-3) return;
+        const end = k === 0 || k === n, tw = 0.7 + 0.3 * Math.sin(t / 700 + k * 2.1 + l.ph * 6);
+        star(ctx, p, (end ? 1.8 : 1.3) * tw, show * tw, end ? 9 : 6);
+      });
+      if (grow >= 1) [0, 1].forEach((s) => { const f = (t / 2800 + l.ph + s * 0.5) % 1; glint(ctx, w.at(s ? 1 - f : f), 0.85 * Math.sin(Math.PI * f) * show); });
+    } },
+
+  { title: "Arc above", desc: "The same constellation, but rising from the top of each card and arching over the spread.", breathe: true,
+    draw(ctx, t, u, { TA, TB, l }) {
+      const d = Math.hypot(TB.x - TA.x, TB.y - TA.y), show = Math.min(1, u * 1.6), grow = easeOut(u);
+      const ctrl = { x: (TA.x + TB.x) / 2, y: Math.min(TA.y, TB.y) - 18 - d * 0.1 };
+      const n = Math.max(3, Math.min(8, Math.round(d / 55))), pts = [];
+      for (let k = 0; k <= n; k++) { const p = quad([TA, ctrl, TB], k / n), j = k && k < n ? 5 * l.jit[k % 9] : 0; pts.push({ x: p.x, y: p.y + j }); }
+      const w = walker(pts);
+      thread(ctx, w, grow, show, t);
+      pts.forEach((p, k) => {
+        if (w.reach(k) > grow + 1e-3) return;
+        const end = k === 0 || k === n, tw = 0.7 + 0.3 * Math.sin(t / 700 + k * 2.1 + l.ph * 6);
+        star(ctx, p, (end ? 1.8 : 1.3) * tw, show * tw, end ? 9 : 6);
+      });
+      if (grow >= 1) [0, 1].forEach((s) => { const f = (t / 2800 + l.ph + s * 0.5) % 1; glint(ctx, w.at(s ? 1 - f : f), 0.85 * Math.sin(Math.PI * f) * show); });
+    } },
+
+  { title: "Straight hairline", desc: "A single gold hairline under the words, a small diamond at each end, one glint gliding back and forth. No stars.", breathe: true,
+    draw(ctx, t, u, { A, B }) {
+      const show = Math.min(1, u * 1.6), grow = easeOut(u);
+      const y = Math.max(A.y, B.y) + 6, a = { x: A.x, y }, b = { x: B.x, y };
+      // grows out from the centre both ways
+      const c = (a.x + b.x) / 2, half = (b.x - a.x) / 2 * grow;
+      const lg = ctx.createLinearGradient(a.x, 0, b.x, 0);
+      lg.addColorStop(0, `rgba(${GOLD}, ${0.75 * show})`); lg.addColorStop(0.5, `rgba(${GOLD}, ${0.3 * show})`); lg.addColorStop(1, `rgba(${GOLD}, ${0.75 * show})`);
+      ctx.strokeStyle = lg; ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(c - half, y); ctx.lineTo(c + half, y); ctx.stroke();
+      if (grow < 1) return;
+      [a, b].forEach((p) => {
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = `rgba(255, 230, 180, ${show})`; ctx.shadowColor = "rgba(255, 200, 110, .9)"; ctx.shadowBlur = 6;
+        ctx.fillRect(-2, -2, 4, 4); ctx.restore();
+      });
+      const f = 0.5 - 0.5 * Math.cos(t / 1600); // eases in and out at each end
+      glint(ctx, { x: a.x + (b.x - a.x) * f, y }, 0.9 * show, 9);
+    } },
+
+  { title: "The Great Bear", desc: "Seven stars in the shape of the Big Dipper, its handle starting at one word and its bowl reaching the other. Drawn star by star, then it twinkles.", breathe: true,
+    draw(ctx, t, u, { A, B, l }) {
+      const show = Math.min(1, u * 1.6);
+      // Alkaid (on A) → Mizar → Alioth → Megrez → Phecda → Merak → Dubhe (on B), then Dubhe closes the bowl back to Megrez.
+      const U = [[0, 0], [0.16, 0.3], [0.32, 0.42], [0.5, 0.45], [0.56, 1], [0.95, 1], [1, 0]];
+      const d = Math.hypot(B.x - A.x, B.y - A.y), ex = { x: (B.x - A.x) / d, y: (B.y - A.y) / d }, ey = { x: -ex.y, y: ex.x };
+      const h = Math.min(46, d * 0.3);
+      // x runs along A→B, y hangs below the words.
+      const P = U.map(([x, y]) => ({ x: A.x + ex.x * x * d + ey.x * y * h, y: A.y + ex.y * x * d + ey.y * y * h }));
+      const order = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]];
+      const per = 0.22;
+      ctx.lineWidth = 0.8;
+      order.forEach(([i, j], k) => {
+        const g = easeOut((u - k * per) / 0.5);
+        if (g <= 0) return;
+        ctx.strokeStyle = `rgba(${GOLD}, ${0.4 * show})`;
+        ctx.beginPath(); ctx.moveTo(P[i].x, P[i].y); ctx.lineTo(P[i].x + (P[j].x - P[i].x) * g, P[i].y + (P[j].y - P[i].y) * g); ctx.stroke();
+      });
+      P.forEach((p, k) => {
+        const lit = Math.min(1, Math.max(0, (u - (k === 0 ? 0 : (k - 1) * per + 0.4)) * 3));
+        if (lit <= 0) return;
+        const tw = 0.65 + 0.35 * Math.sin(t / 650 + k * 1.9 + l.ph * 6);
+        star(ctx, p, (k === 0 || k === 6 ? 2 : 1.4) * tw, lit * show * tw, 8);
+      });
+    } },
+
+  { title: "Pulse only", desc: "No line at all. The two words glow in turn, as if answering each other, with a faint star above each.", breathe: false,
+    draw(ctx, t, u, { WA, WB, l }) {
+      const show = Math.min(1, u * 1.2);
+      [WA, WB].forEach((p, s) => {
+        const ph = 0.5 + 0.5 * Math.sin(t / 900 + s * Math.PI);
+        ctx.save(); ctx.globalCompositeOperation = "lighter";
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 34);
+        g.addColorStop(0, `rgba(255, 200, 110, ${0.28 * ph * show})`); g.addColorStop(1, "rgba(255, 200, 110, 0)");
+        ctx.fillStyle = g; ctx.fillRect(p.x - 34, p.y - 34, 68, 68); ctx.restore();
+        star(ctx, { x: p.x, y: p.y - 14 }, 1.1 + 0.6 * ph, show * (0.35 + 0.65 * ph), 7);
+      });
+    } },
+
+  { title: "Star burst", desc: "A star wakes at each word; every few breaths both send a spark toward the other, and they meet in a small flash.", breathe: true,
+    draw(ctx, t, u, { A, B, l }) {
+      const show = Math.min(1, u * 1.6), d = Math.hypot(B.x - A.x, B.y - A.y);
+      const ctrl = { x: (A.x + B.x) / 2, y: Math.max(A.y, B.y) + 10 + d * 0.08 };
+      [A, B].forEach((p, s) => star(ctx, p, 1.7 * (0.8 + 0.2 * Math.sin(t / 600 + s * 3)), show, 10));
+      const cyc = 3.6, c = ((u + l.ph * cyc) % cyc) / 1.1; // spark travels in 1.1s, then rests
+      if (u < 0.6) return;
+      if (c <= 1) {
+        const f = easeOut(c) * 0.5;
+        [0, 1].forEach((s) => {
+          for (let k = 0; k < 8; k++) { // the spark and its tail
+            const ff = Math.max(0, f - k * 0.012), p = quad([A, ctrl, B], s ? 1 - ff : ff);
+            ctx.fillStyle = `rgba(255, 236, 200, ${(1 - k / 8) * 0.85 * show})`;
+            ctx.beginPath(); ctx.arc(p.x, p.y, 1.5 * (1 - k / 10), 0, Math.PI * 2); ctx.fill();
+          }
+        });
+      } else if (c < 1.8) {
+        const k = (c - 1) / 0.8, p = quad([A, ctrl, B], 0.5);
+        glint(ctx, p, (1 - k) * show, 6 + 14 * k);
+        star(ctx, p, 1.6 * (1 - k), (1 - k) * show, 10);
+      }
+    } },
+];
+
+const grid = document.getElementById("grid"), stages = [];
+LOOKS.forEach((look, i) => {
+  const el = document.createElement("div");
+  el.className = "opt";
+  el.innerHTML = `<h2><span>${i === 0 ? "0" : i}</span>${look.title}</h2><p class="desc">${look.desc}</p>
+    <div class="stage${look.breathe ? " breathe" : ""}"><canvas></canvas><div class="row">${CARDS.map((c, k) => `
+      <div class="slot${TWINS.some(([a, b]) => a === k || b === k) ? " kw-twin" : ""}"><img src="../cards/${c.img}.jpg" alt="">
+      <div class="slot-name">${c.name}</div><div class="slot-kw"><span class="kw-key">${c.kw}</span></div></div>`).join("")}</div></div>
+    <button class="demo">Again</button>`;
+  grid.appendChild(el);
+  const st = { look, stage: el.querySelector(".stage"), canvas: el.querySelector("canvas"), start: performance.now() + 400,
+    l: { jit: Array.from({ length: 9 }, () => Math.random() * 2 - 1), ph: Math.random() } };
+  st.ctx = st.canvas.getContext("2d");
+  el.querySelector(".demo").onclick = () => { st.start = performance.now() + 150; };
+  stages.push(st);
+});
+
+function size(st) {
+  const r = st.stage.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+  st.canvas.width = r.width * dpr; st.canvas.height = r.height * dpr;
+  st.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+const ro = new ResizeObserver(() => stages.forEach(size));
+stages.forEach((s) => ro.observe(s.stage));
+
+function frame(t) {
+  stages.forEach((st) => {
+    const { ctx, stage } = st, r = stage.getBoundingClientRect();
+    ctx.clearRect(0, 0, r.width, r.height);
+    const u = (t - st.start) / 1400;
+    if (u <= 0) return;
+    const slots = stage.querySelectorAll(".slot");
+    TWINS.forEach(([a, b]) => {
+      const ka = slots[a].querySelector(".kw-key").getBoundingClientRect(), kb = slots[b].querySelector(".kw-key").getBoundingClientRect();
+      const ia = slots[a].querySelector("img").getBoundingClientRect(), ib = slots[b].querySelector("img").getBoundingClientRect();
+      const rel = (x, y) => ({ x: x - r.left, y: y - r.top });
+      ctx.save(); ctx.lineCap = ctx.lineJoin = "round";
+      st.look.draw(ctx, t, u, {
+        A: rel(ka.left + ka.width / 2, ka.bottom + 4), B: rel(kb.left + kb.width / 2, kb.bottom + 4),
+        TA: rel(ia.left + ia.width / 2, ia.top - 6), TB: rel(ib.left + ib.width / 2, ib.top - 6),
+        WA: rel(ka.left + ka.width / 2, ka.top + ka.height / 2), WB: rel(kb.left + kb.width / 2, kb.top + kb.height / 2),
+        l: st.l,
+      });
+      ctx.restore();
+    });
+  });
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

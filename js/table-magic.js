@@ -443,17 +443,33 @@ function drawTwins(ctx, t) {
     if (!sa.kwEl.classList.contains("shown") || !sb.kwEl.classList.contains("shown")) return;
     const show = Math.min(1, u * 1.6), grow = 1 - Math.pow(1 - Math.min(1, u), 3);
     const ra = sa.kwEl.getBoundingClientRect(), rb = sb.kwEl.getBoundingClientRect();
+    const ca = sa.box.getBoundingClientRect(), cb = sb.box.getBoundingClientRect();
     if (!ra.width || !rb.width) return;
-    // From just under one word to just under the other, hanging a little below.
+    // One hangs from just under one word to just under the other; a second
+    // arches over the two cards, from the top of one to the top of the other.
     const A = { x: ra.left + ra.width / 2, y: ra.bottom + 4 }, B = { x: rb.left + rb.width / 2, y: rb.bottom + 4 };
     const d = Math.hypot(B.x - A.x, B.y - A.y);
     if (d < 4) return;
-    const ctrl = { x: (A.x + B.x) / 2, y: Math.max(A.y, B.y) + 14 + d * 0.12 };
+    drawTwinStars(ctx, t, l, A, B, { x: (A.x + B.x) / 2, y: Math.max(A.y, B.y) + 14 + d * 0.12 }, 0, show, grow);
+    if (ca.width && cb.width) {
+      const TA = { x: ca.left + ca.width / 2, y: ca.top - 6 }, TB = { x: cb.left + cb.width / 2, y: cb.top - 6 };
+      const dt = Math.hypot(TB.x - TA.x, TB.y - TA.y);
+      if (dt >= 4) drawTwinStars(ctx, t, l, TA, TB, { x: (TA.x + TB.x) / 2, y: Math.min(TA.y, TB.y) - 18 - dt * 0.1 }, 4, show, grow);
+    }
+  });
+  ctx.restore();
+}
+
+// One string of twin stars from A to B along a curve bent toward ctrl:
+// a glowing thread with light flowing along it, bright twinkling stars,
+// and two glints that keep travelling, one each way.
+function drawTwinStars(ctx, t, l, A, B, ctrl, seed, show, grow) {
+    const d = Math.hypot(B.x - A.x, B.y - A.y);
     const nx = -(B.y - A.y) / d, ny = (B.x - A.x) / d;
     const n = Math.max(3, Math.min(8, Math.round(d / 55)));
     const pts = [];
     for (let k = 0; k <= n; k++) {
-      const p = curvePoint([A, ctrl, B], k / n), j = k && k < n ? 7 * l.jit[k % 9] : 0;
+      const p = curvePoint([A, ctrl, B], k / n), j = k && k < n ? 7 * l.jit[(k + seed) % 9] : 0;
       pts.push({ x: p.x + nx * j, y: p.y + ny * j });
     }
     // Lengths along the line of stars, to find a point a fraction of the way.
@@ -476,15 +492,17 @@ function drawTwins(ctx, t) {
       }
       ctx.stroke();
     };
-    // The lines: a faint thread, and over it light flowing from word to word.
+    // The lines: a glowing gold thread, and over it light flowing from word to word.
     ctx.setLineDash([]);
-    ctx.strokeStyle = `rgba(${GOLD}, ${0.22 * show})`;
-    ctx.lineWidth = 0.8;
-    line(grow);
-    ctx.setLineDash([2, 8]);
-    ctx.lineDashOffset = -t / 45;
-    ctx.strokeStyle = `rgba(255, 228, 175, ${0.5 * show})`;
+    ctx.shadowColor = `rgba(255, 200, 110, ${0.8 * show})`;
+    ctx.shadowBlur = 6;
+    ctx.strokeStyle = `rgba(232, 200, 140, ${0.55 * show})`;
     ctx.lineWidth = 1.1;
+    line(grow);
+    ctx.setLineDash([3, 7]);
+    ctx.lineDashOffset = -t / 40;
+    ctx.strokeStyle = `rgba(255, 238, 200, ${0.9 * show})`;
+    ctx.lineWidth = 1.4;
     line(grow);
     ctx.setLineDash([]);
     // The stars, each lit as the line reaches it, twinkling.
@@ -492,19 +510,19 @@ function drawTwins(ctx, t) {
       const reach = cum[k] / total;
       if (reach > grow + 1e-3) return;
       const end = k === 0 || k === n;
-      const tw = 0.7 + 0.3 * Math.sin(t / 700 + k * 2.1 + l.ph * 6);
-      const r = (end ? 1.8 : 1.3) * tw;
-      ctx.shadowColor = `rgba(255, 210, 130, ${0.9 * show})`;
-      ctx.shadowBlur = end ? 9 : 6;
-      ctx.fillStyle = `rgba(255, 240, 210, ${show * tw})`;
+      const tw = 0.75 + 0.25 * Math.sin(t / 700 + k * 2.1 + l.ph * 6 + seed);
+      const r = (end ? 2.4 : 1.8) * tw;
+      ctx.shadowColor = `rgba(255, 210, 130, ${show})`;
+      ctx.shadowBlur = end ? 14 : 10;
+      ctx.fillStyle = `rgba(255, 246, 225, ${show * tw})`;
       ctx.beginPath();
       ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
       ctx.fill();
-      // a small cross of light on each star
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = `rgba(255, 236, 200, ${0.45 * show * tw})`;
-      ctx.lineWidth = 0.6;
-      const c = r * 2.6;
+      // a cross of light on each star
+      ctx.shadowBlur = 4;
+      ctx.strokeStyle = `rgba(255, 240, 210, ${0.75 * show * tw})`;
+      ctx.lineWidth = 0.7;
+      const c = r * 3.2;
       ctx.beginPath();
       ctx.moveTo(p.x - c, p.y); ctx.lineTo(p.x + c, p.y);
       ctx.moveTo(p.x, p.y - c); ctx.lineTo(p.x, p.y + c);
@@ -513,17 +531,18 @@ function drawTwins(ctx, t) {
     // Two glints that keep flowing, one each way, so both cards speak.
     if (grow >= 1) {
       [0, 1].forEach((w) => {
-        const f = (t / 2800 + l.ph + w * 0.5) % 1, along = w ? 1 - f : f;
+        const f = (t / 2800 + l.ph + seed * 0.13 + w * 0.5) % 1, along = w ? 1 - f : f;
         const p = at(along), fade = Math.sin(Math.PI * f);
-        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 7);
-        g.addColorStop(0, `rgba(255, 246, 220, ${0.85 * fade * show})`);
+        ctx.shadowBlur = 0;
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 10);
+        g.addColorStop(0, `rgba(255, 250, 232, ${fade * show})`);
+        g.addColorStop(0.35, `rgba(255, 226, 160, ${0.6 * fade * show})`);
         g.addColorStop(1, "rgba(255, 214, 140, 0)");
         ctx.fillStyle = g;
-        ctx.fillRect(p.x - 7, p.y - 7, 14, 14);
+        ctx.fillRect(p.x - 10, p.y - 10, 20, 20);
       });
     }
-  });
-  ctx.restore();
+    ctx.shadowBlur = 0;
 }
 
 // The magic thins out behind each turned card's name and keywords, so
