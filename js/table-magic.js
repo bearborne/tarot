@@ -399,6 +399,127 @@ function strokeCurve(ctx, path, upTo = 1) {
 function drawMagic(t) {
   drawMagicLayer(t);
   softenUnderText(t);
+  drawTwins(MG.ctx, t);
+}
+
+// ── Twin words ──────────────────────────────────────────
+// When two turned cards tell the same key word, a little constellation
+// hangs between their words: a few stars joined by fine lines, drawn out
+// from one word to the other, with light flowing along it both ways for as
+// long as the reading is open. (Three or more alike are joined in a chain.)
+function linkTwinWords() {
+  if (!S) return;
+  const now = performance.now(), old = new Map((S.twins || []).map((l) => [l.id, l])), twins = [];
+  const by = new Map();
+  S.slots.forEach((s, i) => {
+    if (!s.flipped || !s.key) return;
+    if (!by.has(s.key)) by.set(s.key, []);
+    by.get(s.key).push(i);
+  });
+  by.forEach((ix) => {
+    for (let k = 1; k < ix.length; k++) {
+      const a = ix[k - 1], b = ix[k], id = `${a}-${b}`;
+      twins.push(old.get(id) || { id, a, b, at: now + 450,   // once the word has glowed in
+        jit: Array.from({ length: 9 }, () => Math.random() * 2 - 1), ph: Math.random() });
+    }
+  });
+  S.twins = twins;
+  S.slots.forEach((s, i) => s.kwEl?.classList.toggle("kw-twin", twins.some((l) => l.a === i || l.b === i)));
+  if (twins.length) startMagic();
+}
+
+function drawTwins(ctx, t) {
+  if (!ctx || !S || !S.twins || !S.twins.length) return;
+  ctx.save();
+  ctx.lineCap = ctx.lineJoin = "round";
+  S.twins.forEach((l) => {
+    const u = (t - l.at) / 1400;
+    if (u <= 0) return;
+    const sa = S.slots[l.a], sb = S.slots[l.b];
+    if (!sa.kwEl.classList.contains("shown") || !sb.kwEl.classList.contains("shown")) return;
+    const show = Math.min(1, u * 1.6), grow = 1 - Math.pow(1 - Math.min(1, u), 3);
+    const ra = sa.kwEl.getBoundingClientRect(), rb = sb.kwEl.getBoundingClientRect();
+    if (!ra.width || !rb.width) return;
+    // From just under one word to just under the other, hanging a little below.
+    const A = { x: ra.left + ra.width / 2, y: ra.bottom + 4 }, B = { x: rb.left + rb.width / 2, y: rb.bottom + 4 };
+    const d = Math.hypot(B.x - A.x, B.y - A.y);
+    if (d < 4) return;
+    const ctrl = { x: (A.x + B.x) / 2, y: Math.max(A.y, B.y) + 14 + d * 0.12 };
+    const nx = -(B.y - A.y) / d, ny = (B.x - A.x) / d;
+    const n = Math.max(3, Math.min(8, Math.round(d / 55)));
+    const pts = [];
+    for (let k = 0; k <= n; k++) {
+      const p = curvePoint([A, ctrl, B], k / n), j = k && k < n ? 7 * l.jit[k % 9] : 0;
+      pts.push({ x: p.x + nx * j, y: p.y + ny * j });
+    }
+    // Lengths along the line of stars, to find a point a fraction of the way.
+    const cum = [0];
+    for (let k = 1; k < pts.length; k++) cum.push(cum[k - 1] + Math.hypot(pts[k].x - pts[k - 1].x, pts[k].y - pts[k - 1].y));
+    const total = cum[cum.length - 1];
+    const at = (f) => {
+      const s = f * total;
+      let k = 1;
+      while (k < cum.length - 1 && cum[k] < s) k++;
+      const q = (s - cum[k - 1]) / Math.max(1e-6, cum[k] - cum[k - 1]);
+      return { x: pts[k - 1].x + (pts[k].x - pts[k - 1].x) * q, y: pts[k - 1].y + (pts[k].y - pts[k - 1].y) * q };
+    };
+    const line = (upTo) => {
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let k = 1; k < pts.length && cum[k - 1] < upTo * total; k++) {
+        const p = cum[k] <= upTo * total ? pts[k] : at(upTo);
+        ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+    };
+    // The lines: a faint thread, and over it light flowing from word to word.
+    ctx.setLineDash([]);
+    ctx.strokeStyle = `rgba(${GOLD}, ${0.22 * show})`;
+    ctx.lineWidth = 0.8;
+    line(grow);
+    ctx.setLineDash([2, 8]);
+    ctx.lineDashOffset = -t / 45;
+    ctx.strokeStyle = `rgba(255, 228, 175, ${0.5 * show})`;
+    ctx.lineWidth = 1.1;
+    line(grow);
+    ctx.setLineDash([]);
+    // The stars, each lit as the line reaches it, twinkling.
+    pts.forEach((p, k) => {
+      const reach = cum[k] / total;
+      if (reach > grow + 1e-3) return;
+      const end = k === 0 || k === n;
+      const tw = 0.7 + 0.3 * Math.sin(t / 700 + k * 2.1 + l.ph * 6);
+      const r = (end ? 1.8 : 1.3) * tw;
+      ctx.shadowColor = `rgba(255, 210, 130, ${0.9 * show})`;
+      ctx.shadowBlur = end ? 9 : 6;
+      ctx.fillStyle = `rgba(255, 240, 210, ${show * tw})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      // a small cross of light on each star
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = `rgba(255, 236, 200, ${0.45 * show * tw})`;
+      ctx.lineWidth = 0.6;
+      const c = r * 2.6;
+      ctx.beginPath();
+      ctx.moveTo(p.x - c, p.y); ctx.lineTo(p.x + c, p.y);
+      ctx.moveTo(p.x, p.y - c); ctx.lineTo(p.x, p.y + c);
+      ctx.stroke();
+    });
+    // Two glints that keep flowing, one each way, so both cards speak.
+    if (grow >= 1) {
+      [0, 1].forEach((w) => {
+        const f = (t / 2800 + l.ph + w * 0.5) % 1, along = w ? 1 - f : f;
+        const p = at(along), fade = Math.sin(Math.PI * f);
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 7);
+        g.addColorStop(0, `rgba(255, 246, 220, ${0.85 * fade * show})`);
+        g.addColorStop(1, "rgba(255, 214, 140, 0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(p.x - 7, p.y - 7, 14, 14);
+      });
+    }
+  });
+  ctx.restore();
 }
 
 // The magic thins out behind each turned card's name and keywords, so

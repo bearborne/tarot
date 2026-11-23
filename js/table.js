@@ -497,10 +497,13 @@ function refreshKeywords() {
     const all = filled(keywordsFor(s.card, s.reversed));
     const key = spreadKeyword(s);
     s.kwEl.textContent = "";
+    s.key = "";
     if (!all.length) { s.kwEl.textContent = " "; return; }
     // Only the one key word: the one that speaks to the whole reading.
     s.kwEl.append(el("b", "kw-key", key || all[0]));
+    s.key = (key || all[0]).trim().toLowerCase();
   });
+  linkTwinWords();   // cards telling the same word are joined by a constellation
 }
 
 async function turn(slot) {

@@ -571,6 +571,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
   color: #f3d99a;
   text-shadow: 0 0 3px rgba(12, 11, 17, .95), 0 0 6px rgba(255, 214, 130, .55), 0 0 14px rgba(255, 196, 90, .3);
 }
+/* A word another card tells too (joined to it by a constellation): it breathes. */
+.kw-twin .kw-key { animation: kw-twin 3.2s ease-in-out infinite; }
+@keyframes kw-twin {
+  50% { color: #fff0d0; text-shadow: 0 0 3px rgba(12, 11, 17, .95), 0 0 8px rgba(255, 220, 140, .85), 0 0 18px rgba(255, 196, 90, .5); }
+}
+@media (prefers-reduced-motion: reduce) { .kw-twin .kw-key { animation: none; } }
 /* The card's name like a title from an old tome, set between two small
    ornaments (a star and a fading line), sitting close over its keywords. */
 /* UNIFORM LABELS: every card's name takes exactly two lines (a short
