@@ -39,6 +39,10 @@ const GOLD = "201, 169, 110";
 const MG = { cv: null, ctx: null, running: false, cards: [], travels: [], links: [], finale: 0, w: 0, h: 0,
   flyers: [], ghosts: [], flares: [], motes: [], steps: [] };
 
+// How strongly each picked card's ring shows: its turning runes and its
+// dotted ring (tuned in labs/arcane-lab.html).
+const CARD_RING = { runes: 1.616, dots: 0.436 };
+
 function sizeMagic() {
   const c = $("magic");
   const r = Math.min(devicePixelRatio || 1, 2);
@@ -636,7 +640,7 @@ function drawMagicLayer(t) {
     ctx.save();
     ctx.setLineDash([1, 5]);
     ctx.lineDashOffset = (t / 90) * c.spin;
-    ctx.strokeStyle = `rgba(${GOLD}, ${0.22 * show * pulse})`;
+    ctx.strokeStyle = `rgba(${GOLD}, ${CARD_RING.dots * show * pulse})`;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.ellipse(g.x, g.y, rx, ry, 0, 0, Math.PI * 2);
@@ -656,7 +660,7 @@ function drawMagicLayer(t) {
       const ang = (k / c.runes.length) * Math.PI * 2 + (t / 26000) * c.spin;
       const x = g.x + Math.cos(ang) * (rx + 9), y = g.y + Math.sin(ang) * (ry + 9);
       const tw = 0.75 + 0.25 * Math.sin(t / 900 + k * 1.7);
-      rune(ctx, RUNES[r], x, y, 10, 0, 0.8 * show * tw);
+      rune(ctx, RUNES[r], x, y, 10, 0, CARD_RING.runes * show * tw);
     });
   });
 

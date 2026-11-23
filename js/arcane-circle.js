@@ -191,6 +191,13 @@ const ARC_PARTS = [
   // medallions, turning on its own, slowly, against the ring inside it.
   { key: "crown",   group: "crown", final: true },
 ];
+// How strongly each element shows, and the live light laid over them
+// (1: as drawn, 0: hidden). Tuned in labs/arcane-lab.html.
+const ARC_ALPHA = {
+  core: 0.47, midband: 0.56, star: 1.51, ring: 0.26, runes: 1.91, sats: 0.51,
+  oring: 0.53, orunes: 0.77, squares: 0.95, arcs: 1, crown: 0.67,
+  pulses: 0.86, sparks: 1.84, dust: 3, haze: 0,
+};
 // The elements the picks and turns share out; the final ones come with the last card turned.
 const STEPPED = ARC_PARTS.filter((e) => !e.final);
 
@@ -632,7 +639,7 @@ function drawArcaneCircle(ctx, t, { cx, cy, R1, seal, from }) {
     rune(ctx, RUNES[SEAL], seal.x, seal.y, 10, t / 9000, 0.7 * sb);
   }
 
-  arcHaze(ctx, cx, cy, (from == null ? R2 : S2.R3) * 1.25, (0.35 + 0.65 * together + 1.5 * surge) * (state.length / ARC_PARTS.length) * breathe);
+  arcHaze(ctx, cx, cy, (from == null ? R2 : S2.R3) * 1.25, (0.35 + 0.65 * together + 1.5 * surge) * (state.length / ARC_PARTS.length) * breathe * ARC_ALPHA.haze);
 
   // The final reveal: a burst of light at the heart, and a shockwave
   // racing out past the edge of the circle.
@@ -659,7 +666,7 @@ function drawArcaneCircle(ctx, t, { cx, cy, R1, seal, from }) {
   const draw = (x, { e, p, early }) => {
     const full = e.group === "in" ? 0.55 : 0.5;
     const q = easeIO(p);
-    const a = full * breathe * (early ? 0.6 + 0.4 * together : 1) * q * (1 + 1.1 * surge);
+    const a = full * breathe * (early ? 0.6 + 0.4 * together : 1) * q * (1 + 1.1 * surge) * ARC_ALPHA[e.key];
     const k = 1 + 0.035 * (1 - easeOut(p));
     const g = glow * (1 + 2.2 * Math.sin(Math.PI * p) ** 2) * (1 + 1.6 * surge);
     const rot = partTurn(e.key, t);
@@ -686,13 +693,13 @@ function drawArcaneCircle(ctx, t, { cx, cy, R1, seal, from }) {
   if (has("midband")) radii.push([Rm, 1, 3600]);
   if (has("ring")) radii.push([R1, 1, 5200], [R1 - 22, -1, 4300]);
   if (has("oring")) radii.push([R2, -1, 7600], [R2 - 26, 1, 6400]);
-  if (radii.length) ringPulses(ctx, t, cx, cy, radii, (0.25 + 0.3 * (from == null ? 0 : arcSeg(el, cascadeEnd - 600, cascadeEnd + 900))) * breathe);
+  if (radii.length) ringPulses(ctx, t, cx, cy, radii, (0.25 + 0.3 * (from == null ? 0 : arcSeg(el, cascadeEnd - 600, cascadeEnd + 900))) * breathe * ARC_ALPHA.pulses);
 
   // Sparks where lines cross: the star's points, the small circles on the
   // rim and the squares' corners, each on its own slow beat.
   const spark = (x, y, r, i, a) => {
     const v = Math.max(0, Math.sin(t / (1300 + (i % 5) * 270) + i * 2.17));
-    glint(ctx, x, y, r, a * v * v * (0.5 + 0.5 * together));
+    glint(ctx, x, y, r, a * v * v * (0.5 + 0.5 * together) * ARC_ALPHA.sparks);
   };
   if (has("crown")) {
     // a soft spark now and then on the crown's medallions
@@ -728,7 +735,7 @@ function drawArcaneCircle(ctx, t, { cx, cy, R1, seal, from }) {
       const ang = hash01(i + 100) * TAU + (t / (16000 + hash01(i + 200) * 30000)) * (i % 2 ? 1 : -1);
       const life = 5000 + hash01(i + 400) * 6000, ph = ((t + hash01(i + 500) * life) % life) / life;
       const tw = Math.max(0, Math.sin(t / (700 + hash01(i + 300) * 1400) + i)) * Math.sin(Math.PI * ph);
-      const a = 0.7 * tw * together;
+      const a = 0.7 * tw * together * ARC_ALPHA.dust;
       if (a < 0.02) continue;
       const x = cx + Math.cos(ang) * r, y = cy + Math.sin(ang) * r - ph * 26;
       glowAt(ctx, x, y, 1.6 + hash01(i + 600) * (i % 5 ? 3 : 7), a);

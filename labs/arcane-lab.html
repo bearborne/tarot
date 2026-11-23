@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arcane Lab</title>
+<style>
+  :root { --bg:#0c0b11; --panel:#16131f; --ink:#e9e2d3; --muted:#a79f8f; --gold:#c9a96e; --line:rgba(201,169,110,.18);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; }
+  body { background:var(--bg); color:var(--ink); font-family:var(--serif); font-size:14px; }
+  .app { display:grid; grid-template-columns:1fr 380px; height:100vh; }
+  .stage { position:relative; overflow:hidden; background:radial-gradient(ellipse at 50% 40%, #1a1527 0%, #0c0b11 70%); }
+  #cv { position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .cards { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:18px; pointer-events:none; }
+  .card { width:clamp(70px, 11vw, 120px); aspect-ratio:4 / 7; border-radius:7px; background:#19102d center / cover; box-shadow:0 3px 10px rgba(0,0,0,.45); }
+  .panel { background:var(--panel); border-left:1px solid var(--line); overflow-y:auto; padding:12px 14px 40px; }
+  h1 { margin:0 0 2px; font-weight:normal; color:var(--gold); font-size:20px; }
+  .sub { margin:0 0 10px; color:var(--muted); font-size:12px; font-style:italic; }
+  details { border-top:1px solid var(--line); padding:8px 0; }
+  summary { cursor:pointer; color:var(--gold); font-size:15px; list-style:none; user-select:none; }
+  summary::before { content:"▸ "; color:var(--muted); }
+  details[open] > summary::before { content:"▾ "; }
+  .row { display:grid; grid-template-columns:18px 118px 1fr 46px; gap:8px; align-items:center; margin:7px 0; }
+  .row label { color:var(--muted); font-size:12.5px; cursor:pointer; }
+  .row output { text-align:right; font-variant-numeric:tabular-nums; font-size:12px; }
+  .row.solo label { color:var(--gold); }
+  input[type=range] { width:100%; accent-color:var(--gold); }
+  input[type=checkbox] { accent-color:var(--gold); margin:0; }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; margin:8px 0; }
+  button { font:inherit; font-size:13px; color:var(--ink); background:#241f31; border:1px solid var(--line); border-radius:7px; padding:6px 10px; cursor:pointer; }
+  button:hover { border-color:var(--gold); }
+  button.on { background:#4b3670; border-color:var(--gold); }
+  textarea { width:100%; height:200px; background:#0f0d16; color:var(--ink); border:1px solid var(--line); border-radius:6px; font:11.5px/1.4 Consolas, monospace; padding:8px; }
+  @media (max-width: 800px) {
+    .app { grid-template-columns:1fr; grid-template-rows:56vh auto; height:auto; }
+    .stage { height:56vh; position:sticky; top:0; z-index:1; }
+    .panel { border-left:0; border-top:1px solid var(--line); padding:12px 16px 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="cards" id="cards"></div>
+  </div>
+  <div class="panel">
+    <h1>Arcane Lab</h1>
+    <p class="sub">How strongly each turning piece behind the picked cards shows. The app's own drawing code; 100% is how it is now. Tick a box to show that piece alone.</p>
+    <div class="btns">
+      <button id="pauseBtn">Pause</button>
+      <button id="allOff">All 0</button>
+      <button id="allOn">All 100%</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+    <div id="controls"></div>
+    <details>
+      <summary>Export</summary>
+      <p class="sub">Paste into CARD_RING (js/table-magic.js) and ARC_ALPHA (js/arcane-circle.js).</p>
+      <div class="btns"><button id="copyBtn">Copy</button></div>
+      <textarea id="out" readonly></textarea>
+    </details>
+  </div>
+</div>
+
+<script>let S = null; const calm = false;</script>
+<script src="../js/table-magic.js"></script>
+<script src="../js/arcane-circle.js"></script>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+
+// Each piece: [where it lives, key, name]. Values are multipliers on the
+// app's own brightness (1 = as now), except the card ring's, which are the
+// app's own alphas shown as a share of how they are now.
+const GROUPS = [
+  ["Round each card", [
+    ["card", "runes", "Turning runes"],
+    ["card", "dots", "Dotted ring"],
+  ]],
+  ["Inner circle", [
+    ["arc", "core", "Innermost circle"],
+    ["arc", "midband", "Small rune ring"],
+    ["arc", "star", "Six-pointed star"],
+    ["arc", "ring", "Main ring lines"],
+    ["arc", "runes", "Main rune band"],
+    ["arc", "sats", "Three satellites"],
+  ]],
+  ["Outer circle", [
+    ["arc", "oring", "Outer ring lines"],
+    ["arc", "orunes", "Outer rune band"],
+    ["arc", "squares", "Crossed squares"],
+    ["arc", "arcs", "Broken arcs, ticks"],
+    ["arc", "crown", "Crown of beads"],
+  ]],
+  ["Live light", [
+    ["arc", "pulses", "Energy round rings"],
+    ["arc", "sparks", "Sparks at crossings"],
+    ["arc", "dust", "Drifting dust"],
+    ["arc", "haze", "Warm haze"],
+  ]],
+];
+const BASE = { card: { ...CARD_RING }, arc: { ...ARC_ALPHA } };
+const TARGET = { card: CARD_RING, arc: ARC_ALPHA };
+const id = (w, k) => `${w}.${k}`;
+// The lab's own values: a share of how it is now (1 = as now), per piece.
+let V = {};
+const fresh = () => { const v = {}; GROUPS.forEach(([, l]) => l.forEach(([w, k]) => { v[id(w, k)] = 1; })); return v; };
+V = fresh();
+try { Object.assign(V, JSON.parse(localStorage.getItem("arcane-lab-2") || "{}")); } catch {}
+let solo = null;
+
+function apply() {
+  GROUPS.forEach(([, l]) => l.forEach(([w, k]) => {
+    const on = !solo || solo === id(w, k);
+    TARGET[w][k] = on ? +(BASE[w][k] * V[id(w, k)]).toFixed(3) : 0;
+  }));
+  const r = (w) => Object.fromEntries(Object.keys(BASE[w]).map((k) => [k, +(BASE[w][k] * V[id(w, k)]).toFixed(3)]));
+  $("out").value = `const CARD_RING = ${JSON.stringify(r("card"))};\n\nconst ARC_ALPHA = ${JSON.stringify(r("arc"), null, 2)};`;
+  try { localStorage.setItem("arcane-lab-2", JSON.stringify(V)); } catch {}
+}
+
+function build() {
+  const box = $("controls");
+  box.innerHTML = "";
+  GROUPS.forEach(([name, list]) => {
+    const d = document.createElement("details");
+    d.open = true;
+    d.innerHTML = `<summary>${name}</summary>`;
+    list.forEach(([w, k, label]) => {
+      const key = id(w, k);
+      const row = document.createElement("div");
+      row.className = "row" + (solo === key ? " solo" : "");
+      const pct = Math.round(V[key] * 100);
+      row.innerHTML = `<input type="checkbox" title="Show only this" ${solo === key ? "checked" : ""}><label>${label}</label><input type="range" min="0" max="300" step="1" value="${pct}"><output>${pct}%</output>`;
+      const out = row.querySelector("output");
+      row.querySelector("input[type=range]").oninput = (e) => { V[key] = e.target.value / 100; out.textContent = e.target.value + "%"; apply(); };
+      const toggle = () => { solo = solo === key ? null : key; build(); apply(); };
+      row.querySelector("input[type=checkbox]").onchange = toggle;
+      row.querySelector("label").onclick = toggle;
+      d.append(row);
+    });
+    box.append(d);
+  });
+}
+
+$("allOff").onclick = () => { Object.keys(V).forEach((k) => { V[k] = 0; }); build(); apply(); };
+$("allOn").onclick = () => { Object.keys(V).forEach((k) => { V[k] = 1; }); build(); apply(); };
+$("resetBtn").onclick = () => { V = fresh(); solo = null; build(); apply(); };
+$("copyBtn").onclick = () => navigator.clipboard?.writeText($("out").value);
+let paused = false, pausedAt = 0, offset = 0;
+$("pauseBtn").onclick = (e) => {
+  paused = !paused;
+  e.target.classList.toggle("on", paused);
+  e.target.textContent = paused ? "Play" : "Pause";
+  if (paused) pausedAt = performance.now(); else offset += performance.now() - pausedAt;
+};
+
+// ── The scene: three picked cards and the whole circle behind them ──
+const NAMES = ["the-magician", "the-high-priestess", "the-star"];
+const cardEls = NAMES.map((n) => {
+  const c = document.createElement("div");
+  c.className = "card";
+  c.style.backgroundImage = `url("../cards/${n}.jpg")`;
+  $("cards").append(c);
+  return c;
+});
+const ringRunes = cardEls.map((_, i) => ({ runes: Array.from({ length: 8 }, (_, k) => (i * 5 + k * 3) % RUNES.length), spin: i % 2 ? -1 : 1 }));
+
+const cv = $("cv"), ctx = cv.getContext("2d"), stage = $("stage");
+function size() {
+  const d = Math.min(devicePixelRatio || 1, 2), r = stage.getBoundingClientRect();
+  cv.width = r.width * d; cv.height = r.height * d;
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+}
+addEventListener("resize", size);
+size();
+
+const start = performance.now() - 20000;   // long since formed: the circle at rest
+function geoms() {
+  const s = stage.getBoundingClientRect();
+  return cardEls.map((c) => {
+    const r = c.getBoundingClientRect();
+    return { x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2, rx: r.width / 2, ry: r.height / 2 };
+  });
+}
+
+requestAnimationFrame(function frame(now) {
+  const t = paused ? pausedAt - offset : now - offset;
+  const s = stage.getBoundingClientRect();
+  ctx.clearRect(0, 0, s.width, s.height);
+  const geo = geoms();
+  const left = Math.min(...geo.map((g) => g.x - g.rx)), right = Math.max(...geo.map((g) => g.x + g.rx));
+  const top = Math.min(...geo.map((g) => g.y - g.ry)), bottom = Math.max(...geo.map((g) => g.y + g.ry));
+  MG.w = s.width;
+  const R1 = Math.min(greatR1(geo), Math.round(Math.min(s.width, s.height) * 0.28));
+  drawArcaneCircle(ctx, t, { cx: (left + right) / 2, cy: (top + bottom) / 2, R1, seal: null, from: start });
+
+  // Each card's ring, as drawMagicLayer draws it in the app.
+  const pulse = 0.85 + 0.15 * Math.sin(t / 1400);
+  geo.forEach((g, i) => {
+    const c = ringRunes[i], rx = g.rx + 12, ry = g.ry + 12;
+    ctx.save();
+    ctx.setLineDash([1, 5]);
+    ctx.lineDashOffset = (t / 90) * c.spin;
+    ctx.strokeStyle = `rgba(${GOLD}, ${CARD_RING.dots * pulse})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(g.x, g.y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+    c.runes.forEach((r, k) => {
+      const ang = (k / c.runes.length) * Math.PI * 2 + (t / 26000) * c.spin;
+      const x = g.x + Math.cos(ang) * (rx + 9), y = g.y + Math.sin(ang) * (ry + 9);
+      const tw = 0.75 + 0.25 * Math.sin(t / 900 + k * 1.7);
+      rune(ctx, RUNES[r], x, y, 10, 0, CARD_RING.runes * tw);
+    });
+  });
+  requestAnimationFrame(frame);
+});
+
+build();
+apply();
+</script>
+</body>
+</html>
