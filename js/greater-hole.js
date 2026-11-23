@@ -339,9 +339,18 @@ function playGreatHole(snap, dpr, colours = null, cardRects = [], way = HOME_WAY
   // (Easing in, but never slowing at the end, so there's no lingering.)
   const ph = [r(0, TAU), r(0, TAU), r(0, TAU)];
   const eaten = (t) => Math.pow(seg(t, F.pullFrom + 60, EATEN), 1.25);
+  // It starts as a rounded box the shape of the screen, just outside it, so
+  // it meets all four sides at once (a circle met the nearer sides first
+  // and left the others cut off straight), and closes to a circle at the hole.
+  // Its raggedness grows in as it starts, so no corner shows past it.
+  const BOX = 1.22, hw = W / 2, hh = H / 2;
+  const edgeAt = (a) => {
+    const c = Math.abs(Math.cos(a)) / hw, s = Math.abs(Math.sin(a)) / hh;
+    return BOX / Math.sqrt(Math.sqrt(c * c * c * c + s * s * s * s));
+  };
   const front = (q, a, t, g) => {
-    const rh = (holeR(t) * 0.9) / g.s;
-    return (rh + (far - rh) * (1 - q)) * (1 + 0.1 * (Math.sin(3 * a + ph[0] + t * 0.0013) + 0.6 * Math.sin(7 * a + ph[1] - t * 0.002)
+    const rh = (holeR(t) * 0.9) / g.s, amp = 0.1 * Math.min(1, q * 5);
+    return (rh + (edgeAt(a) - rh) * (1 - q)) * (1 + amp * (Math.sin(3 * a + ph[0] + t * 0.0013) + 0.6 * Math.sin(7 * a + ph[1] - t * 0.002)
       + 0.35 * Math.sin(13 * a + ph[2] + t * 0.003)) / 1.95);
   };
   const dust = [];
