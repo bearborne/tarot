@@ -76,7 +76,7 @@ let swallowing = false;
 // Where the hole leads: `land()` puts the screen there, the moment the last
 // grain is in, and `build(C, opts)` makes its pieces again with burnFronts.
 // Home is one way; the reading's summary is another (see summonSummary).
-const HOME_WAY = { land: () => landHome(), build: (C, o) => burnFronts(homeParts(), C, o) };
+const HOME_WAY = { land: () => landHome(), build: (C, o) => burnFronts(homeParts(), C, { ...o, glow: 1.8 }) };
 async function swallowHome(btn) {
   if (swallowing) return;
   document.activeElement?.blur();   // (saves a note being written)

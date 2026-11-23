@@ -14,7 +14,7 @@
 // page's own clipping and zoom carry it too). Taps go through it.
 // Returns { end } (ms from now until it's all over) and stop().
 const BURN_FX = { fly: 380, build: 560 };
-function burnFronts(parts, C, { mode = "build", at = 0, fly = BURN_FX.fly, build = BURN_FX.build, host = document.body, z = 9600, flare = true, flash = null } = {}) {
+function burnFronts(parts, C, { mode = "build", at = 0, fly = BURN_FX.fly, build = BURN_FX.build, host = document.body, z = 9600, flare = true, flash = null, glow: G = 1 } = {}) {
   const W = innerWidth, H = innerHeight, TAU = Math.PI * 2;
   const burning = mode === "burn";
   const r = (a, b) => a + Math.random() * (b - a);
@@ -70,11 +70,13 @@ function burnFronts(parts, C, { mode = "build", at = 0, fly = BURN_FX.fly, build
   // Each piece's gold flare as it forms (as home's parts do), or as it catches.
   if (flare) {
     const halo = (a, rr) => (LITE ? "" : ` drop-shadow(0 0 ${rr}px rgba(255, 206, 120, ${a}))`);
+    // (`glow` above 1 burns hotter: brighter, a wider halo, lingering longer)
+    const b0 = 1 + 1.6 * G, b1 = 1 + 0.8 * G, ha = Math.min(1, 0.95 * G);
     pieces.forEach((pc) => pc.el.animate([
-      { filter: `brightness(2.6)${halo(0.95, 12)}` },
-      { filter: `brightness(1.8)${halo(0.75, 9)}`, offset: 0.3 },
+      { filter: `brightness(${b0})${halo(ha, 12 * G)}` },
+      { filter: `brightness(${b1})${halo(Math.min(1, 0.75 * G), 9 * G)}`, offset: 0.3 },
       { filter: `brightness(1)${halo(0, 0)}` },
-    ], { duration: burning ? build * 0.8 : 720, delay: pc.start + build * 0.15, easing: "cubic-bezier(.2, .8, .2, 1)", fill: burning ? "forwards" : "backwards" }));
+    ], { duration: burning ? build * 0.8 : 720 * Math.sqrt(G), delay: pc.start + build * 0.15, easing: "cubic-bezier(.2, .8, .2, 1)", fill: burning ? "forwards" : "backwards" }));
   }
   // On the screen: a point `al` along a piece's way and `x` across it.
   const scr = (pc, al, x) => [pc.cx + al * pc.nx - x * pc.ny, pc.cy + al * pc.ny + x * pc.nx];
@@ -134,8 +136,8 @@ function burnFronts(parts, C, { mode = "build", at = 0, fly = BURN_FX.fly, build
     if (flash) {
       const u = seg(t, flash.at, flash.at + flash.ms), fl = Math.sin(Math.PI * u);
       if (fl > 0.01) {
-        const gr = 12 + 40 * u;
-        ctx.globalAlpha = fl;
+        const gr = (12 + 40 * u) * G;
+        ctx.globalAlpha = Math.min(1, fl * G);
         ctx.drawImage(spot, C.x - gr, C.y - gr, gr * 2, gr * 2);
         ctx.globalAlpha = 1;
       }
@@ -153,8 +155,8 @@ function burnFronts(parts, C, { mode = "build", at = 0, fly = BURN_FX.fly, build
       else ctx.rect(pc.b.left - 2, pc.b.top - 2, pc.b.width + 4, pc.b.height + 4);
       ctx.clip();
       [[7, 0.35], [2.4, 0.7], [0.9, 1]].forEach(([lw, a]) => {
-        ctx.strokeStyle = `rgba(255, ${lw > 2 ? 170 : 226}, ${lw > 2 ? 90 : 170}, ${(a * glow).toFixed(3)})`;
-        ctx.lineWidth = lw;
+        ctx.strokeStyle = `rgba(255, ${lw > 2 ? 170 : 226}, ${lw > 2 ? 90 : 170}, ${Math.min(1, a * glow * G).toFixed(3)})`;
+        ctx.lineWidth = lw > 2 ? lw * G : lw;
         ctx.beginPath();
         for (let j = 0; j <= STEPS; j++) {
           const x = -pc.span - 4 + ((2 * pc.span + 8) * j) / STEPS, [sx, sy] = scr(pc, frontAt(pc, p, x), x);
